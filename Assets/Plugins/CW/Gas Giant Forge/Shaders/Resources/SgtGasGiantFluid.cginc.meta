@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 04ef933d643332a499689d6b6440216e
+ShaderIncludeImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 323821
+  packageName: Gas Giant Forge
+  packageVersion: 1.2.9
+  assetPath: Assets/Plugins/CW/Gas Giant Forge/Shaders/Resources/SgtGasGiantFluid.cginc
+  uploadId: 775941

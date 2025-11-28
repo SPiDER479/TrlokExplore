@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 422b1fba119e1e9408ce3911b4bf8878
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 323821
+  packageName: Gas Giant Forge
+  packageVersion: 1.2.9
+  assetPath: Assets/Plugins/CW/Gas Giant Forge/Scripts/SgtGasGiantAnimation.cs
+  uploadId: 775941
