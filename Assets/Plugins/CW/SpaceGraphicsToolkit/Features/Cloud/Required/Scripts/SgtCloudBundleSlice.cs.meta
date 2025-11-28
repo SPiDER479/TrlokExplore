@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: f094607b8851f6347898402b542016c4
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Cloud/Required/Scripts/SgtCloudBundleSlice.cs
+  uploadId: 775926

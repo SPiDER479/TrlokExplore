@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: c55a8fe4b61dcfb41a8aaa1869b89fed
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/Shared/Common/Required/Shaders/ShapeOutline.shader
+  uploadId: 775926

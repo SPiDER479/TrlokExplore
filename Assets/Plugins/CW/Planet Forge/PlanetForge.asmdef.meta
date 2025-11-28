@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 95f99d8fcc5bf2a41be1065d415aa276
+AssemblyDefinitionImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/Planet Forge/PlanetForge.asmdef
+  uploadId: 775926

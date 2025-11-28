@@ -1,0 +1,21 @@
+{
+    "name": "PlanetForge",
+    "rootNamespace": "",
+    "references": [
+        "GUID:d8b63aba1907145bea998dd612889d6b",
+        "GUID:637dfb2b87b2cf0499a8da5b0b91da54",
+        "GUID:530cda8ce29b2774983ab8dce27e07d2",
+        "GUID:d61893648f3e7d840811e759681a85c8",
+        "GUID:1bb4d13908d3b9e4f8adbafd7124dc07",
+        "GUID:16069fde8e175f949a9b00c541e792d1"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
