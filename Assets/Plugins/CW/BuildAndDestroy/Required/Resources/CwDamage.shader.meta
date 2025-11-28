@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: ace12ae2668a9a74cbf11f0f3f4ff77d
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/BuildAndDestroy/Required/Resources/CwDamage.shader
+  uploadId: 722675

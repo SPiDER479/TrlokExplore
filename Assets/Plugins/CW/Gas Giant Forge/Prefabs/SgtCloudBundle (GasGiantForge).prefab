@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3798149094050685343
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 363998962181312231}
+  - component: {fileID: 4513345821312773710}
+  m_Layer: 0
+  m_Name: SgtCloudBundle (GasGiantForge)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &363998962181312231
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3798149094050685343}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4513345821312773710
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3798149094050685343}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e4da3a63e7b555479cbc8b81e5e817f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  width: 2048
+  slices:
+  - {fileID: 101653374130836380, guid: 9a520c10af79c5445bc3ef21668c4157, type: 3}
+  - {fileID: 101653374130836380, guid: e845cea07d3318c4baae1dffa4d099a5, type: 3}
+  - {fileID: 101653374130836380, guid: 4e7b63adf32c06648b5b594e3e431bbb, type: 3}
+  - {fileID: 101653374130836380, guid: 940920ffeec3c834483d2e9f1cad8224, type: 3}
+  - {fileID: 101653374130836380, guid: 65e41da3b2e38c74ba3b5785d0b6a6c0, type: 3}
+  - {fileID: 101653374130836380, guid: 18eda780f0126a147b232b736013ea74, type: 3}
+  - {fileID: 101653374130836380, guid: 5f1e22ba9a7566041a804184f179b04f, type: 3}
+  - {fileID: 101653374130836380, guid: 5db1e88b096f18d45bf2c7e98e117976, type: 3}
+  - {fileID: 101653374130836380, guid: 1db5e94914f35994daade89e50e290b5, type: 3}
+  - {fileID: 101653374130836380, guid: 2ab68b9d9bfb70744b3d4bcd04e700ee, type: 3}
+  - {fileID: 101653374130836380, guid: 5efae7d5f7c14ce4591a7cf5846ac6fb, type: 3}
+  - {fileID: 101653374130836380, guid: e72462c731243484fb00909b990a9825, type: 3}
+  - {fileID: 101653374130836380, guid: a3ce6225c712d044996b2e06fbe1f986, type: 3}

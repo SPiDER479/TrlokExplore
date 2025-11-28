@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: e3c0a640e9283cd49b3f98e3060ebfa7
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 323821
+  packageName: Gas Giant Forge
+  packageVersion: 1.2.9
+  assetPath: Assets/Plugins/CW/Gas Giant Forge/Prefabs/Demo UI + Light + Camera.prefab
+  uploadId: 775941

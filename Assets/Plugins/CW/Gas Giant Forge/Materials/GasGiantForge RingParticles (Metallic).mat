@@ -1,0 +1,120 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: GasGiantForge RingParticles (Metallic)
+  m_Shader: {fileID: 4800000, guid: 687553480e1ca724c9b58ed97926fe5c, type: 3}
+  m_ValidKeywords:
+  - _SGT_DETAIL
+  - _SGT_DETAIL_DARKEN_OFF
+  - _SGT_DETAIL_EMISSION_OFF
+  - _SGT_SHADOWS
+  - _SGT_SPHEREMASK_OFF
+  m_InvalidKeywords:
+  - _SGT_DETAIL_AO_INVERSE
+  - _SGT_DETAIL_LIGHT
+  - _SGT_LIGHTING
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _SGT_CloudTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_DetailHeightTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_DetailNormalTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_DetailTex:
+        m_Texture: {fileID: 2800000, guid: cff1ae7c7576c2042a092bbd5740d268, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_DetailTexture:
+        m_Texture: {fileID: 2800000, guid: 904ffe6b18ab9c54d8213f99dfff4b06, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_Field:
+        m_Texture: {fileID: 11700000, guid: 35a06e069090c0147ab511b9be582d55, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_RingMainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_RingShadowTexture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_RingTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_RingThicknessTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_SpriteSheet:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _CW_DisableFog: 0
+    - _SGT_CloudWarp: 0
+    - _SGT_Clouds: 0
+    - _SGT_Columns: 1
+    - _SGT_Detail: 1
+    - _SGT_DetailEmissionBlend: 0.62
+    - _SGT_DetailEmissionMultiplier: 1
+    - _SGT_DetailGlow: 0.28
+    - _SGT_DetailRelief: 0.74
+    - _SGT_DetailTiling: 2
+    - _SGT_Detail_AO: 2
+    - _SGT_Detail_Darken: 0
+    - _SGT_Detail_Emission: 0
+    - _SGT_Error: 2
+    - _SGT_LightCount: 0
+    - _SGT_Lighting: 1
+    - _SGT_MaxSteps: 64
+    - _SGT_Metallic: 1
+    - _SGT_RingColorInfluence: 0.525
+    - _SGT_RingShadowCount: 0
+    - _SGT_Roll: 0
+    - _SGT_Rows: 1
+    - _SGT_Shadows: 1
+    - _SGT_Smoothness: 0.404
+    - _SGT_SphereMask: 0
+    - _SGT_SphereMaskFalloff: 3
+    - _SGT_SphereMaskRadius: 1
+    - _SGT_SphereShadowCount: 0
+    - _SGT_UnderwaterBrightness: 0
+    - _SGT_UnderwaterShadowRange: 0
+    m_Colors:
+    - _SGT_Cells: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_CloudOpacity: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_DataA: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_DataB: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_DetailEmissionColor: {r: 0, g: 1, b: 0, a: 1}
+    - _SGT_RingSize: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_SphereMaskPosition: {r: 0, g: 0, b: 0, a: 1}
+    - _SGT_WrapSize: {r: 0, g: 0, b: 0, a: 0}
+  m_BuildTextureStacks: []

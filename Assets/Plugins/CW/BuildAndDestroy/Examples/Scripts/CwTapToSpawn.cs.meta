@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 17c1be49c307c15439c59c5b120f2c53
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/BuildAndDestroy/Examples/Scripts/CwTapToSpawn.cs
+  uploadId: 722675

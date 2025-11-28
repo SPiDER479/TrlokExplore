@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c0b0b7b3a56dff846aa6e43012c9cfa4
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 323821
+  packageName: Gas Giant Forge
+  packageVersion: 1.2.9
+  assetPath: Assets/Plugins/CW/Gas Giant Forge/Asteroid SDFs/Rock9 SDF.asset
+  uploadId: 775941

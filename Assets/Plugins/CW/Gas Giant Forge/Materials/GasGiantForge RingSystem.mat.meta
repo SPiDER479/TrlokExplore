@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 1ef87602b8864474098b08eba30962f6
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 323821
+  packageName: Gas Giant Forge
+  packageVersion: 1.2.9
+  assetPath: Assets/Plugins/CW/Gas Giant Forge/Materials/GasGiantForge RingSystem.mat
+  uploadId: 775941

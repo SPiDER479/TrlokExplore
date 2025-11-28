@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/Solar System.unity
+    guid: 96a35fb913fc46a458705318ae81a510
+  - enabled: 1
+    path: Assets/Scenes/Saturn.unity
+    guid: 5b79716f6f5f1ac4c98f9b64744e6ad1
+  m_configObjects:
+    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: bbbf2c5232dc5c0489ff26740c741902, type: 2}
+    com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 64ed23503317c0640a5ebf0d02afe6fe, type: 2}
+  m_UseUCBPForAssetBundles: 0

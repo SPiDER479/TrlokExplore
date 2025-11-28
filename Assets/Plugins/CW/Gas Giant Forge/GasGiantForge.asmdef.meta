@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: a49472a965d65714a918f23a6ea7d394
+AssemblyDefinitionImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 323821
+  packageName: Gas Giant Forge
+  packageVersion: 1.2.9
+  assetPath: Assets/Plugins/CW/Gas Giant Forge/GasGiantForge.asmdef
+  uploadId: 775941

@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4099337300614637717
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3849507099866584691}
+  - component: {fileID: 1730071090847021150}
+  m_Layer: 0
+  m_Name: GasGiantForge
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3849507099866584691
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4099337300614637717}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1730071090847021150
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4099337300614637717}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec59174ea9873f94a9eab2eca20c9605, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ExampleBundle: {fileID: 4513345821312773710, guid: 802ef67f3be760f4481ed685e05742d5,
+    type: 3}
+  ExampleAlbedoGradient: {fileID: 2800000, guid: c9309f2b4ed37b64caa75147027f76b9,
+    type: 3}
+  ExampleRingBands: {fileID: 2800000, guid: 219bd1ad1bea79445902b05d7c57bdd7, type: 3}
+  ExampleRingParticlesMaterial: {fileID: 2100000, guid: 88dc59c0414dfc548a39639f2280c80e,
+    type: 2}
+  ExampleRingParticlesSdf: {fileID: 11700000, guid: 35a06e069090c0147ab511b9be582d55,
+    type: 2}

@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: 09359644b7e2c2840b7397ee5a54ec2b
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - stickerPack: {fileID: 4414107116028745090, guid: 4e09a397c74aa9c4f927894b9ab04bb5,
+      type: 3}
+  - shapeVisual: {instanceID: 0}
+  - decalVisual: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/BuildAndDestroy/Required/Scripts/CwDesign.cs
+  uploadId: 722675

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 154801ac1b7e5724f9c25dc2bad729eb
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 323821
+  packageName: Gas Giant Forge
+  packageVersion: 1.2.9
+  assetPath: Assets/Plugins/CW/Gas Giant Forge/Fluid Slices/ThinFluidSlice4.prefab
+  uploadId: 775941

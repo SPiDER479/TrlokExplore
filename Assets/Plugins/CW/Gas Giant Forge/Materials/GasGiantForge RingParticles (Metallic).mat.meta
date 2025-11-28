@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 4b85099b570af6641935e6bc54093ed0
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 323821
+  packageName: Gas Giant Forge
+  packageVersion: 1.2.9
+  assetPath: Assets/Plugins/CW/Gas Giant Forge/Materials/GasGiantForge RingParticles
+    (Metallic).mat
+  uploadId: 775941

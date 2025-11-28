@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 03ed91f10ffdb8749a139c2529094621
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 323821
+  packageName: Gas Giant Forge
+  packageVersion: 1.2.9
+  assetPath: Assets/Plugins/CW/Gas Giant Forge/Prefabs/GasGiantForge.prefab
+  uploadId: 775941
