@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 5e02bb009db2f144aaafbff1aa69bfba
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 323821
+  packageName: Gas Giant Forge
+  packageVersion: 1.2.9
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/RingSystem/Required/Shaders/SGT_RingParticles_Additive_Bundle.asset
+  uploadId: 775941

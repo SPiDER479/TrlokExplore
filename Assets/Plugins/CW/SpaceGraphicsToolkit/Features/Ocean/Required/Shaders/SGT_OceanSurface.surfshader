@@ -1,0 +1,352 @@
+﻿BEGIN_OPTIONS
+	Alpha "Blend"
+END_OPTIONS
+
+BEGIN_PASS("All")
+	Cull Off
+	ZWrite Off
+	ZTest Always
+END_PASS
+
+BEGIN_PROPERTIES
+	[KeywordEnum(Box, Sphere)] _SGT_Shape ("Shape", Float) = 0
+	[KeywordEnum(One, Two, Three, Four)] _SGT_Layers ("Layers", Float) = 0
+	[KeywordEnum(Off, On)] _SGT_Displacement ("Displacement", Float) = 0
+	
+	[Header(CLOUDS)]
+	[Toggle(_SGT_CLOUDS)] _SGT_Clouds("	Enable", Float) = 0
+	[HideInInspector] [NoScaleOffset] _SGT_CloudTex("", 2D) = "black" {}
+	[HideInInspector] _SGT_CloudOpacity("", Vector) = (0.0, 0.0, 0.0, 0.0)
+	[HideInInspector] _SGT_CloudWarp("", Float) = 0
+	
+	[HideInInspector] _SGT_FadeDistance("", Float) = 0
+	[HideInInspector] _SGT_SurfaceColor("", Color) = (0,0,0)
+	[HideInInspector] _SGT_SurfaceDensity("", Float) = 0
+	[HideInInspector] _SGT_SurfaceMinimumOpacity("", Float) = 0
+	[HideInInspector] _SGT_SurfaceSmoothness("", Float) = 0
+	[HideInInspector] [NoScaleOffset] _SGT_SurfaceTexture("", 2D) = "black" {}
+	[HideInInspector] _SGT_SurfaceRange("", Vector) = (0,0,0,0)
+	[HideInInspector] _SGT_SurfaceStrength("", Vector) = (0,0,0,0)
+	
+	[HideInInspector] _SGT_UnderwaterColor("", Vector) = (0,0,0,0)
+	[HideInInspector] _SGT_UnderwaterExtinction("", Vector) = (0,0,0,0)
+	[HideInInspector] _SGT_UnderwaterDensity("", Float) = 0
+	[HideInInspector] _SGT_UnderwaterMinimumOpacity("", Float) = 0
+	[HideInInspector] _SGT_UnderwaterBrightness("", Float) = 0
+	[HideInInspector] _SGT_UnderwaterShadowRange("", Float) = 0
+	
+	[Header(CAUSTICS)]
+	[Toggle(_SGT_CAUSTICS)] _SGT_Caustics("	Enable", Float) = 0
+	[HideInInspector] [NoScaleOffset] _SGT_CausticsTexure("", 2D) = "black" {}
+	[HideInInspector] _SGT_CausticsData("", Vector) = (0,0,0,0)
+	[HideInInspector] _SGT_CausticsDirection("", Vector) = (0,0,0,0)
+	
+	[Header(FADE)]
+	[Toggle(_SGT_FADE)] _SGT_Fade("	Enable", Float) = 0
+END_PROPERTIES
+
+BEGIN_CBUFFER
+	float  _SGT_FadeDistance;
+	float4 _SGT_SurfaceColor;
+	float  _SGT_SurfaceDensity;
+	float  _SGT_SurfaceMinimumOpacity;
+	float  _SGT_SurfaceSmoothness;
+	
+	sampler2D _SGT_SurfaceTexture;
+	float4    _SGT_SurfaceRange;
+	float4    _SGT_SurfaceStrength;
+	
+	float4 _SGT_UnderwaterColor;
+	float4 _SGT_UnderwaterExtinction;
+	float  _SGT_UnderwaterDensity;
+	float  _SGT_UnderwaterMinimumOpacity;
+	float  _SGT_UnderwaterBrightness;
+	float  _SGT_UnderwaterShadowRange;
+	
+	sampler2D _SGT_CausticsTexure;
+	float4    _SGT_CausticsData;
+	float4    _SGT_CausticsDirection;
+	
+	sampler2D_float _SGT_WaterDepthTexture;
+	
+	// CLOUDS
+	sampler2D _SGT_CloudTex;
+	float4    _SGT_CloudOpacity;
+	float     _SGT_CloudWarp;
+	float4x4  _SGT_CloudMatrix;
+END_CBUFFER
+
+BEGIN_DEFINES
+	#pragma shader_feature_local _SGT_SHAPE_BOX _SGT_SHAPE_SPHERE
+	#pragma shader_feature_local _SGT_LAYERS_ONE _SGT_LAYERS_TWO _SGT_LAYERS_THREE _SGT_LAYERS_FOUR
+	#pragma shader_feature_local _SGT_DISPLACEMENT_OFF _SGT_DISPLACEMENT_ON
+	#pragma shader_feature_local _SGT_CLOUDS_OFF _SGT_CLOUDS
+	#pragma shader_feature_local _SGT_CAUSTICS_OFF _SGT_CAUSTICS
+	#pragma shader_feature_local _SGT_FADE_OFF _SGT_FADE
+	#if _SGT_LAYERS_FOUR
+		#define CW_LAYER_COUNT 4
+	#elif _SGT_LAYERS_THREE
+		#define CW_LAYER_COUNT 3
+	#elif _SGT_LAYERS_TWO
+		#define CW_LAYER_COUNT 2
+	#else
+		#define CW_LAYER_COUNT 1
+	#endif
+END_DEFINES
+
+BEGIN_CODE
+	#pragma instancing_options procedural:SetupInstancing forwardadd
+	#include "OceanShared.cginc"
+	
+	float SGT_SampleCloudDensity(float3 wpos, float bias)
+	{
+		float3 p = normalize(mul(_SGT_CloudMatrix, float4(wpos, 1.0f)).xyz);
+		float2 w = float2(-p.x, p.y);
+		float2 z = normalize(w) * pow(length(w), 1.0f / (_SGT_CloudWarp + 1.0f));
+		
+		return saturate(dot(tex2Dbias(_SGT_CloudTex, float4(z * 0.5f + 0.5f, 0, bias)), _SGT_CloudOpacity));
+	}
+	
+	float4 CW_O2V(float4 v)
+	{
+		#if _STANDARD
+			return float4(UnityObjectToViewPos(v.xyz), 1.0f);
+		#else
+			return float4(TransformWorldToView(TransformObjectToWorld(v.xyz)), 1.0f);
+		#endif
+	}
+
+	float4 CW_O2W(float4 v)
+	{
+		v = mul(UNITY_MATRIX_M, v);
+		#if _HDRP
+			v.xyz = GetAbsolutePositionWS(v.xyz);
+		#endif
+		return v;
+	}
+	
+	void SetupInstancing()
+	{
+		#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
+			#ifdef unity_ObjectToWorld
+				#undef unity_ObjectToWorld
+			#endif
+
+			#ifdef unity_WorldToObject
+				#undef unity_WorldToObject
+			#endif
+			
+			unity_ObjectToWorld = _SGT_ObjectToOcean;
+			unity_WorldToObject = _SGT_OceanToObject;
+		#endif
+	}
+	
+	float3 CW_Normal3(float2 normal2)
+	{
+		return normalize(float3(normal2.x, normal2.y, sqrt(1.0f - dot(normal2.xy, normal2.xy))));
+	}
+
+	void ModifyVertex(inout VertexData v, inout ExtraV2F e)
+	{
+		float3 opos = CW_CalculateVertexData(v.vertex, v.texcoord0, v.texcoord1, v.texcoord2, v.texcoord3);
+		
+		e.extraV2F0.xyz = CW_O2V(v.vertex).xyz;
+		
+		#if _SGT_SHAPE_SQUARE
+			v.normal  = float3(0,1,0);
+			v.tangent = float4(1,0,0,-1);
+		#elif _SGT_SHAPE_SPHERE
+			v.normal = normalize(opos);
+			
+			if (opos.x == 0.0f && opos.z == 0.0f)
+			{
+				opos.xz += 0.00000001f;
+			}
+			
+			v.tangent = float4(normalize(cross(float3(0,-1,0), normalize(opos))), -1.0f);
+		#endif
+		
+		e.extraV2F1.xyz = opos;
+	}
+	
+	float4 CW_SampleTwo(sampler2D samp, float4 coords, float pole)
+	{
+		float4 wavesA = tex2D(samp, coords.xy);
+		float4 wavesB = tex2D(samp, coords.zw);
+		
+		return lerp(wavesA, wavesB, pole);
+	}
+	
+	float CW_SampleCaustics(float3 worldPosition, float3 worldNormal, float3 lightDirection)
+	{
+		float3 lightUp = abs(lightDirection.y) < 0.99 ? float3(0,1,0) : float3(1,0,0);
+		float3 lightU  = normalize(cross(lightUp, lightDirection)); // U direction
+		float3 lightV  = normalize(cross(lightDirection, lightU));   // V direction
+		float  u       = dot(worldPosition, lightU);
+		float  v       = dot(worldPosition, lightV);
+		float  slope   = max(0.0f, dot(lightDirection, -worldNormal));
+		
+		return tex2D(_SGT_CausticsTexure, float2(u, v)).x * slope;
+	}
+
+	void SurfaceFunction(inout Surface o, inout ShaderData d)
+	{
+		float4 wpos = float4(d.worldSpacePosition, 1.0f);
+		float3 opos = d.extraV2F1.xyz;
+		
+		float  worldEyeDepth    = GetLinearEyeDepth(d.screenUV) * length(d.extraV2F0.xyz / d.extraV2F0.z);
+		float  worldDistance    = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
+		float3 worldEyePosition = _WorldSpaceCameraPos - d.worldSpaceViewDir * worldEyeDepth;
+		
+		float3 localEyePosition = mul(_SGT_WorldToLocal, float4(worldEyePosition, 1.0f)).xyz;
+		float  localEyeDepth    = _SGT_Radius - length(localEyePosition);
+		float3 localEyeNormal   = normalize(localEyePosition);
+		
+		float3 localEye = mul(_SGT_WorldToLocal, float4(_WorldSpaceCameraPos, 1.0f)).xyz;
+		float3 localSpaceViewDir = normalize(localEye - d.localSpacePosition);
+		
+		float3 dx = ddx(worldEyePosition);
+		float3 dy = ddy(worldEyePosition);
+		float3 worldNormal = normalize(cross(dy, dx));
+		
+		#if _SGT_SHAPE_SPHERE
+		//	normal3 = normalize(opos);
+		#endif
+		
+		//d.worldSpaceNormal = worldNormal;
+		//d.TBNMatrix[2] = worldNormal;
+		
+		float4 coords   = CW_CalculateCoords(normalize(opos));
+		float4 gradsX   = CW_CalculateGradsX(coords);
+		float4 gradsY   = CW_CalculateGradsY(coords);
+		float4 strength = saturate(worldDistance / _SGT_SurfaceRange) * _SGT_SurfaceStrength;
+		
+		float3 direction = normalize(opos);
+		
+		float pole = smoothstep(0.0f, 1.0f, saturate((abs(direction.y) - 0.7f) * 30.0f));
+		
+		o.Normal = UnpackScaleNormal(CW_SampleTwo(_SGT_SurfaceTexture, coords * _SGT_SurfaceTiling.x, pole), strength.x);
+		//o.Normal = UnpackScaleNormal(CW_SampleSphere(_SGT_SurfaceTexture, coords, gradsX, gradsY, _SGT_SurfaceTiling.x), strength.x);
+		
+		#if CW_LAYER_COUNT > 1
+			//float3 normal2  = UnpackScaleNormal(CW_SampleSphere(_SGT_SurfaceTexture, coords, gradsX, gradsY, _SGT_SurfaceTiling.y), strength.y);
+			float3 normal2 = UnpackScaleNormal(CW_SampleTwo(_SGT_SurfaceTexture, d.texcoord1, pole), strength.y);
+			o.Normal = SGT_BlendNormals(o.Normal, normal2);
+		#endif
+		
+		#if CW_LAYER_COUNT > 2
+			//float3 normal3  = UnpackScaleNormal(CW_SampleSphere(_SGT_SurfaceTexture, coords, gradsX, gradsY, _SGT_SurfaceTiling.z), strength.z);
+			float3 normal3 = UnpackScaleNormal(CW_SampleTwo(_SGT_SurfaceTexture, d.texcoord2, pole), strength.z);
+			o.Normal = SGT_BlendNormals(o.Normal, normal3);
+		#endif
+		
+		#if CW_LAYER_COUNT > 3
+			//float3 normal4  = UnpackScaleNormal(CW_SampleSphere(_SGT_SurfaceTexture, coords, gradsX, gradsY, _SGT_SurfaceTiling.w), strength.w);
+			float3 normal4 = UnpackScaleNormal(CW_SampleTwo(_SGT_SurfaceTexture, d.texcoord3, pole), strength.w);
+			o.Normal = SGT_BlendNormals(o.Normal, normal4);
+		#endif
+		
+		float3 normalW = UnpackScaleNormal(CW_SampleTwo(_SGT_WaveTexture, d.texcoord0 * _SGT_WaveData.z, pole), _SGT_WaveData.w);
+		
+		o.Normal = SGT_BlendNormals(o.Normal, normalW);
+		
+		float3 color = _SGT_SurfaceColor.xyz;
+		
+		o.Albedo     = _SGT_SurfaceColor.xyz;
+		o.Smoothness = _SGT_SurfaceSmoothness;
+		
+		float waterDepth   = tex2D(_SGT_WaterDepthTexture, d.screenUV);
+		float waterDiff    = abs(abs(waterDepth) - worldDistance);
+		float waterEpsilon = 0.01f + worldDistance * 0.01f;
+		
+		#if _SGT_CLOUDS
+			float shadow = SGT_SampleCloudDensity(d.worldSpacePosition, 0.0f);
+			o.Albedo = lerp(o.Albedo, float3(0,0,0), shadow);
+		#endif
+		
+		d.extraV2F0.z = _SGT_UnderwaterBrightness;
+		
+		#if _SGT_CAUSTICS
+			float maxDepth         = _SGT_CausticsData.x;
+			float surfaceSharpness = _SGT_CausticsData.y;
+			float deepSharpness    = _SGT_CausticsData.z;
+			float deepTiling       = _SGT_CausticsData.w;
+			float caustics         = CW_SampleCaustics(worldEyePosition * deepTiling, worldNormal, _SGT_CausticsDirection.xyz);
+			
+			caustics *= 1.0f - pow(1.0f - saturate(localEyeDepth / maxDepth), surfaceSharpness);
+			caustics *= 1.0f - pow(saturate(localEyeDepth / maxDepth), deepSharpness);
+		#endif
+		
+		d.extraV2F1.xyz = _SGT_UnderwaterColor.xyz;
+		
+		// Top surface
+		if (d.isFrontFace == true)
+		{
+			if (worldEyeDepth < worldDistance || waterDiff > waterEpsilon)
+			{
+				discard;
+			}
+			
+			o.Alpha = saturate(1.0f - exp(-(worldEyeDepth - worldDistance) * _SGT_SurfaceDensity) + _SGT_SurfaceMinimumOpacity);
+			
+			d.extraV2F0.x = 0.0f;
+			d.extraV2F0.y = 1.0f;
+			
+			#if _SGT_CAUSTICS
+				o.Emission += (1.0f - o.Alpha) * caustics;
+			#endif
+			
+			#if _SGT_FADE
+				float dist01 = distance(_WorldSpaceCameraPos, d.worldSpacePosition) / _SGT_FadeDistance;
+				o.Alpha *= smoothstep(0.0f, 1.0f, saturate(1.0f - (dist01 * 2.0f - 1.0f)));
+			#endif
+		}
+		// Under surface
+		else
+		{
+			if (waterDepth >= 0.0f || waterDiff > waterEpsilon)
+			{
+				discard;
+			}
+			
+			o.Alpha = saturate(1.0f - exp(-min(worldEyeDepth, worldDistance) * _SGT_UnderwaterDensity) + _SGT_UnderwaterMinimumOpacity);
+			
+			d.extraV2F0.x = o.Alpha;
+			d.extraV2F0.y = 1.0f;
+			
+			float3 extinctionPoint = localEye - localSpaceViewDir * _SGT_UnderwaterExtinction.w;
+			d.extraV2F1.xyz *= saturate(exp((length(extinctionPoint) - _SGT_Radius) * _SGT_UnderwaterExtinction.xyz));
+			
+			if (worldEyeDepth < worldDistance) // Point behind scene depth
+			{
+				d.extraV2F0.y = 0.0f;
+			}
+			
+			#if _SGT_CLOUDS
+				float shadow2 = SGT_SampleCloudDensity(_WorldSpaceCameraPos - d.worldSpaceViewDir * _SGT_UnderwaterShadowRange, 10.0f);
+				d.extraV2F0.z *= 1.0f - shadow2;
+			#endif
+			
+			#if _SGT_CAUSTICS
+				if (worldEyeDepth < -waterDepth)
+				{
+					d.extraV2F1.xyz += (1.0f - o.Alpha) * caustics;
+				}
+			#endif
+		}
+		
+		#if _HDRP
+			d.extraV2F0.z /= 90000.0f;
+		#endif
+	}
+	
+	void FinalColorForward(inout Surface o, inout ShaderData d, inout half4 color)
+	{
+		color.rgb = lerp(color.rgb * d.extraV2F0.y, d.extraV2F1.xyz * d.extraV2F0.z, d.extraV2F0.x);
+	}
+	
+	void FinalGBufferStandard(inout Surface o, inout ShaderData d, inout half4 GBuffer0, inout half4 GBuffer1, inout half4 GBuffer2, inout half4 outEmission, inout half4 outShadowMask)
+	{
+		GBuffer0.xyz = lerp(GBuffer0.xyz * d.extraV2F0.y, d.extraV2F1.xyz * d.extraV2F0.z, d.extraV2F0.x);
+	}
+END_CODE

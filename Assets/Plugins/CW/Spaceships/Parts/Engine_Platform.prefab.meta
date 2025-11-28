@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 2762f61a7e3b962419294fd3326df659
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Parts/Engine_Platform.prefab
+  uploadId: 722675

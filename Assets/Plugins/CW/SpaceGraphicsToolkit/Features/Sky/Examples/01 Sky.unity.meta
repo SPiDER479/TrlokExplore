@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 047da5c6fdede47478e1c9840557b61f
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Sky/Examples/01 Sky.unity
+  uploadId: 775926

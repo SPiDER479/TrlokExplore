@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 18eca1b481b794b4e8031252b8a009ec
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Ocean/Required/Shaders/SGT_OceanRays_Bundle.asset
+  uploadId: 775926

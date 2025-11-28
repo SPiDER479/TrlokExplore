@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 481f3b86ab010bf47a5d322b5b575a56
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Parts/Grip_01.prefab
+  uploadId: 722675

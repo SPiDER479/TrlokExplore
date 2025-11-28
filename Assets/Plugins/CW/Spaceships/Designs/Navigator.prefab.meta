@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 0c1017dccf94ebe4db9dea334dd8eb5c
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Designs/Navigator.prefab
+  uploadId: 722675

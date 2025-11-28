@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d33ac52b2fc9ac0479fb8fc1f7d90e69
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Bundles/Hull2.prefab
+  uploadId: 722675

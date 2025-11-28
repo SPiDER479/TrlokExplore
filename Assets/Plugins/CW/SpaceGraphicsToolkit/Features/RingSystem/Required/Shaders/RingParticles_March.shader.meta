@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: 687553480e1ca724c9b58ed97926fe5c
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures:
+  - _CubeTex: {instanceID: 0}
+  - _FlowTex: {instanceID: 0}
+  - _NoiseTex: {fileID: 11700000, guid: 5ef5dc22158dd364399c5c3d307c0085, type: 2}
+  - _DepthTex: {instanceID: 0}
+  - _LightingTex: {instanceID: 0}
+  - _ScatteringTex: {instanceID: 0}
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 323821
+  packageName: Gas Giant Forge
+  packageVersion: 1.2.9
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/RingSystem/Required/Shaders/RingParticles_March.shader
+  uploadId: 775941

@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 2cec5a4f0ba0e4c479c2a34d0c4ceb98
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: 67d4904eef0dc43ab86c98a2532bae6e, type: 3}
+AssetOrigin:
+  serializedVersion: 1
+  productId: 323821
+  packageName: Gas Giant Forge
+  packageVersion: 1.2.9
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/RingSystem/Required/Shaders/SGT_RingParticles_March_Bundle.stackedshader
+  uploadId: 775941

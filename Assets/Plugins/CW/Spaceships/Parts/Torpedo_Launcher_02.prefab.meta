@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: e494ce10e52d59b41aa433f3629112ad
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Parts/Torpedo_Launcher_02.prefab
+  uploadId: 722675

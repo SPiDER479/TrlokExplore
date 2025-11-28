@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 3e30b189e19b5e94e808e2c15e731129
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Ocean/Required/Shaders/SGT_OceanSurface_Bundle.asset
+  uploadId: 775926

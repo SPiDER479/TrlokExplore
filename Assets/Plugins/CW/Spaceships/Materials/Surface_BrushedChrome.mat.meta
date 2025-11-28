@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: a636ba12f4fee66449763a671b3e8aec
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Materials/Surface_BrushedChrome.mat
+  uploadId: 722675

@@ -1,0 +1,106 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Surface_Metal
+  m_Shader: {fileID: 4800000, guid: 770b835314c35324b81e5a7e691fe47e, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 2450
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _CW_BaseAlbedoTex:
+        m_Texture: {fileID: 2800000, guid: 495ebc98c5fb03b4589f6e20c4e3cea3, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CW_BaseDamageMap:
+        m_Texture: {fileID: 2800000, guid: 5424ef97244c372408026a25c7976dc7, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CW_BaseEmissionTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CW_BaseMosTex:
+        m_Texture: {fileID: 2800000, guid: 97bd64591ade04f4b8b6f883de329710, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CW_BaseNormalTex:
+        m_Texture: {fileID: 2800000, guid: e6fffb183af3c0e44b71d52043a80ed2, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CW_CharAlbedoTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CW_CharEmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CW_DamageMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CW_DecalAlphaTex:
+        m_Texture: {fileID: 2800000, guid: 5381658909224444bb551fc93eddd02c, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CW_DecalEmissionTex:
+        m_Texture: {fileID: 2800000, guid: c087e8cb8ee45d84e8342ca5891845a0, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CW_DecalNormalTex:
+        m_Texture: {fileID: 2800000, guid: 63bdd2eb1c3cba043ba5f48a38e094b6, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CW_HullOpacity:
+        m_Texture: {fileID: 2800000, guid: 4b8f1c1c49a7c054eba5c35c7079df2f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CW_MarkDetail:
+        m_Texture: {fileID: 2800000, guid: 5424ef97244c372408026a25c7976dc7, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CW_MarkGlowNoiseTexture:
+        m_Texture: {fileID: 11700000, guid: f5ed7c9348ffda342bee93f46dd164c9, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CW_MarkTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CW_Marks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Floats:
+    - _CW_BaseNormalScale: 1
+    - _CW_BaseTextureScale: 0.05
+    - _CW_BaseTiling: 1
+    - _CW_DecalNormalScale: 1
+    - _CW_DisableFog: 0
+    - _CW_HeatFade: 0
+    - _CW_HullTiling: 0.3
+    - _CW_MarkDetailTiling: 0.05
+    - _CW_MarkGlow: 0.522
+    - _CW_MarkGlowNoiseSpeed: 1
+    - _CW_MarkGlowNoiseTiling: 0.05
+    - _CW_MarkGlowScrollSpeed: 0.2
+    - _CW_MarkTiling: 1
+    - _CW_StickerSharpness: 0.01
+    m_Colors:
+    - _CW_BaseOffset: {r: 0, g: 0, b: 0, a: 1}
+    - _CW_BaseTint: {r: 1, g: 1, b: 1, a: 1}
+    - _CW_DamageCenter: {r: 0, g: 0, b: 0, a: 1}
+    - _CW_HeatColor: {r: 35.137253, g: 5.7029047, b: 0, a: 1}
+  m_BuildTextureStacks: []

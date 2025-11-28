@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 1f08fd3186b48854b86f539e46b5b380
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Parts/Antenna_01.prefab
+  uploadId: 722675

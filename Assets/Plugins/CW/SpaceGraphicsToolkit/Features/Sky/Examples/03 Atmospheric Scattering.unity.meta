@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: a186d614005b60b48a5d3729688a561d
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Sky/Examples/03 Atmospheric
+    Scattering.unity
+  uploadId: 775926

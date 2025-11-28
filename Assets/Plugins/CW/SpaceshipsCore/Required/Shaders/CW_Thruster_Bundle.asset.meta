@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 64d449892f13e4447a7dae9f287fb29b
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/SpaceshipsCore/Required/Shaders/CW_Thruster_Bundle.asset
+  uploadId: 722675

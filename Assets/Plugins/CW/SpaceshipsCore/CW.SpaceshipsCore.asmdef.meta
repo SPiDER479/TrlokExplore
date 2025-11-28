@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 5426dd244a5e8a04a8b7e9756fad0014
+AssemblyDefinitionImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/SpaceshipsCore/CW.SpaceshipsCore.asmdef
+  uploadId: 722675

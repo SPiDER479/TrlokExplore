@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 30079532843289e478c049814ef7e112
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - material: {fileID: 2100000, guid: 88dc59c0414dfc548a39639f2280c80e, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 323821
+  packageName: Gas Giant Forge
+  packageVersion: 1.2.9
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/RingSystem/Required/Scripts/SgtRingParticles.cs
+  uploadId: 775941

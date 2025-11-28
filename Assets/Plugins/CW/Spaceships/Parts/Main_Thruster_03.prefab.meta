@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 91160bf2be16eda47add2ad0153dbd3e
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Parts/Main_Thruster_03.prefab
+  uploadId: 722675

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d0470dd0285dc2a4685aa8b900ea0cc4
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Sky/Examples/Materials/Sky.mat
+  uploadId: 775926

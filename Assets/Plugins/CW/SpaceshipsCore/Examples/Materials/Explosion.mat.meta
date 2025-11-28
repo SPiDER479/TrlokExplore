@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 3986719b54fbf4a4ea99170ff6309cc5
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/SpaceshipsCore/Examples/Materials/Explosion.mat
+  uploadId: 722675

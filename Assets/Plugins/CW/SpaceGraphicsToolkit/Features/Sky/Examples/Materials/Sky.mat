@@ -1,0 +1,140 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Sky
+  m_Shader: {fileID: 4800000, guid: 6c35a34d0891ea949bb50c18d18af0de, type: 3}
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3000
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _SGT_CloudTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_DepthTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_LightingTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_OceanCausticsTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_OceanDetail0:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_OceanDetail1:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_OceanDetail2:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_OceanTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_OceanWavesTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_RingShadowTexture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_ScatteringTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BumpScale: 1
+    - _CW_DisableFog: 0
+    - _CW_DisableTransparentMV: 1
+    - _CloudDistortionStrength: 0
+    - _CloudTexPower: 1
+    - _CloudTexTiling: 1
+    - _Cutoff: 0.5
+    - _CwStrength: 50
+    - _DetailNormalMapScale: 1
+    - _DstBlend: 0
+    - _GlossMapScale: 1
+    - _Glossiness: 0.5
+    - _GlossyReflections: 1
+    - _Metallic: 0
+    - _Mode: 0
+    - _OcclusionStrength: 1
+    - _Parallax: 0.02
+    - _SGT_Brightness: 0
+    - _SGT_CloudRenderer: 0
+    - _SGT_Clouds: 0
+    - _SGT_Cull: 2
+    - _SGT_Hdr: 0
+    - _SGT_HorizonLengthRecip: 0
+    - _SGT_InnerRatio: 0
+    - _SGT_InnerScale: 1
+    - _SGT_LightCount: 0
+    - _SGT_Lighting: 0
+    - _SGT_OceanClip: 0
+    - _SGT_OceanDensity: 0
+    - _SGT_OceanFresnelPower: 0
+    - _SGT_OceanMinimumOpacity: 0
+    - _SGT_OceanRadius: 0
+    - _SGT_OceanWavesHeight: 0
+    - _SGT_OceanWavesScale: 0
+    - _SGT_OceanWavesTiling: 0
+    - _SGT_RingShadowCount: 0
+    - _SGT_Scattering: 0
+    - _SGT_ScatteringMie: 0.5
+    - _SGT_ScatteringRayleigh: 0.5
+    - _SGT_ScatteringStrength: 1
+    - _SGT_SilhouetteRange: 0
+    - _SGT_Sky: 0
+    - _SGT_SphereShadowCount: 0
+    - _SGT_StepCount: 0
+    - _SGT_ZTest: 4
+    - _SmoothnessTextureChannel: 0
+    - _SpecularHighlights: 1
+    - _SrcBlend: 1
+    - _UVSec: 0
+    - _ZWrite: 1
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _SGT_AmbientColor: {r: 0, g: 0, b: 0, a: 1}
+    - _SGT_CloudOpacity: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_Color: {r: 1, g: 1, b: 1, a: 1}
+    - _SGT_Density: {r: 0, g: 0, b: 0, a: 1}
+    - _SGT_OceanBaseColor: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_OceanCausticsData: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_OceanData0: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_OceanData1: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_OceanData2: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_OceanFresnelColor: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_OceanSpecularPower: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_OceanSpecularStrength: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_Scale: {r: 0, g: 0, b: 0, a: 1}
+    - _SGT_ScatteringInner: {r: 0.5, g: 0.25, b: 0.25, a: 0.1}
+    - _SGT_ScatteringOuter: {r: 0.5, g: 0.25, b: 0.25, a: 0.1}
+    - _SGT_ScatteringPower: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_ScatteringTerms: {r: 500, g: 100, b: 2, a: -2}
+    - _SGT_SilhouetteRange: {r: 0, g: 0, b: 0, a: 0}
+  m_BuildTextureStacks: []

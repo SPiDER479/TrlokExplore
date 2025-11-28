@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 98f81fab738132240b73a701e5ae1c1b
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Parts/Pipe_Connector_100_mm.prefab
+  uploadId: 722675

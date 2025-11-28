@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 0068e3f986dfcb44b89f32f39c0c2b31
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Parts/Weapon_Cover_01.prefab
+  uploadId: 722675

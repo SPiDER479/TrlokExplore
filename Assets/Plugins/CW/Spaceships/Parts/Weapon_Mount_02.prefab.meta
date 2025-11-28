@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 2da1fb6b2478481429107c9c7abe022c
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Parts/Weapon_Mount_02.prefab
+  uploadId: 722675

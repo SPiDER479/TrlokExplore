@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 65fddb83e5d26634f8806e91c2c77f5d
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures:
+  - _SGT_OffsetTex: {instanceID: 0}
+  nonModifiableTextures: []
+  preprocessorOverride: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Ocean/Required/Shaders/Resources/SgtOcean.shader
+  uploadId: 775926

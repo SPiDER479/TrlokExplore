@@ -1,0 +1,166 @@
+﻿BEGIN_OPTIONS
+	Workflow "Unlit"
+	Alpha "Blend"
+END_OPTIONS
+
+BEGIN_PASS("All")
+	Cull Front
+	ZTest Always
+END_PASS
+
+BEGIN_PROPERTIES
+END_PROPERTIES
+
+BEGIN_DEFINES
+	#pragma multi_compile_local _SGT_NO_DOWNSCALE _SGT_DOWNSCALE
+END_DEFINES
+
+BEGIN_CBUFFER
+END_CBUFFER
+
+BEGIN_CODE
+	float4x4 _SGT_WorldToLocal; // Auto
+	float4x4 _SGT_LocalToWorld; // Auto
+	
+	Texture2D _SGT_Volumetrics_ColorTex; // Auto
+	float2    _SGT_Volumetrics_ColorSize; // Auto
+	Texture2D _SGT_Volumetrics_DepthTex; // Auto
+	float2    _SGT_Volumetrics_DepthSize; // Auto
+	
+	SamplerState my_linear_clamp_sampler;
+	SamplerState my_point_clamp_sampler;
+	
+	float CW_GetWeight(float sceneDepth, float snappedSceneDepth, float snappedCloudDepth)
+	{
+		float depthDiff = abs(sceneDepth - snappedSceneDepth);
+		float depthMin  = min(sceneDepth, snappedSceneDepth);
+		
+		if (isnan(depthDiff)) depthDiff = 0; // This happens with extreme camera ranges for some reason?
+		
+		return exp(-2 * depthDiff / max(depthMin, 0.001f));
+	}
+	
+	bool CW_DepthInBounds(float3 wcam, float3 wdir, float wdst)
+	{
+		float3 volumeWorld = wcam + wdir * wdst;
+		float3 volumeLocal = mul(_SGT_WorldToLocal, float4(volumeWorld, 1.0f)).xyz;
+		
+		return wdst > 0.0f && length(volumeLocal) < 1.0f;
+	}
+	
+	float4 CW_SampleColorDefault(float3 wcam, float3 wdir, float2 screenUV, float linearScale)
+	{
+		float  centerDepth = _SGT_Volumetrics_DepthTex.Sample(my_point_clamp_sampler, screenUV).x;
+		float4 centerColor = _SGT_Volumetrics_ColorTex.Sample(my_linear_clamp_sampler, screenUV);
+		
+		//centerDepth *= 1.05f;
+		//centerDepth = LinearEyeDepth(centerDepth);
+		//centerDepth = _ZBufferParams.x / (centerDepth * _ZBufferParams.y + _ZBufferParams.z);
+		
+		return CW_DepthInBounds(wcam, wdir, centerDepth) == true ? centerColor : 0.0f;
+	}
+	
+	float4 CW_SampleColor(float3 wcam, float3 wdir, float2 screenUV, float linearScale)
+	{
+		#if _SGT_DOWNSCALE
+			float3 texelStep = float3(1.0f / _SGT_Volumetrics_ColorSize.xy, 0.0f);
+			float2 texelPos  = screenUV * _SGT_Volumetrics_ColorSize.xy + 0.5f;
+			float2 texelLoc  = fmod(floor(texelPos), _SGT_Volumetrics_ColorSize.xy);
+			
+			if (texelLoc.x + texelLoc.y > 0)
+			{
+				float2 snappedUV = (floor(texelPos) - 0.5f) / _SGT_Volumetrics_ColorSize.xy;
+				float2 snappedF  = texelPos - floor(texelPos);
+				
+				float depth0 = _SGT_Volumetrics_DepthTex.Sample(my_point_clamp_sampler, snappedUV + texelStep.zz).x;
+				float depth1 = _SGT_Volumetrics_DepthTex.Sample(my_point_clamp_sampler, snappedUV + texelStep.xz).x;
+				float depth2 = _SGT_Volumetrics_DepthTex.Sample(my_point_clamp_sampler, snappedUV + texelStep.zy).x;
+				float depth3 = _SGT_Volumetrics_DepthTex.Sample(my_point_clamp_sampler, snappedUV + texelStep.xy).x;
+				
+				bool pass0    = CW_DepthInBounds(wcam, wdir, depth0);
+				bool pass1    = CW_DepthInBounds(wcam, wdir, depth1);
+				bool pass2    = CW_DepthInBounds(wcam, wdir, depth2);
+				bool pass3    = CW_DepthInBounds(wcam, wdir, depth3);
+				int passCount = pass0 + pass1 + pass2 + pass3;
+				
+				if (passCount > 0)
+				{
+					if (passCount < 4)
+					{
+						float passDepth = 0.0f;
+						float failDepth = 0.0f;
+						
+						if (pass0) passDepth = depth0; else failDepth = depth0;
+						if (pass1) passDepth = depth1; else failDepth = depth1;
+						if (pass2) passDepth = depth2; else failDepth = depth2;
+						if (pass3) passDepth = depth3; else failDepth = depth3;
+						
+						if (passDepth < failDepth)
+						{
+							return 0;
+						}
+					}
+					
+					float sceneDepth = GetLinearEyeDepth(screenUV) * linearScale;
+					float scene0     = GetLinearEyeDepth(snappedUV + texelStep.zz) * linearScale;
+					float scene1     = GetLinearEyeDepth(snappedUV + texelStep.xz) * linearScale;
+					float scene2     = GetLinearEyeDepth(snappedUV + texelStep.zy) * linearScale;
+					float scene3     = GetLinearEyeDepth(snappedUV + texelStep.xy) * linearScale;
+					
+					float w0 = CW_GetWeight(sceneDepth, scene0, depth0) * (1.0 - snappedF.x) * (1.0 - snappedF.y);
+					float w1 = CW_GetWeight(sceneDepth, scene1, depth1) * snappedF.x * (1.0 - snappedF.y);
+					float w2 = CW_GetWeight(sceneDepth, scene2, depth2) * (1.0 - snappedF.x) * snappedF.y;
+					float w3 = CW_GetWeight(sceneDepth, scene3, depth3) * snappedF.x * snappedF.y;
+					float wt = max(w0 + w1 + w2 + w3, 0.00001f);
+					
+					float4 color0 = _SGT_Volumetrics_ColorTex.Sample(my_point_clamp_sampler, snappedUV + texelStep.zz);
+					float4 color1 = _SGT_Volumetrics_ColorTex.Sample(my_point_clamp_sampler, snappedUV + texelStep.xz);
+					float4 color2 = _SGT_Volumetrics_ColorTex.Sample(my_point_clamp_sampler, snappedUV + texelStep.zy);
+					float4 color3 = _SGT_Volumetrics_ColorTex.Sample(my_point_clamp_sampler, snappedUV + texelStep.xy);
+					
+					return (color0 * w0 + color1 * w1 + color2 * w2 + color3 * w3) * (1.0f / wt);
+				}
+				else
+				{
+					return CW_SampleColorDefault(wcam, wdir, screenUV, linearScale);
+				}
+			}
+			else
+			{
+				return CW_SampleColorDefault(wcam, wdir, screenUV, linearScale);
+			}
+		#else
+			return CW_SampleColorDefault(wcam, wdir, screenUV, linearScale);
+		#endif
+	}
+
+	void ModifyVertex(inout VertexData v, inout ExtraV2F e)
+	{
+		#if __CW_MATRIX
+			v.texcoord0.xyz = CW_O2W(v.vertex).xyz;
+			e.extraV2F0.xyz = CW_O2V(v.vertex).xyz;
+		#endif
+	}
+
+	void SurfaceFunction(inout Surface o, inout ShaderData d)
+	{
+		#if __CW_OUTPUT
+			float3 wcam = _WorldSpaceCameraPos;
+			float3 wfar = d.texcoord0.xyz;
+			float3 wdir = normalize(wfar - wcam);
+			
+			float linearScale = length(d.extraV2F0.xyz / d.extraV2F0.z);
+			
+			float4 color = CW_SampleColor(wcam, wdir, d.screenUV, linearScale);
+			
+			if (color.w > 0.0f)
+			{
+				CW_OutputWithAlpha(o, color);
+			}
+			else
+			{
+				discard;
+			}
+		#endif
+	}
+END_CODE

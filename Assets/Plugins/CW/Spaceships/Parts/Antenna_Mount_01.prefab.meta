@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d8834f102e5b77a43a30f4b9bfd5d1be
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Parts/Antenna_Mount_01.prefab
+  uploadId: 722675

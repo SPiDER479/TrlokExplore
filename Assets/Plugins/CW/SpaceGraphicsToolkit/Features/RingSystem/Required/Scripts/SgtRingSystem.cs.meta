@@ -1,0 +1,29 @@
+fileFormatVersion: 2
+guid: 39befe56b9c711b42b7ac06b0fe2272a
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - sourceMaterial: {fileID: 2100000, guid: 1ef87602b8864474098b08eba30962f6, type: 2}
+  - mainTex: {instanceID: 0}
+  - bandsTex: {instanceID: 0}
+  - foregroundMesh: {instanceID: 0}
+  - foregroundGameObject: {instanceID: 0}
+  - foregroundMeshFilter: {instanceID: 0}
+  - foregroundMeshRenderer: {instanceID: 0}
+  - backgroundMesh: {instanceID: 0}
+  - backgroundGameObject: {instanceID: 0}
+  - backgroundMeshFilter: {instanceID: 0}
+  - backgroundMeshRenderer: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 323821
+  packageName: Gas Giant Forge
+  packageVersion: 1.2.9
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/RingSystem/Required/Scripts/SgtRingSystem.cs
+  uploadId: 775941

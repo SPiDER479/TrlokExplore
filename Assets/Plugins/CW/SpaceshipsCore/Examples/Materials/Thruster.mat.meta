@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 698b4304d6698e14abfc322a73a62a9e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/SpaceshipsCore/Examples/Materials/Thruster.mat
+  uploadId: 722675

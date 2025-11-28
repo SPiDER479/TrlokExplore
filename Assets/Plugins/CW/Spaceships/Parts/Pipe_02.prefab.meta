@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: bc991b53e4d370e41bb9e02aa1c8ed9c
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Parts/Pipe_02.prefab
+  uploadId: 722675

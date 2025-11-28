@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 90791d8b6063b4d4f8d6b2b0d05439cd
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Bundles/Thruster1.prefab
+  uploadId: 722675

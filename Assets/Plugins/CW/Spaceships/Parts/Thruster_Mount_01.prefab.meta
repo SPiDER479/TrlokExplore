@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: cad8284777c28a740aab75adec11d321
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Parts/Thruster_Mount_01.prefab
+  uploadId: 722675

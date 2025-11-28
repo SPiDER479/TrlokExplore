@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: e9ece04b73dcd5a4190a338b30daa991
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Parts/Engine_Mount_02.prefab
+  uploadId: 722675

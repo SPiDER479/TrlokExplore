@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 4a7b28ccfe7f6054496e38e886322254
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  preprocessorOverride: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Volumetrics/Required/Shaders/Resources/SgtVolumeFilter.shader
+  uploadId: 775926

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: bd0bc0bb7ff80e14d926333998fb3567
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Designs/Warlock.prefab
+  uploadId: 722675

@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 52f3ac3201e6d9347b94d59da51c88fa
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/SpaceshipsCore/Examples/Prefabs/Explosion.prefab
+  uploadId: 722675

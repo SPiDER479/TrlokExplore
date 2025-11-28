@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b2ad52a82886ad542b92bd449faa8d53
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Designs/Pathfinder.prefab
+  uploadId: 722675

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: dcd02d03518f97f4d9bd513df7a19cd7
+timeCreated: 1527578832
+licenseType: Store
+ShaderImporter:
+  defaultTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 323821
+  packageName: Gas Giant Forge
+  packageVersion: 1.2.9
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/RingSystem/Required/Shaders/RingSystem.shader
+  uploadId: 775941

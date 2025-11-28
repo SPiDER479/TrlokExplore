@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 15252a3197e7a5949a2a23e4da1fa9bf
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  preprocessorOverride: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Sky/Required/Shaders/Resources/SgtSky.shader
+  uploadId: 775926

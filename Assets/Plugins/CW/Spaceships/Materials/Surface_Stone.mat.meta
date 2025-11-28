@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c0481de6029eb9c4b84514fec60fe5ea
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Materials/Surface_Stone.mat
+  uploadId: 722675

@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: c045983184b273146aa6b17b4293937b
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - sourceMaterial: {fileID: 2100000, guid: d0470dd0285dc2a4685aa8b900ea0cc4, type: 2}
+  - outerMesh: {fileID: -1086744806390364007, guid: 85e7b0bd229113941869a11455180727,
+      type: 3}
+  - model: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Sky/Required/Scripts/SgtSky.cs
+  uploadId: 775926

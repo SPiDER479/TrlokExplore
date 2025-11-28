@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: a41bf8182c6b18d438c6b20cfdb8edb4
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Parts/Front.prefab
+  uploadId: 722675

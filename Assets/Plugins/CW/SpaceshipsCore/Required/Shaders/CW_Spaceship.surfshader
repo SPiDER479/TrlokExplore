@@ -1,0 +1,242 @@
+﻿BEGIN_PROPERTIES
+	[Header(BASE)]
+	[NoScaleOffset]_CW_BaseAlbedoTex("	Albedo (RGB)", 2D) = "white" {}
+	[NoScaleOffset][Normal]_CW_BaseNormalTex("	Normal (RGBA)", 2D) = "bump" {}
+	[NoScaleOffset]_CW_BaseMosTex("	Metallic (R) Occlusion (G) Smoothness (B)", 2D) = "white" {}
+	[NoScaleOffset]_CW_BaseEmissionTex("	Emission (RGB)", 2D) = "black" {}
+
+	[HideInInspector]_CW_BaseTint("	Tint", Color) = (1, 1, 1)
+	_CW_BaseTextureScale("	Texture Scale", Float) = 1
+	_CW_BaseNormalScale("	Normal Scale", Range(0,5)) = 1
+	_CW_BaseSmoothnessScale("	Smoothness Scale", Range(0,5)) = 1
+	_CW_BaseEmissionScale("	Emission Scale", Float) = 1
+
+	[Header(DECAL)]
+	[NoScaleOffset][Normal]_CW_DecalNormalTex("	Normal (RGBA)", 2D) = "bump" {}
+	[NoScaleOffset]_CW_DecalEmissionTex("	Emission (RGB)", 2D) = "black" {}
+	[NoScaleOffset]_CW_DecalAlphaTex("	Alpha (R)", 2D) = "white" {}
+
+	_CW_DecalNormalScale("	Normal Scale", Range(0,5)) = 1
+	_CW_DecalEmissionScale("	Emission Scale", Float) = 1
+
+	[Header(HULL)]
+	[NoScaleOffset]_CW_HullOpacity("	Opacity (A)", 2D) = "black" {}
+	_CW_HullTiling("	Tiling", Float) = 1
+
+	[Header(MARK)]
+	[NoScaleOffset]_CW_MarkTex("	Heat (R) Char (G) Hole (B)", 2D) = "black" {}
+	[NoScaleOffset]_CW_MarkDetail("	Albedo (R) Emission (G) Opacity (B)", 2D) = "black" {}
+	[NoScaleOffset]_CW_CharAlbedoTex("	Albedo (RGB)", 2D) = "black" {}
+	[NoScaleOffset]_CW_CharEmissionMap("	Emission (A)", 2D) = "black" {}
+
+	_CW_MarkDetailTiling("	Tiling", Float) = 1
+	_CW_MarkGlow("	Glow", Range(0, 1)) = 1
+	_CW_MarkGlowNoiseTiling("	Glow Noise Tiling", Float) = 1
+	_CW_MarkGlowNoiseSpeed("	Glow Noise Speed", Float) = 1
+	[NoScaleOffset]_CW_MarkGlowNoiseTexture("	Noise (A)", 3D) = "black" {}
+
+	[Header(DAMAGE)]
+	[HDR]_CW_HeatColor("	Heat Color", Color) = (1, 1, 1)
+	[PerRendererData]_CW_HeatFade("	Heat Fade", Float) = 0.0
+	_CW_DamageCenter("	Damage Center", Vector) = (0.0, 0.0, 0.0)
+	
+	[HideInInspector] _CW_StickerCount("", Float) = 0
+	[HideInInspector] _CW_PreviewColor("", Vector) = (0.0, 0.0, 0.0, 0.0)
+	[HideInInspector] _CW_PreviewOffset("", Vector) = (0.0, 0.0, 0.0)
+	[HideInInspector] _CW_PreviewTiling("", Vector) = (0.0, 0.0, 0.0)
+END_PROPERTIES
+
+BEGIN_DEFINES
+	#pragma shader_feature_local _CW_PREVIEW
+END_DEFINES
+
+BEGIN_CBUFFER
+	//float4 _Color;
+	float4 _CW_Colors[256];
+
+	// BASE
+	float3 _CW_BaseTint;
+	float  _CW_BaseTextureScale;
+	float  _CW_BaseNormalScale;
+	float  _CW_BaseSmoothnessScale;
+	float  _CW_BaseEmissionScale;
+
+	// DECAL
+	float _CW_DecalNormalScale;
+	float _CW_DecalEmissionScale;
+
+	// HULL
+	float _CW_HullTiling;
+
+	// MARK
+	float3 _CW_HeatColor;
+	float  _CW_MarkDetailTiling;
+	float  _CW_MarkGlow;
+	float  _CW_MarkGlowNoiseTiling;
+	float  _CW_MarkGlowNoiseSpeed;
+
+	// DAMAGE
+	float  _CW_HeatFade;
+	float3 _CW_DamageCenter;
+
+	// STICKERS
+	int      _CW_StickerCount;
+	float4x4 _CW_StickerMatrices[256];
+	float4   _CW_StickerCoords[256];
+	float4   _CW_StickerDataA[256];
+	float4   _CW_StickerDataB[256];
+
+	// PREVIEW
+	float4 _CW_PreviewColor;
+	float2 _CW_PreviewOffset;
+	float2 _CW_PreviewTiling;
+END_CBUFFER
+
+BEGIN_CODE
+	SAMPLER(sampler_trilinear_repeat);
+	SAMPLER(sampler_trilinear_repeat_aniso16);
+		TEXTURE2D(_CW_BaseAlbedoTex);
+		TEXTURE2D(_CW_BaseMosTex);
+		TEXTURE2D(_CW_BaseEmissionTex);
+		TEXTURE2D(_CW_DecalNormalTex);
+		TEXTURE2D(_CW_DecalEmissionTex);
+		TEXTURE2D(_CW_DecalAlphaTex);
+		TEXTURE2D(_CW_BaseDamageMap);
+		TEXTURE2D(_CW_StickerOpacityTex);
+		TEXTURE2D(_CW_MarkDetail);
+		TEXTURE2D(_CW_BaseNormalTex);
+		TEXTURE2D(_CW_HullOpacity);
+		TEXTURE2D(_CW_MarkTex);
+		TEXTURE2D(_CW_CharAlbedoTex);
+		TEXTURE2D(_CW_CharEmissionMap);
+
+	SAMPLER(sampler_CW_MarkGlowNoiseTexture);
+		TEXTURE3D(_CW_MarkGlowNoiseTexture);
+
+	float2 CW_Rotate(float2 v, float a)
+	{
+		float s = sin(a);
+		float c = cos(a);
+		return float2(c * v.x - s * v.y, s * v.x + c * v.y);
+	}
+
+	half3 CW_BlendNormals(half3 n1, half3 n2)
+	{
+		return normalize(half3(n1.xy + n2.xy, n1.z*n2.z));
+	}
+
+	void ModifyVertex(inout VertexData v, inout ExtraV2F e)
+	{
+		#if _CW_PREVIEW
+			v.vertexColor = _CW_PreviewColor;
+			v.texcoord0.xy += _CW_PreviewOffset;
+			v.texcoord0.xy *= _CW_PreviewTiling;
+		#endif
+	}
+
+	void SurfaceFunction(inout Surface o, ShaderData d)
+	{
+		float4 finalColor;
+
+		// BASE
+		float2 baseUV       = d.texcoord0.xy * _CW_BaseTextureScale;
+		float4 baseAlbedo   = SAMPLE_TEXTURE2D(_CW_BaseAlbedoTex, sampler_trilinear_repeat_aniso16, baseUV);
+		float4 baseMOS      = SAMPLE_TEXTURE2D(_CW_BaseMosTex, sampler_trilinear_repeat_aniso16, baseUV);
+		float4 baseNormal   = SAMPLE_TEXTURE2D(_CW_BaseNormalTex, sampler_trilinear_repeat_aniso16, baseUV);
+		float4 baseEmission = SAMPLE_TEXTURE2D(_CW_BaseEmissionTex, sampler_trilinear_repeat_aniso16, baseUV);
+
+		finalColor = baseAlbedo;
+
+		finalColor.xyz *= _CW_BaseTint;
+
+		o.Albedo     = finalColor.rgb;
+		o.Alpha      = finalColor.a;
+		o.Normal     = UnpackScaleNormal(baseNormal, _CW_BaseNormalScale);
+		o.Metallic   = baseMOS.r;
+		o.Occlusion  = baseMOS.g;
+		o.Smoothness = baseMOS.b * _CW_BaseSmoothnessScale;
+		o.Emission   = baseEmission.rgb * _CW_BaseEmissionScale;
+
+		float3 tint = _CW_Colors[round(d.vertexColor.x * 255)].xyz;
+
+		// DECAL
+		float2 decalUV       = d.texcoord0.zw;
+		float4 decalNormal   = SAMPLE_TEXTURE2D(_CW_DecalNormalTex, sampler_trilinear_repeat_aniso16, decalUV);
+		float4 decalEmission = SAMPLE_TEXTURE2D(_CW_DecalEmissionTex, sampler_trilinear_repeat_aniso16, decalUV);
+		float4 decalAlpha    = SAMPLE_TEXTURE2D(_CW_DecalAlphaTex, sampler_trilinear_repeat_aniso16, decalUV);
+
+		o.Normal   = CW_BlendNormals(o.Normal, UnpackScaleNormal(decalNormal, _CW_DecalNormalScale));
+		o.Emission = decalEmission.rgb * _CW_DecalEmissionScale;
+
+		if (decalAlpha.r < 0.5f && d.texcoord0.y > 0.0f && d.texcoord0.z > 0.0f)
+		{
+			//discard;
+		}
+
+		// STICKER
+		for (int i = 0; i < _CW_StickerCount; i++)
+		{
+			#if _CW_PREVIEW
+				float3 fragP = d.worldSpacePosition;
+				float3 fragN = d.worldSpaceNormal;
+			#else
+				float3 fragP = d.localSpacePosition + _CW_DamageCenter;
+				float3 fragN = d.localSpaceNormal;
+			#endif
+
+			float4 pos    = mul(_CW_StickerMatrices[i], float4(fragP, 1.0f));
+			float4 dataA  = _CW_StickerDataA[i];
+			float4 dataB  = _CW_StickerDataB[i];
+			float4 coords = _CW_StickerCoords[i];
+
+			pos.xy = saturate(pos.xy);
+			pos.x = lerp(coords.x, coords.z, pos.x);
+			pos.y = lerp(coords.y, coords.w, pos.y);
+
+			if (pos.z > -0.5f && pos.z < 0.5f)
+			{
+				float4 sticker    = SAMPLE_TEXTURE2D(_CW_StickerOpacityTex, sampler_trilinear_repeat_aniso16, pos.xy);
+				float4 decalColor = _CW_Colors[dataA.x];
+				float  weight     = saturate((sticker.w - dataA.y) * dataA.z) * decalColor.w;
+
+				float4x4 mat = _CW_StickerMatrices[i];
+				float3 fwd = normalize(mat[2].xyz);
+
+				weight *= dot(fragN, -fwd) >= dataB.x || dot(fragN, fwd) >= dataB.y;
+
+				tint = lerp(tint, decalColor.xyz, weight);
+			}
+		}
+
+		o.Albedo *= tint.xyz;
+
+		// MARKS
+		float2 marksUV      = d.texcoord1.xy;
+		float4 marks        = SAMPLE_TEXTURE2D(_CW_MarkTex, sampler_trilinear_repeat_aniso16, marksUV);
+		float2 markDetailUV = d.texcoord0.xy * _CW_MarkDetailTiling;
+		float4 markDetail   = SAMPLE_TEXTURE2D(_CW_MarkDetail, sampler_trilinear_repeat_aniso16, markDetailUV);
+
+		marks += _CW_HeatFade;
+
+		float markOpacity = 0.5f - marks.b + (markDetail.z - 0.5f);
+
+		o.Albedo *= 1.0f - marks.y * markDetail.y;
+
+		float4 glowDetail = SAMPLE_TEXTURE3D(_CW_MarkGlowNoiseTexture, sampler_CW_MarkGlowNoiseTexture, float3(d.texcoord0.xy * _CW_MarkGlowNoiseTiling, _CW_MarkGlowNoiseSpeed * _Time.x));
+		o.Emission += _CW_HeatColor * (marks.x * glowDetail.w) * saturate(0.5f - markOpacity);
+
+		if (markOpacity < 0.0f)
+		{
+			o.Albedo = 0;
+			o.Emission = 0;
+
+			float2 hullUV = d.texcoord0.xy * _CW_HullTiling;
+
+			clip(SAMPLE_TEXTURE2D(_CW_HullOpacity, sampler_trilinear_repeat_aniso16, hullUV).w - 0.5f - _CW_HeatFade * (markDetail.y * 0.5f + 0.5f));
+		}
+
+		#if _HDRP
+			o.Emission *= 25000.0f;
+		#endif
+	}
+END_CODE

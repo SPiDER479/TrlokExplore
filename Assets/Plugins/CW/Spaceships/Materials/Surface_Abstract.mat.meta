@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 4231c24bf8a884843a8c7b8b94b738a1
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Materials/Surface_Abstract.mat
+  uploadId: 722675

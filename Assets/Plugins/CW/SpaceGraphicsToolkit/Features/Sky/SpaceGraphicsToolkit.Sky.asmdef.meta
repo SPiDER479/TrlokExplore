@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 16069fde8e175f949a9b00c541e792d1
+AssemblyDefinitionImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Sky/SpaceGraphicsToolkit.Sky.asmdef
+  uploadId: 775926

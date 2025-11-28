@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: d9b72a68af688d54caba20981d0f5d33
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/SpaceshipsCore/Examples/Prefabs/Debris.prefab
+  uploadId: 722675

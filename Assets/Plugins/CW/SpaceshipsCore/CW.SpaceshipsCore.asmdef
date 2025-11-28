@@ -1,0 +1,17 @@
+{
+    "name": "CW.SpaceshipsCore",
+    "rootNamespace": "",
+    "references": [
+        "CW.Common",
+        "CW.BuildAndDestroy"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

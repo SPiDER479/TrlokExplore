@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: c0713a5dcb379dd4da59d580ee52cc3b
+timeCreated: 1527583107
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Sky/Required/Scripts/SgtSkyLightingTex.cs
+  uploadId: 775926

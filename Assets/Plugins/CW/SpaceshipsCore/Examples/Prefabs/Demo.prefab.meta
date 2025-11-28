@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 24b009e84a6e63b449d69f3b4fc3ac7d
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/SpaceshipsCore/Examples/Prefabs/Demo.prefab
+  uploadId: 722675

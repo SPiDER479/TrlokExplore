@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: fa8d0274812698c408c6de426c6fdbcf
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Parts/Body_Connector_01.prefab
+  uploadId: 722675

@@ -1,0 +1,131 @@
+﻿BEGIN_OPTIONS
+END_OPTIONS
+
+BEGIN_PROPERTIES
+	[HideInInspector] _SGT_WrapSize("", Vector) = (0,0,0,0)
+	[HideInInspector] _SGT_Data("", Vector) = (0,0,0,0)
+	[HideInInspector] _SGT_AnimationData("", Vector) = (0,0,0,0)
+	[HideInInspector] _SGT_DataB("", Vector) = (0,0,0,0)
+	[HideInInspector] _SGT_ParticleCount("", Float) = 0
+	
+	[HideInInspector] _SGT_RingMainTex("", 2D) = "white" {}
+	[HideInInspector] _SGT_RingThicknessTex("", 2D) = "white" {}
+	[HideInInspector] _SGT_RingSize("", Vector) = (0,0,0,0)
+	[HideInInspector] _SGT_RingData("", Vector) = (0,0,0,0)
+	
+	[HideInInspector] _SGT_InstanceData("", 2D) = "black" {}
+	[HideInInspector] _SGT_InstanceSize("", Vector) = (0,0,0,0)
+END_PROPERTIES
+
+BEGIN_DEFINES
+	#define __SGT_RINGPARTICLES 1
+	#define BILLBOARD_CAPACITY 24
+END_DEFINES
+
+BEGIN_CBUFFER
+	float4 _SGT_OctavePivots[8];
+	float4 _SGT_OctaveRanges[8];
+	float4 _SGT_Deltas[1000];
+	float4 _SGT_AxisX;
+	float4 _SGT_AxisY;
+	float4 _SGT_AxisZ;
+	float  _SGT_Seed;
+	
+	float4    _SGT_WrapSize;
+	float4    _SGT_Data;
+	float4    _SGT_AnimationData;
+	float4x4  _SGT_WorldToLocal;
+	float     _SGT_ParticleCount;
+	
+	// RING
+	sampler2D _SGT_RingMainTex;
+	sampler2D _SGT_RingThicknessTex;
+	float4    _SGT_RingSize;
+	float4    _SGT_RingData;
+	
+	sampler2D _SGT_InstanceData;
+	float4    _SGT_InstanceSize;
+END_CBUFFER
+
+BEGIN_BLACKBOARD
+	int   octave;
+	float visible;
+END_BLACKBOARD
+
+BEGIN_CODE
+	#pragma instancing_options procedural:SetupInstancing forwardadd
+	
+	void SetupInstancing()
+	{
+		#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
+			#ifdef unity_ObjectToWorld
+				#undef unity_ObjectToWorld
+			#endif
+
+			#ifdef unity_WorldToObject
+				#undef unity_WorldToObject
+			#endif
+			
+			unity_ObjectToWorld = float4x4(1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1);
+			unity_WorldToObject = float4x4(1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1);
+		#endif
+	}
+	
+	float4 SGT_GetRingColor(float3 opos)
+	{
+		float  distance01 = (length(opos.xz) - _SGT_RingSize.x) / _SGT_RingSize.y;
+		float  thickness  = _SGT_RingSize.z * (_SGT_RingData.w + _SGT_RingData.z * tex2Dlod(_SGT_RingThicknessTex, float4(distance01, 0.0f, 0.0f, 0)).x);
+		float4 color      = tex2Dlod(_SGT_RingMainTex, float4(distance01, 0.0f, 0.0f, 0.0f));
+		
+		color.w *= pow(1.0f - saturate(abs(opos.y) / thickness), _SGT_RingData.y);
+		
+		return color;
+	}
+	
+	float4 SGT_GetInstanceData(int index)
+	{
+		float x = index % _SGT_InstanceSize.x;
+		float y = floor(index / _SGT_InstanceSize.x);
+		float u = (x + 0.5f) / _SGT_InstanceSize.x;
+		float v = (y + 0.5f) / _SGT_InstanceSize.y;
+		return tex2Dlod(_SGT_InstanceData, float4(u, v, 0, 0));
+	}
+	
+	void ModifyVertex(inout VertexData v, inout ExtraV2F e)
+	{
+		#if __CW_MATRIX && defined(UNITY_PROCEDURAL_INSTANCING_ENABLED)
+			// Calc random position
+			int    index  = unity_InstanceID * BILLBOARD_CAPACITY + (int)v.vertex.x;
+			float4 idat   = SGT_GetInstanceData(index);
+			int    chunk  = abs(idat.w);
+			float  seed   = dot(idat.x, 1000.0f) % 1.0f;
+			int    octave = _SGT_Deltas[chunk].w;
+			
+			v.vertex.xyz = _SGT_OctavePivots[octave].xyz +
+				(_SGT_Deltas[chunk].x + idat.x) * _SGT_AxisX.xyz * _SGT_OctavePivots[octave].w +
+				(_SGT_Deltas[chunk].y + idat.y) * _SGT_AxisY.xyz * _SGT_OctavePivots[octave].w +
+				(_SGT_Deltas[chunk].z + idat.z) * _SGT_AxisZ.xyz * _SGT_OctavePivots[octave].w;
+			
+			
+			e.blackboard.octave = octave;
+			
+			e.blackboard.visible = index < _SGT_ParticleCount && idat.w > 0;
+			
+			v.texcoord1.x = seed;
+			
+			// Drift
+			float  angle1    = seed * 6.2831853f;
+			float  angle2    = frac(seed * 5 + _SGT_AnimationData.x) * 6.2831853f;
+			float3 direction = float3(cos(angle1) * sin(angle2), cos(angle2), sin(angle1) * sin(angle2));
+			v.vertex.xyz += mul(transpose((float3x3)_SGT_WorldToLocal), direction * _SGT_AnimationData.y);
+			
+			// Write color
+			float3 ringLocal = mul(_SGT_WorldToLocal, v.vertex).xyz;
+			v.vertexColor = SGT_GetRingColor(ringLocal);
+		#endif
+	}
+
+	void SurfaceFunction(inout Surface o, inout ShaderData d)
+	{
+	}
+END_CODE

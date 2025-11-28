@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 6c35a34d0891ea949bb50c18d18af0de
+timeCreated: 1527583067
+licenseType: Store
+ShaderImporter:
+  defaultTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Sky/Required/Shaders/SGT_Sky.shader
+  uploadId: 775926

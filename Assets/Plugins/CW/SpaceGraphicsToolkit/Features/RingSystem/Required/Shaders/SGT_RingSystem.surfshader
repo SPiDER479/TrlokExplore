@@ -1,0 +1,221 @@
+﻿BEGIN_OPTIONS
+	Workflow "Unlit"
+	Alpha "Blend"
+END_OPTIONS
+
+BEGIN_PASS("All")
+	Cull Back
+	ZTest Always
+	Blend One OneMinusSrcAlpha
+END_PASS
+
+BEGIN_PROPERTIES
+	[HideInInspector] _SGT_Color("", Vector) = (0,0,0,0)
+	[HideInInspector] _SGT_Brightness("", Float) = 0
+	[HideInInspector] _SGT_Side("", Float) = 0
+	[HideInInspector] _SGT_Density("", Float) = 0
+	[HideInInspector] _SGT_Detail("", Float) = 0
+	[HideInInspector] _SGT_Frame("", Float) = 0
+	[HideInInspector] _SGT_RingSize("", Vector) = (0,0,0,0)
+	[HideInInspector] _SGT_RingData("", Vector) = (0,0,0,0)
+	[HideInInspector] _SGT_RingMainTex("", 2D) = "white" {}
+	[HideInInspector] _SGT_RingThicknessTex("", 2D) = "white" {}
+	[HideInInspector] _SGT_BlueNoiseTex("", 2D) = "white" {}
+	
+	[Header(LIGHTING)]
+	[Toggle(_SGT_LIGHTING)] _SGT_Lighting ("	Enable", Float) = 0
+	[HDR][Gamma]_SGT_AmbientColor("	Ambient Color", Color) = (0, 0, 0, 0)
+END_PROPERTIES
+
+BEGIN_DEFINES
+	#define __SGT_CUTOFF 0.01
+	
+	#pragma shader_feature_local _SGT_LIGHTING
+END_DEFINES
+
+BEGIN_CBUFFER
+	float4 _SGT_Color;
+	float  _SGT_Brightness;
+	float  _SGT_Side;
+	float  _SGT_Detail;
+	float  _SGT_Frame;
+	sampler2D _SGT_BlueNoiseTex;
+	
+	sampler2D _SGT_RingMainTex;
+	sampler2D _SGT_RingThicknessTex;
+	float4    _SGT_RingSize;
+	float4    _SGT_RingData;
+	
+	float4x4 _SGT_World2Object; // Auto
+	float4x4 _SGT_Object2World; // Auto
+	
+	// LIGHTING
+	float4 _SGT_AmbientColor;
+	float4 _SGT_ScatteringTerms;
+	float4 _SGT_ScatteringPower;
+END_CBUFFER
+
+BEGIN_CODE
+	float4 SGT_GetRingColor(float3 opos)
+	{
+		float  distance01 = (length(opos.xz) - _SGT_RingSize.x) / _SGT_RingSize.y;
+		float  thickness  = _SGT_RingSize.z * (_SGT_RingData.w + _SGT_RingData.z * tex2Dlod(_SGT_RingThicknessTex, float4(distance01, 0.0f, 0.0f, 0)).x);
+		float4 color      = tex2Dlod(_SGT_RingMainTex, float4(distance01, 0.0f, 0.0f, 0.0f));
+		
+		color.w *= pow(1.0f - saturate(abs(opos.y) / thickness), _SGT_RingData.y);
+		
+		return color;
+	}
+	
+	void ModifyVertex(inout VertexData v, inout ExtraV2F e)
+	{
+		#if __CW_MATRIX
+			e.extraV2F0.xyz = CW_O2V(v.vertex).xyz;
+		#endif
+	}
+	
+	float SGT_DitherBlue(float2 screenUV)
+	{
+		float2 pixel = floor(screenUV * _ScreenParams.xy);
+		float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64).r;
+		return frac(noise + (_SGT_Frame)/sqrt(0.5f));
+	}
+	
+	float SGT_DitherIGN(float2 screenUV)
+	{
+		float2 pixel = floor(screenUV * _ScreenParams.xy);
+		float2 pos   = pixel + 5.588238f * _SGT_Frame;
+		return frac(52.9829189f * frac(0.06711056f * pos.x + 0.00583715f * pos.y));
+	}
+	
+	float SGT_GetNearDistance(float3 ray, float3 rayD, float halfThickness)
+	{
+		float t1 = ((-halfThickness) - ray.y) / rayD.y;
+		float t2 = (( halfThickness) - ray.y) / rayD.y;
+
+		return max(min(t1, t2), 0.0f);
+	}
+	
+	float SGT_GetFarDistance(float3 ray, float3 rayD, float halfThickness)
+	{
+		float t1 = ((-halfThickness) - ray.y) / rayD.y;
+		float t2 = (( halfThickness) - ray.y) / rayD.y;
+
+		return max(max(t1, t2), 0.0f);
+	}
+	
+	void SGT_GetCylinderDistances(float3 ray, float3 rayD, float radius, inout float dist)
+	{
+		float a = dot(rayD.xz, rayD.xz);
+		float b = 2.0 * dot(ray.xz, rayD.xz);
+		float c = dot(ray.xz, ray.xz) - radius * radius;
+		float d = b * b - 4.0 * a * c;
+		
+		if (d >= 0.0)
+		{
+			float sd = sqrt(d);
+			float t0 = (-b - sd) / (2.0 * a);
+			float t1 = (-b + sd) / (2.0 * a);
+			float td = (t0 < 0.0) ? t0 : ((t1 > 0.0) ? t1 : -1.0);
+			
+			dist = max(dist, td);
+		}
+	}
+
+	void SurfaceFunction(inout Surface o, inout ShaderData d)
+	{
+		#if __CW_OUTPUT
+			float3 wcam = _WorldSpaceCameraPos;
+			float3 wdir = normalize(d.worldSpacePosition - wcam);
+			float3 ocam = mul(_SGT_World2Object, float4(wcam, 1.0f)).xyz;
+			float3 odir = normalize(mul(_SGT_World2Object, float4(wdir, 0.0f)).xyz);
+			
+			// Find ray near far distances so we don't sample empty space
+			float distN = SGT_GetNearDistance(ocam, odir, _SGT_RingSize.z);
+			float distF = distance(ocam, d.localSpacePosition);
+			
+			if (_SGT_Side == 1) // Back
+			{
+				SGT_GetCylinderDistances(ocam, odir, _SGT_RingSize.x, distN);
+			}
+			
+			// Fade out if intersecting scene geometry
+			float  wled = GetLinearEyeDepth(d.screenUV) * length(d.extraV2F0.xyz / d.extraV2F0.z);
+			float3 wedp = wcam + wdir * wled;
+			float3 oedp = mul(_SGT_World2Object, float4(wedp, 1.0f)).xyz;
+			distN = min(distN, distance(ocam, oedp));
+			distF = min(distF, distance(ocam, oedp));
+			
+			// Move camera to ray march start point
+			float3 ocam_old = ocam;
+			ocam += odir * distN;
+			distF -= distN;
+			if (abs(ocam_old.y) > _SGT_RingSize.z) { ocam.y = _SGT_RingSize.z * sign(ocam_old.y); } // Fix the height for super wide & thin rings
+			
+			// Ray march
+			float  stepSize  = _SGT_RingSize.z * _SGT_Detail;
+			float  dither    = SGT_DitherBlue(d.screenUV);
+			float4 baseColor = float4(_SGT_Color.xyz, _SGT_Color.w * _SGT_RingData.x);
+			float4 totalC    = float4(0, 0, 0, 1);
+			float  totalD    = 0.0f;
+			float4 totalO    = float4(ocam, 1.0f) * 0.0001f;
+			
+			for (int r = 0; r < 150 && (totalD + stepSize * dither) < distF && totalC.a >= __SGT_CUTOFF; r++)
+			{
+				float  midLen = min(stepSize, distF - (totalD + stepSize * dither));
+				float3 midPos = ocam + odir * (totalD + stepSize * dither);
+				
+				float4 luminance     = baseColor * SGT_GetRingColor(midPos);
+				float  transmittance = exp(-luminance.w * midLen);
+				
+				totalO += float4(midPos, 1.0f) * (1.0f - transmittance) * totalC.a;
+				
+				totalC.rgb += luminance.xyz * (1.0f - transmittance) * totalC.a;
+				totalC.a   *= transmittance;
+					
+				totalD += stepSize; stepSize *= 1.1f;
+			}
+			
+			totalC.a = saturate((totalC.a - __SGT_CUTOFF) / (1.0f - __SGT_CUTOFF));
+			
+			float3 totalW = mul(_SGT_Object2World, totalO / totalO.w).xyz;
+			
+			float4 finalColor = float4(totalC.xyz * _SGT_Brightness, 1.0f - totalC.w);
+			
+			#if __SGT_LIGHTANDSHADOW
+				#if _SGT_LIGHTING
+					float4 main = finalColor;
+					
+					float4 lighting   = 0.0f;
+					float4 scattering = 0.0f;
+					
+					finalColor.rgb *= _SGT_AmbientColor.xyz;
+					
+					for (int i = 0; i < _SGT_LightCount; i++)
+					{
+						float theta = dot(-odir, _SGT_LightDirection[i].xyz) * 0.5f + 0.5f;
+
+						lighting += theta * main * _SGT_LightColor[i];
+
+						float3 worldViewDir  = normalize(totalW - wcam);
+						float3 worldLightDir = normalize(_SGT_LightPosition[i].xyz - wcam);
+						float  angle         = dot(worldViewDir, worldLightDir);
+						float  phase         = SGT_ScatteringPhase(angle, _SGT_ScatteringTerms, _SGT_ScatteringPower);
+
+						scattering += main * _SGT_LightColor[i] * phase;
+					}
+					
+					lighting += scattering * (1.0f - main.w);
+					
+					finalColor += lighting * SGT_ShadowColor(totalW) * main.w;
+					
+					finalColor.a = saturate(finalColor.a);
+				#else
+					//finalColor = SGT_ModifyUnlitOutput(finalColor);
+				#endif
+			#endif
+			
+			CW_OutputWithAlpha(o, finalColor);
+		#endif
+	}
+END_CODE

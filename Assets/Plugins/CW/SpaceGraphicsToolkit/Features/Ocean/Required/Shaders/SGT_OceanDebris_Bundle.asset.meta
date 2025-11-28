@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 6388c6882831d5f4f8d4a2a980c584d1
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Ocean/Required/Shaders/SGT_OceanDebris_Bundle.asset
+  uploadId: 775926

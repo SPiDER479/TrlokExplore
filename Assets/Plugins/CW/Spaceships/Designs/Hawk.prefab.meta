@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 615c24e98aeacd643ab10c40a2a42440
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Designs/Hawk.prefab
+  uploadId: 722675

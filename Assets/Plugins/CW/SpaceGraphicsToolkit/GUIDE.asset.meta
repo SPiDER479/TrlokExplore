@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 47df783e7137e2d469f23d9a7447563d
+timeCreated: 1564659804
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/GUIDE.asset
+  uploadId: 775926

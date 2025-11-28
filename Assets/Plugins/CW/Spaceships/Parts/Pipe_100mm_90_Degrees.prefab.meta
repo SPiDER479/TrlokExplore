@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: be0de760824c36247aaab8019c7ceacf
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 236290
+  packageName: CW Spaceships - Build & Destroy
+  packageVersion: 1.1.2
+  assetPath: Assets/Plugins/CW/Spaceships/Parts/Pipe_100mm_90_Degrees.prefab
+  uploadId: 722675
