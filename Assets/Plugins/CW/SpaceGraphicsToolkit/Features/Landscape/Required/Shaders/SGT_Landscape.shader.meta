@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: ccaf40f7b11b3284abc916adc0781fcd
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Landscape/Required/Shaders/SGT_Landscape.shader
+  uploadId: 775926

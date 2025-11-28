@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 28af6bb57bb227e47b1a5b985fd906f4
+ShaderIncludeImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Landscape/Required/Shaders/Resources/SgtShared.cginc
+  uploadId: 775926

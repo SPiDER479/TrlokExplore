@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 26882550368c5c642960d7d0334607be
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Landscape/Required/Shaders/SGT_LandscapeStaticSolid.shader
+  uploadId: 775926

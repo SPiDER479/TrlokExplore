@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: SGT_Landscape_Sphere + Clouds + OceanFade
+  m_Shader: {fileID: 4800000, guid: ccaf40f7b11b3284abc916adc0781fcd, type: 3}
+  m_ValidKeywords:
+  - _CW_SHAPE_SPHERE
+  - _SGT_CLOUDS
+  - _SGT_OCEAN_FADE
+  m_InvalidKeywords:
+  - _SGT_DISTANCE_FADE
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _Albedo:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Normal:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_CloudTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _CW_Shape: 1
+    - _CwStrength: 1
+    - _SGT_CloudWarp: 0
+    - _SGT_Clouds: 1
+    - _SGT_DistanceFade: 1
+    - _SGT_OceanDensity: 0
+    - _SGT_OceanDistance: 0
+    - _SGT_OceanFade: 1
+    - _SGT_OceanMinimum: 0
+    - _SGT_OceanSmoothness: 0
+    m_Colors:
+    - _SGT_CloudOpacity: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_OceanColor: {r: 0, g: 0, b: 0, a: 1}
+    - _SGT_Off: {r: 0.5, g: 0.5, b: -3, a: -1}
+    - _Shift: {r: 0, g: 0, b: 1, a: 1}
+  m_BuildTextureStacks: []

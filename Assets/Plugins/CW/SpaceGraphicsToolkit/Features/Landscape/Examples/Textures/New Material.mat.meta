@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 1f026e0e5c6d9aa408c5acbf75f699da
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Landscape/Examples/Textures/New
+    Material.mat
+  uploadId: 775926

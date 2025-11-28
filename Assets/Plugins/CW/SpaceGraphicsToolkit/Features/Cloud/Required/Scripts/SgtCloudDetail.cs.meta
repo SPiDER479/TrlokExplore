@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 7196e84cb76419e4d8e78e00afe49e83
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Cloud/Required/Scripts/SgtCloudDetail.cs
+  uploadId: 775926

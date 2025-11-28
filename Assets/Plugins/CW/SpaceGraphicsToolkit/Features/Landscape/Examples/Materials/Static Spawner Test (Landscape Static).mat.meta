@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: fab6ebac0c8956749985b7397ee0605c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Landscape/Examples/Materials/Static
+    Spawner Test (Landscape Static).mat
+  uploadId: 775926

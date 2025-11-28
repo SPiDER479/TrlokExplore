@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 7cce6e50d52036e43b5cd78b1fec523b
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Landscape/Examples/Prefabs/Demo
+    UI + Light + Camera.prefab
+  uploadId: 775926

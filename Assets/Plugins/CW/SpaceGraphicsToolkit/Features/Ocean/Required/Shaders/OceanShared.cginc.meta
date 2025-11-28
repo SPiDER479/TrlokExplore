@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: ed64468c4e24ed74faa0a23c544573d5
+ShaderIncludeImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Ocean/Required/Shaders/OceanShared.cginc
+  uploadId: 775926

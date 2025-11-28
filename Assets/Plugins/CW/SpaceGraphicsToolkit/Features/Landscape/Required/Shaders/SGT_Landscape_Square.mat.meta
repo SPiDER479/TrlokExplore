@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 05f44584651d0724ebf7efb419de4a8c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Landscape/Required/Shaders/SGT_Landscape_Square.mat
+  uploadId: 775926

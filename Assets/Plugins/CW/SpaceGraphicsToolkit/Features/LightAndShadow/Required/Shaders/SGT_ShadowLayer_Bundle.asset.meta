@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c78da8b3661a31d43aca81b914e5df30
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/LightAndShadow/Required/Shaders/SGT_ShadowLayer_Bundle.asset
+  uploadId: 775926

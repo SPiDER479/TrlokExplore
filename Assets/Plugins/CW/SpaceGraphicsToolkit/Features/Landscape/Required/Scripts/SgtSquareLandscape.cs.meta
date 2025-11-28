@@ -1,0 +1,23 @@
+fileFormatVersion: 2
+guid: 93fb6ae513bd9434da6c94fc8b31add4
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - material: {fileID: 2100000, guid: 05f44584651d0724ebf7efb419de4a8c, type: 2}
+  - bundle: {fileID: 1504359710658688620, guid: dbbb67e30544ed54b9b7d56b001fecf3,
+      type: 3}
+  - albedoTex: {instanceID: 0}
+  - heightTex: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Landscape/Required/Scripts/SgtSquareLandscape.cs
+  uploadId: 775926

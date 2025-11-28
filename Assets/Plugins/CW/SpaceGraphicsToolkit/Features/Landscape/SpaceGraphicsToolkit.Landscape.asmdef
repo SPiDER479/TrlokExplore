@@ -1,0 +1,41 @@
+{
+    "name": "SpaceGraphicsToolkit.Landscape",
+    "rootNamespace": "",
+    "references": [
+        "SpaceGraphicsToolkit",
+        "Unity.Mathematics",
+        "Unity.Burst",
+        "Unity.Collections",
+        "CW.Common",
+        "SpaceGraphicsToolkit.Ocean"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "__MATHEMATICS__",
+        "__BURST__",
+        "__COLLECTIONS__"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.mathematics",
+            "expression": "",
+            "define": "__MATHEMATICS__"
+        },
+        {
+            "name": "com.unity.burst",
+            "expression": "",
+            "define": "__BURST__"
+        },
+        {
+            "name": "com.unity.collections",
+            "expression": "",
+            "define": "__COLLECTIONS__"
+        }
+    ],
+    "noEngineReferences": false
+}

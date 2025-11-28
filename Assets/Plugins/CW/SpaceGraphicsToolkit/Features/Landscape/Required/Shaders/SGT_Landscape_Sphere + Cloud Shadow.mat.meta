@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: eaaa943ecc193ae4a84c1eaf5befc977
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.25
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Landscape/Required/Shaders/SGT_Landscape_Sphere
+    + Cloud Shadow.mat
+  uploadId: 774934

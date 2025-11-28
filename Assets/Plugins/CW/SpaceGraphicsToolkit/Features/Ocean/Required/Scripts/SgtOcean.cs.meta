@@ -1,0 +1,27 @@
+fileFormatVersion: 2
+guid: 5de2855d40c4cfa4da722a6c7ae99c9c
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - surfaceMaterial: {fileID: 2100000, guid: 34fa7823db602ed43b123c622be1ddbf, type: 2}
+  - surfaceTexture: {instanceID: 0}
+  - underwaterMaterial: {fileID: 2100000, guid: 82a84ec0d2370cf47a1eb2ed6f86db24,
+      type: 2}
+  - underwaterMaskMaterial: {fileID: 2100000, guid: ac7a707d4ddf1c1408136f79d342ded9,
+      type: 2}
+  - wavesTexture: {fileID: 2800000, guid: 14f5906f302fa6e4c96d738618666ff5, type: 3}
+  - wavesOffset: {fileID: 2800000, guid: 41156fa711f40054f94fecbd12f53c57, type: 3}
+  - causticsTexture: {fileID: 11700000, guid: f968585bd4a33c64e9699bc8a9c15972, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Ocean/Required/Scripts/SgtOcean.cs
+  uploadId: 775926

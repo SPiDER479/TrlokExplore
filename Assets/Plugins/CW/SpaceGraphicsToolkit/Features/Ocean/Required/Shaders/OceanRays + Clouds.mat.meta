@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 86564da864c7f3c4782063925101ce32
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Ocean/Required/Shaders/OceanRays
+    + Clouds.mat
+  uploadId: 775926

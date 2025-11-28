@@ -1,0 +1,182 @@
+BEGIN_OPTIONS
+END_OPTIONS
+
+BEGIN_PROPERTIES
+	[KeywordEnum(Square, Sphere)] _CW_Shape ("Shape", Float) = 0
+	
+	[Header(CLOUDS)]
+	[Toggle(_SGT_CLOUDS)] _SGT_Clouds("	Enable", Float) = 0
+	[HideInInspector] [NoScaleOffset] _SGT_CloudTex("", 2D) = "black" {}
+	[HideInInspector] _SGT_CloudOpacity("", Vector) = (0.0, 0.0, 0.0, 0.0)
+	[HideInInspector] _SGT_CloudWarp("", Float) = 0
+	
+	[Header(OCEAN FADE)]
+	[Toggle(_SGT_OCEAN_FADE)] _SGT_OceanFade("	Enable", Float) = 0
+	[HideInInspector] _SGT_OceanDistance("", Float) = 0
+	[HideInInspector] _SGT_OceanColor("", Color) = (0,0,0)
+	[HideInInspector] _SGT_OceanMinimum("", Float) = 0
+	[HideInInspector] _SGT_OceanSmoothness("", Float) = 0
+END_PROPERTIES
+
+BEGIN_CBUFFER
+	#define BATCH_CAPACITY 35
+	#define VERTEX_COUNT 243
+	
+	float4 _CwSize;
+	float4 _CwAtlas;
+	float4 _CwWeights[VERTEX_COUNT];
+	float4 _CwCoords[VERTEX_COUNT];
+	
+	float4 _CwOrigins[BATCH_CAPACITY];
+	float4 _CwPositionsA[BATCH_CAPACITY];
+	float4 _CwPositionsB[BATCH_CAPACITY];
+	float4 _CwPositionsC[BATCH_CAPACITY];
+	
+	sampler2D_float DataP;
+	sampler2D       DataA;
+	sampler2D       DataN;
+	
+	float3 _CwOffset;
+	
+	float4x4 _CwObjectToWorld;
+	float4x4 _CwWorldToObject;
+	
+	// CLOUDS
+	sampler2D _SGT_CloudTex;
+	float4    _SGT_CloudOpacity;
+	float     _SGT_CloudWarp;
+	
+	float4x4 _SGT_CloudMatrix;
+	
+	// OCEAN FADE
+	float  _SGT_OceanDistance;
+	float4 _SGT_OceanColor;
+	float  _SGT_OceanMinimum;
+	float  _SGT_OceanSmoothness;
+END_CBUFFER
+
+BEGIN_DEFINES
+	#pragma shader_feature_local _CW_SHAPE_SQUARE _CW_SHAPE_SPHERE
+	#pragma shader_feature_local _SGT_CLOUDS_OFF _SGT_CLOUDS
+	#pragma shader_feature_local _SGT_OCEAN_FADE_OFF _SGT_OCEAN_FADE
+END_DEFINES
+
+BEGIN_CODE
+	#pragma instancing_options procedural:SetupInstancing forwardadd
+	
+	void SetupInstancing()
+	{
+		#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
+			#ifdef unity_ObjectToWorld
+				#undef unity_ObjectToWorld
+			#endif
+
+			#ifdef unity_WorldToObject
+				#undef unity_WorldToObject
+			#endif
+			
+			unity_ObjectToWorld = _CwObjectToWorld;
+			unity_WorldToObject = _CwWorldToObject;
+		#endif
+	}
+	
+	float SGT_SampleCloudDensity(float3 wpos)
+	{
+		float3 p = normalize(mul(_SGT_CloudMatrix, float4(wpos, 1.0f)).xyz);
+		float2 w = float2(-p.x, p.y);
+		float2 z = normalize(w) * pow(length(w), 1.0f / (_SGT_CloudWarp + 1.0f));
+		
+		return saturate(dot(tex2D(_SGT_CloudTex, z * 0.5f + 0.5f), _SGT_CloudOpacity));
+	}
+	
+	void ModifyVertex(inout VertexData v, inout ExtraV2F d)
+	{
+		float vertexIndex = v.vertex.x;
+		float squareIndex = v.vertex.y;
+		float batchIndex  = v.vertex.z;
+		
+		#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
+			batchIndex = unity_InstanceID;
+		#endif
+		
+		float  batchCol = batchIndex % _CwAtlas.z;
+		float  batchRow = floor(batchIndex / _CwAtlas.z);
+		float3 origin   = _CwOrigins[batchIndex].xyz;
+		float3 weights  = _CwWeights[vertexIndex].xyz;
+		float2 coord    = _CwCoords[vertexIndex].xy; coord.x /= 3.0f;
+		float3 position = _CwPositionsA[batchIndex].xyz * weights.x + _CwPositionsB[batchIndex].xyz * weights.y + _CwPositionsC[batchIndex].xyz * weights.z;
+		
+		v.vertex.xyz = _CwOffset + origin + tex2Dlod(DataP, float4(vertexIndex * _CwSize.x, batchIndex * _CwSize.y, 0.0f, 0.0f)).xyz;
+		
+		#if _CW_SHAPE_SQUARE
+			v.normal  = float3(0,1,0);
+			v.tangent = float4(1,0,0,-1);
+		#elif _CW_SHAPE_SPHERE
+			v.normal = normalize(position);
+			
+			if (position.x == 0.0f && position.z == 0.0f)
+			{
+				position.xz += 0.00000001f;
+			}
+			
+			v.tangent = float4(normalize(cross(float3(0,-1,0), normalize(position))), -1.0f);
+		#endif
+		
+		
+		// Calc UV
+		float2 pixelS = _CwAtlas.xy * _CwAtlas.zw;
+		float  pixelX = batchCol * _CwAtlas.x + coord.x * (_CwAtlas.x - 3.0f) + 0.5f + squareIndex * (_CwAtlas.x / 3.0f);
+		float  pixelY = batchRow * _CwAtlas.y + coord.y * (_CwAtlas.y - 1.0f) + 0.5f;
+		
+		v.texcoord0.x = pixelX / pixelS.x;
+		v.texcoord0.y = pixelY / pixelS.y;
+		
+		v.texcoord1.xyz = position;
+	}
+
+	void SurfaceFunction(inout Surface o, inout ShaderData d)
+	{
+		float4 dataA = tex2Dlod(DataA, float4(d.texcoord0.xy,0,0));
+		float4 dataN = tex2Dlod(DataN, float4(d.texcoord0.xy,0,0)); dataN.xy = dataN.xy * 2.0f - 1.0f;
+		
+		o.Albedo     = dataA.xyz;
+		o.Occlusion  = 1.0f;
+		o.Emission   = dataA.xyz * dataN.z;
+		o.Smoothness = dataN.w;
+		o.Metallic   = 0.0f;
+		o.Normal     = float3(dataN.xy, sqrt(1.0f - saturate(dot(dataN.xy, dataN.xy))));
+		
+		#if _SGT_OCEAN_FADE
+			float fade = saturate(distance(_WorldSpaceCameraPos, d.worldSpacePosition) / (_SGT_OceanDistance * 0.5f));
+			
+			float alt = distance(d.worldSpacePosition, float3(0,0,5000000)) - 5000000;
+			float ocean = 1-exp(min(0.0f, (alt - 2020) * 0.1));
+			
+			//dataA.w = ocean;
+			
+			if (dataA.w > 0.0f && fade >= 0.0f)
+			{
+				float opacity = dataA.w * fade;
+				
+				o.Albedo     = lerp(o.Albedo, _SGT_OceanColor, opacity);
+				o.Smoothness = lerp(o.Smoothness, _SGT_OceanSmoothness, opacity);
+				o.Normal     = lerp(o.Normal, float3(0.0f, 0.0f, 1.0f), opacity);
+			}
+		#endif
+		
+		#if _SGT_CLOUDS
+			float  shadow = SGT_SampleCloudDensity(d.worldSpacePosition);
+			
+			o.Albedo    = lerp(o.Albedo   , 0.0f, shadow);
+			o.Occlusion = lerp(o.Occlusion, 0.0f, shadow);
+		#endif
+		
+		//float3 dx = ddx(d.worldSpacePosition);
+		//float3 dy = ddy(d.worldSpacePosition);
+		//float3 worldNormal = lerp(d.worldSpaceNormal, normalize(cross(dy, dx)), _Time.y % 1.0f);
+		
+		//d.worldSpaceNormal = worldNormal;
+		//d.TBNMatrix[2] = worldNormal;
+		//o.Normal = float3(0,0,1);
+	}
+END_CODE

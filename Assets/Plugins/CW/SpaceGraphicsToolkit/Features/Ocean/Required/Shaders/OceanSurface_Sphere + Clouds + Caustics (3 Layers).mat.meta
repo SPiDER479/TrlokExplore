@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 586e29aca4f89c94fa7aae2d6db3271e
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Ocean/Required/Shaders/OceanSurface_Sphere
+    + Clouds + Caustics (3 Layers).mat
+  uploadId: 775926

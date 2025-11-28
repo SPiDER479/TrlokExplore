@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: 96c98371174714d42a843115bb1a40f4
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - material: {fileID: 2100000, guid: a902ebd8a60aae44ab89768a890ae962, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.3.26
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Ocean/Required/Scripts/SgtOceanRays.cs
+  uploadId: 775926
