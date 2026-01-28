@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: eac923fd9f5d1ea4ab52efadb6bc8e76
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.11
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Sky/Examples/Materials/Geosphere40.asset
+  uploadId: 852530

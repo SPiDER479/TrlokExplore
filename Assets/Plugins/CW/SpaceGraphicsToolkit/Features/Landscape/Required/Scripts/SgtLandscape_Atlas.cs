@@ -351,6 +351,7 @@ namespace SpaceGraphicsToolkit.Landscape
 			blitMaterial.SetVectorArray(_CwGlobalDetailDataB, globalDetailDataB);
 			blitMaterial.SetVectorArray(_CwGlobalDetailDataC, globalDetailDataC);
 			blitMaterial.SetVectorArray(_CwGlobalDetailDataD, globalDetailDataD);
+			blitMaterial.SetVectorArray(_CwGlobalDetailDataE, globalDetailDataE);
 			blitMaterial.SetVectorArray(_CwGlobalDetailLayer, globalDetailLayer);
 
 			blitMaterial.SetInt(_CwLocalDetailCount, localDetailCount);
@@ -358,6 +359,7 @@ namespace SpaceGraphicsToolkit.Landscape
 			blitMaterial.SetVectorArray(_CwLocalDetailDataB, localDetailDataB);
 			blitMaterial.SetVectorArray(_CwLocalDetailDataC, localDetailDataC);
 			blitMaterial.SetVectorArray(_CwLocalDetailDataD, localDetailDataD);
+			blitMaterial.SetVectorArray(_CwLocalDetailDataE, localDetailDataE);
 			blitMaterial.SetMatrixArray(_CwLocalDetailMatrix, localDetailMatrix);
 
 			blitMaterial.SetInt(_CwGlobalFlattenCount, globalFlattenCount);

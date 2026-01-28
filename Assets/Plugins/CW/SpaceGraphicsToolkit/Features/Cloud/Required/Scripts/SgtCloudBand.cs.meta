@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 25eb95278048762478e6fad80a2f9bcf
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.11
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Cloud/Required/Scripts/SgtCloudBand.cs
+  uploadId: 852530

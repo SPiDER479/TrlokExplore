@@ -25,34 +25,53 @@ namespace SpaceGraphicsToolkit.Volumetrics
 
 		private CustomDepthPass customDepthPass;
 
-		private static RenderTargetIdentifier[] identifiers = new RenderTargetIdentifier[2];
+		private static RenderTargetIdentifier[] identifiers1 = new RenderTargetIdentifier[1];
+		private static RenderTargetIdentifier[] identifiers2 = new RenderTargetIdentifier[2];
 
-		public static void AddMRT(RenderBuffer a, RenderBuffer b, RenderBuffer depth, Color defaultColor)
+		public static void AddMRT(RenderBuffer a, RenderBuffer depth)
 		{
-			identifiers[0] = a;
-			identifiers[1] = b;
+			identifiers1[0] = a;
 
-			CustomDepthPass.CurrentContext.cmd.SetRenderTarget(identifiers, depth);
+			CustomDepthPass.CurrentContext.cmd.SetRenderTarget(identifiers1, depth);
+		}
+
+		public static void AddMRT(RenderBuffer a, RenderBuffer depth, Color defaultColor)
+		{
+			identifiers1[0] = a;
+
+			CustomDepthPass.CurrentContext.cmd.SetRenderTarget(identifiers1, depth);
 			CustomDepthPass.CurrentContext.cmd.ClearRenderTarget(true, true, defaultColor);
 		}
 
 		public static void AddMRT(RenderBuffer a, RenderBuffer b, RenderBuffer depth)
 		{
-			identifiers[0] = a;
-			identifiers[1] = b;
+			identifiers2[0] = a;
+			identifiers2[1] = b;
 
-			CustomDepthPass.CurrentContext.cmd.SetRenderTarget(identifiers, depth);
+			CustomDepthPass.CurrentContext.cmd.SetRenderTarget(identifiers2, depth);
 		}
 
-		public static void AddDrawMesh(Mesh mesh, int submesh, Matrix4x4 matrix, Material material, int pass, bool invert)
+		public static void AddMRT(RenderBuffer a, RenderBuffer b, RenderBuffer depth, Color defaultColor)
 		{
-			CustomDepthPass.CurrentContext.cmd.SetInvertCulling(invert);
+			identifiers2[0] = a;
+			identifiers2[1] = b;
+
+			CustomDepthPass.CurrentContext.cmd.SetRenderTarget(identifiers2, depth);
+			CustomDepthPass.CurrentContext.cmd.ClearRenderTarget(true, true, defaultColor);
+		}
+
+		public static void AddDrawMesh(Mesh mesh, int submesh, Matrix4x4 matrix, Material material, int pass)
+		{
 			CustomDepthPass.CurrentContext.cmd.DrawMesh(mesh, matrix, material, submesh, pass);
 		}
 
-		public static void AddDrawMeshInstancedProcedural(Mesh mesh, int submesh, Material material, int pass, bool invert, int count, MaterialPropertyBlock properties)
+		public static void AddDrawMesh(Mesh mesh, int submesh, Matrix4x4 matrix, Material material, int pass, MaterialPropertyBlock properties)
 		{
-			CustomDepthPass.CurrentContext.cmd.SetInvertCulling(invert);
+			CustomDepthPass.CurrentContext.cmd.DrawMesh(mesh, matrix, material, submesh, pass, properties);
+		}
+
+		public static void AddDrawMeshInstancedProcedural(Mesh mesh, int submesh, Material material, int pass, int count, MaterialPropertyBlock properties)
+		{
 			CustomDepthPass.CurrentContext.cmd.DrawMeshInstancedProcedural(mesh, submesh, material, pass, count, properties);
 		}
 
@@ -99,7 +118,23 @@ namespace SpaceGraphicsToolkit.Volumetrics
 		}
 #elif __URP__
 		#if __HAS_RENDER_GRAPH__
+			private static RenderTargetIdentifier[] identifiers1 = new RenderTargetIdentifier[1];
 			private static RenderTargetIdentifier[] identifiers2 = new RenderTargetIdentifier[2];
+
+			public static void AddMRT(RenderBuffer a, RenderBuffer depth)
+			{
+				identifiers1[0] = a;
+
+				CustomDepthPass.CurrentContext.cmd.SetRenderTarget(identifiers1, depth);
+			}
+
+			public static void AddMRT(RenderBuffer a, RenderBuffer depth, Color defaultColor)
+			{
+				identifiers1[0] = a;
+
+				CustomDepthPass.CurrentContext.cmd.SetRenderTarget(identifiers1, depth);
+				CustomDepthPass.CurrentContext.cmd.ClearRenderTarget(true, true, defaultColor);
+			}
 
 			public static void AddMRT(RenderBuffer a, RenderBuffer b, RenderBuffer depth)
 			{
@@ -118,19 +153,38 @@ namespace SpaceGraphicsToolkit.Volumetrics
 				CustomDepthPass.CurrentContext.cmd.ClearRenderTarget(true, true, defaultColor);
 			}
 
-			public static void AddDrawMesh(Mesh mesh, int submesh, Matrix4x4 matrix, Material material, int pass, bool invert)
+			public static void AddDrawMesh(Mesh mesh, int submesh, Matrix4x4 matrix, Material material, int pass)
 			{
-				CustomDepthPass.CurrentContext.cmd.SetInvertCulling(invert);
 				CustomDepthPass.CurrentContext.cmd.DrawMesh(mesh, matrix, material, submesh, pass);
 			}
 
-			public static void AddDrawMeshInstancedProcedural(Mesh mesh, int submesh, Material material, int pass, bool invert, int count, MaterialPropertyBlock properties)
+			public static void AddDrawMesh(Mesh mesh, int submesh, Matrix4x4 matrix, Material material, int pass, MaterialPropertyBlock properties)
 			{
-				CustomDepthPass.CurrentContext.cmd.SetInvertCulling(invert);
+				CustomDepthPass.CurrentContext.cmd.DrawMesh(mesh, matrix, material, submesh, pass, properties);
+			}
+
+			public static void AddDrawMeshInstancedProcedural(Mesh mesh, int submesh, Material material, int pass, int count, MaterialPropertyBlock properties)
+			{
 				CustomDepthPass.CurrentContext.cmd.DrawMeshInstancedProcedural(mesh, submesh, material, pass, count, properties);
 			}
 		#else
+			private static RenderTargetIdentifier[] identifiers1 = new RenderTargetIdentifier[1];
 			private static RenderTargetIdentifier[] identifiers2 = new RenderTargetIdentifier[2];
+
+			public static void AddMRT(RenderBuffer a, RenderBuffer depth)
+			{
+				identifiers1[0] = a;
+
+				CustomDepthPass.CurrentCommands.SetRenderTarget(identifiers1, depth);
+			}
+
+			public static void AddMRT(RenderBuffer a, RenderBuffer depth, Color defaultColor)
+			{
+				identifiers1[0] = a;
+
+				CustomDepthPass.CurrentCommands.SetRenderTarget(identifiers1, depth);
+				CustomDepthPass.CurrentCommands.ClearRenderTarget(true, true, defaultColor);
+			}
 
 			public static void AddMRT(RenderBuffer a, RenderBuffer b, RenderBuffer depth)
 			{
@@ -149,15 +203,18 @@ namespace SpaceGraphicsToolkit.Volumetrics
 				CustomDepthPass.CurrentCommands.ClearRenderTarget(true, true, defaultColor);
 			}
 
-			public static void AddDrawMesh(Mesh mesh, int submesh, Matrix4x4 matrix, Material material, int pass, bool invert)
+			public static void AddDrawMesh(Mesh mesh, int submesh, Matrix4x4 matrix, Material material, int pass)
 			{
-				CustomDepthPass.CurrentCommands.SetInvertCulling(invert);
 				CustomDepthPass.CurrentCommands.DrawMesh(mesh, matrix, material, submesh, pass);
 			}
 
-			public static void AddDrawMeshInstancedProcedural(Mesh mesh, int submesh, Material material, int pass, bool invert, int count, MaterialPropertyBlock properties)
+			public static void AddDrawMesh(Mesh mesh, int submesh, Matrix4x4 matrix, Material material, int pass, MaterialPropertyBlock properties)
 			{
-				CustomDepthPass.CurrentCommands.SetInvertCulling(invert);
+				CustomDepthPass.CurrentCommands.DrawMesh(mesh, matrix, material, submesh, pass, properties);
+			}
+
+			public static void AddDrawMeshInstancedProcedural(Mesh mesh, int submesh, Material material, int pass, int count, MaterialPropertyBlock properties)
+			{
 				CustomDepthPass.CurrentCommands.DrawMeshInstancedProcedural(mesh, submesh, material, pass, count, properties);
 			}
 		#endif
@@ -203,6 +260,7 @@ namespace SpaceGraphicsToolkit.Volumetrics
 			}
 		}
 #else // BiRP
+		private static RenderTargetIdentifier[] buffers1 = new RenderTargetIdentifier[1];
 		private static RenderTargetIdentifier[] buffers2 = new RenderTargetIdentifier[2];
 
 		private static System.Collections.Generic.LinkedList<SgtVolumeCamera> instances = new System.Collections.Generic.LinkedList<SgtVolumeCamera>();
@@ -212,6 +270,27 @@ namespace SpaceGraphicsToolkit.Volumetrics
 		private CommandBuffer commandBuffer;
 
 		private Camera registeredCamera;
+
+		public static void AddMRT(RenderBuffer a, RenderBuffer depth)
+		{
+			buffers1[0] = a;
+
+			foreach (var instance in instances)
+			{
+				instance.commandBuffer.SetRenderTarget(buffers1, depth);
+			}
+		}
+
+		public static void AddMRT(RenderBuffer a, RenderBuffer depth, Color defaultColor)
+		{
+			buffers1[0] = a;
+
+			foreach (var instance in instances)
+			{
+				instance.commandBuffer.SetRenderTarget(buffers1, depth);
+				instance.commandBuffer.ClearRenderTarget(true, true, defaultColor);
+			}
+		}
 
 		public static void AddMRT(RenderBuffer a, RenderBuffer b, RenderBuffer depth)
 		{
@@ -236,20 +315,26 @@ namespace SpaceGraphicsToolkit.Volumetrics
 			}
 		}
 
-		public static void AddDrawMesh(Mesh mesh, int submesh, Matrix4x4 matrix, Material material, int pass, bool invert)
+		public static void AddDrawMesh(Mesh mesh, int submesh, Matrix4x4 matrix, Material material, int pass)
 		{
 			foreach (var instance in instances)
 			{
-				instance.commandBuffer.SetInvertCulling(invert);
 				instance.commandBuffer.DrawMesh(mesh, matrix, material, submesh, pass);
 			}
 		}
 
-		public static void AddDrawMeshInstancedProcedural(Mesh mesh, int submesh, Material material, int pass, bool invert, int count, MaterialPropertyBlock properties)
+		public static void AddDrawMesh(Mesh mesh, int submesh, Matrix4x4 matrix, Material material, int pass, MaterialPropertyBlock properties)
 		{
 			foreach (var instance in instances)
 			{
-				instance.commandBuffer.SetInvertCulling(invert);
+				instance.commandBuffer.DrawMesh(mesh, matrix, material, submesh, pass, properties);
+			}
+		}
+
+		public static void AddDrawMeshInstancedProcedural(Mesh mesh, int submesh, Material material, int pass, int count, MaterialPropertyBlock properties)
+		{
+			foreach (var instance in instances)
+			{
 				instance.commandBuffer.DrawMeshInstancedProcedural(mesh, submesh, material, pass, count, properties);
 			}
 		}

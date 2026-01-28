@@ -26,47 +26,44 @@ float2 CW_SnapToPixel(float2 uv, float2 size)
 
 float4 CW_Cubic(float v)
 {
-    float4 n = float4(1.0, 2.0, 3.0, 4.0) - v;
-    float4 s = n * n * n;
-    float4 o;
-    o.x = s.x;
-    o.y = s.y - 4.0 * s.x;
-    o.z = s.z - 4.0 * s.y + 6.0 * s.x;
-    o.w = 6.0 - o.x - o.y - o.z;
-    return o;
+	float4 n = float4(1.0, 2.0, 3.0, 4.0) - v;
+	float4 s = n * n * n;
+	float4 o;
+	o.x = s.x;
+	o.y = s.y - 4.0 * s.x;
+	o.z = s.z - 4.0 * s.y + 6.0 * s.x;
+	o.w = 6.0 - o.x - o.y - o.z;
+	return o;
 }
 
 float4 CW_SampleCubic(sampler2D sam, float2 uv, float2 size)
 {
 	float2 invTexSize = 1.0 / size;
 
-   uv = uv * size - 0.5;
+	uv = uv * size - 0.5;
+	
+	float2 fxy = frac(uv);
+	uv -= fxy;
 
+	float4 xcubic = CW_Cubic(fxy.x);
+	float4 ycubic = CW_Cubic(fxy.y);
 
-    float2 fxy = frac(uv);
-    uv -= fxy;
+	float4 c = uv.xxyy + float2 (-0.5, +1.5).xyxy;
 
-    float4 xcubic = CW_Cubic(fxy.x);
-    float4 ycubic = CW_Cubic(fxy.y);
+	float4 s = float4(xcubic.xz + xcubic.yw, ycubic.xz + ycubic.yw);
+	float4 offset = c + float4(xcubic.yw, ycubic.yw) / s;
 
-    float4 c = uv.xxyy + float2 (-0.5, +1.5).xyxy;
+	offset *= invTexSize.xxyy;
 
-    float4 s = float4(xcubic.xz + xcubic.yw, ycubic.xz + ycubic.yw);
-    float4 offset = c + float4(xcubic.yw, ycubic.yw) / s;
+	float4 sample0 = tex2Dlod(sam, float4(offset.xz, 0.0f, 0.0f));
+	float4 sample1 = tex2Dlod(sam, float4(offset.yz, 0.0f, 0.0f));
+	float4 sample2 = tex2Dlod(sam, float4(offset.xw, 0.0f, 0.0f));
+	float4 sample3 = tex2Dlod(sam, float4(offset.yw, 0.0f, 0.0f));
 
-    offset *= invTexSize.xxyy;
+	float sx = s.x / (s.x + s.y);
+	float sy = s.z / (s.z + s.w);
 
-    float4 sample0 = tex2Dlod(sam, float4(offset.xz, 0.0f, 0.0f));
-    float4 sample1 = tex2Dlod(sam, float4(offset.yz, 0.0f, 0.0f));
-    float4 sample2 = tex2Dlod(sam, float4(offset.xw, 0.0f, 0.0f));
-    float4 sample3 = tex2Dlod(sam, float4(offset.yw, 0.0f, 0.0f));
-
-    float sx = s.x / (s.x + s.y);
-    float sy = s.z / (s.z + s.w);
-
-    return lerp(
-       lerp(sample3, sample2, sx), lerp(sample1, sample0, sx)
-    , sy);
+	return lerp(lerp(sample3, sample2, sx), lerp(sample1, sample0, sx), sy);
 }
 
 float4 CW_SampleCubic2(sampler2D sam, float2 uv, float2 size)

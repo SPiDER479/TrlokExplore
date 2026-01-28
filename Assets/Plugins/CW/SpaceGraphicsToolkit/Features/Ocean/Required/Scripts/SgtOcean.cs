@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Jobs;
+using SpaceGraphicsToolkit.Landscape;
+using SpaceGraphicsToolkit.Sky;
 using SpaceGraphicsToolkit.Cloud;
 using SpaceGraphicsToolkit.Volumetrics;
 using SpaceGraphicsToolkit.LightAndShadow;
@@ -13,8 +15,15 @@ namespace SpaceGraphicsToolkit.Ocean
 	/// <summary>This component can be used to render oceans for your planets.</summary>
 	[ExecuteInEditMode]
 	[AddComponentMenu("Space Graphics Toolkit/SGT Ocean")]
-	public partial class SgtOcean : SgtVolumeEffect
+	public partial class SgtOcean : SgtVolumeEffect, CwChild.IHasChildren
 	{
+		/// <summary>The material used to render the fluid surface.
+		/// NOTE: This must use the <b>SGT/Ocean</b> shader.</summary>
+		public Material Material { set { material = value; } get { return material; } } [SerializeField] private Material material;
+
+		/// <summary>If you want atmospheric effects to apply to this cloud, drag and drop it into here.</summary>
+		public SgtSky Sky { set { sky = value; } get { return sky; } } [SerializeField] private SgtSky sky;
+
 		/// <summary>The radius of the ocean.</summary>
 		public float Radius { set { radius = value; } get { return radius; } } [SerializeField] private float radius = 50.0f;
 
@@ -24,71 +33,22 @@ namespace SpaceGraphicsToolkit.Ocean
 		/// <summary>If you want cloud shadows to appear on the surface of the ocean, specify them here.</summary>
 		public SgtCloud CloudShadow { set { cloudShadow = value; } get { return cloudShadow; } } [SerializeField] protected SgtCloud cloudShadow;
 
-		/// <summary>The LOD will be based on these transform positions.
-		/// None/null = The GameObject with the <b>MainCamera</b> tag will be used.</summary>
-		public List<Transform> Observers { get { if (observers == null) observers = new List<Transform>(); return observers; } } [SerializeField] private List<Transform> observers;
+		public Camera Observer { set { observer = value; } get { return observer; } } [SerializeField] protected Camera observer;
 
-		/// <summary>The material used to render the fluid surface.
-		/// NOTE: This must use the <b>SGT/OceanUSurface</b> shader.</summary>
-		public Material SurfaceMaterial { set { surfaceMaterial = value; } get { return surfaceMaterial; } } [SerializeField] private Material surfaceMaterial;
+		/// <summary>This allows you to offset the camera distance in world space when rendering the ocean, giving you fine control over the render order.</summary>
+		public float CameraOffset { set { cameraOffset = value; } get { return cameraOffset; } } [SerializeField] private float cameraOffset = 0.1f;
 
 		/// <summary>The color of the fluid when viewed from above the surface.</summary>
 		public Color SurfaceColor { set { surfaceColor = value; } get { return surfaceColor; } } [SerializeField] private Color surfaceColor = new Color(0.007843138f, 0.3647059f, 0.5019608f);
 
+		/// <summary>The color of the sub surface scattering.</summary>
+		public Color SurfaceScattering { set { surfaceScattering = value; } get { return surfaceScattering; } } [SerializeField] private Color surfaceScattering = new Color(0.19f, 0.84f, 0.78f, 0.5f);
+
 		/// <summary>The density of the water when viewed from above the surface.</summary>
 		public float SurfaceDensity { set { surfaceDensity = value; } get { return surfaceDensity; } } [SerializeField] private float surfaceDensity = 0.5f;
 
-		/// <summary>The minimum opacity of the water when viewed from above the surface.</summary>
-		public float SurfaceMinimumOpacity { set { surfaceMinimumOpacity = value; } get { return surfaceMinimumOpacity; } } [SerializeField] [Range(0.0f, 1.0f)] private float surfaceMinimumOpacity;
-
 		/// <summary>The PBR smoothness of the surface material.</summary>
 		public float SurfaceSmoothness { set { surfaceSmoothness = value; } get { return surfaceSmoothness; } } [SerializeField] [Range(0.0f, 1.0f)] private float surfaceSmoothness = 0.9f;
-
-		/// <summary>The waves normal map texture.</summary>
-		public Texture2D SurfaceTexture { set { surfaceTexture = value; } get { return surfaceTexture; } } [SerializeField] private Texture2D surfaceTexture;
-
-		/// <summary>The wave texture gets tiled around the planet this many times.
-		/// X = First layer.
-		/// Y = Second layer.
-		/// Z = Third layer.
-		/// W = Fourth layer.
-		/// NOTE: The <b>SurfaceMaterial</b> has the <b>Layers</b> setting, which allows you to choose how many are used.</summary>
-		public Vector4 SurfaceTiling { set { surfaceTiling = value; } get { return surfaceTiling; } } [SerializeField] private Vector4 surfaceTiling = new Vector4(100.0f, 1000.0f, 0.0f, 0.0f);
-
-		/// <summary>The wave texture fades out when the camera is within this world space distance.
-		/// X = First layer.
-		/// Y = Second layer.
-		/// Z = Third layer.
-		/// W = Fourth layer.
-		/// NOTE: The <b>SurfaceMaterial</b> has the <b>Layers</b> setting, which allows you to choose how many are used.</summary>
-		public Vector4 SurfaceRange { set { surfaceRange = value; } get { return surfaceRange; } } [SerializeField] private Vector4 surfaceRange = new Vector4(100.0f, 10.0f, 0.0f, 0.0f);
-
-		/// <summary>The waves texture strength will be multiplied by this.
-		/// X = First layer.
-		/// Y = Second layer.
-		/// Z = Third layer.
-		/// W = Fourth layer.
-		/// NOTE: The <b>SurfaceMaterial</b> has the <b>Layers</b> setting, which allows you to choose how many are used.</summary>
-		public Vector4 SurfaceStrength { set { surfaceStrength = value; } get { return surfaceStrength; } } [SerializeField] [Range(0.01f, 5.0f)] private Vector4 surfaceStrength = new Vector4(0.5f, 0.5f, 0.0f, 0.0f);
-
-		/// <summary>The color of the water when viewed from below the surface.</summary>
-		public Color UnderwaterColor { set { underwaterColor = value; } get { return underwaterColor; } } [SerializeField] private Color underwaterColor = new Color(0.007843138f, 0.3647059f, 0.5019608f);
-
-		/// <summary>The <b>UnderwaterColor</b> will fade out using these value.
-		/// X = Red Extinction.
-		/// Y = Green Extinction.
-		/// Z = Blue Extinction.
-		/// W = RGB Multiplier.</summary>
-		public Vector4 UnderwaterExtinction { set { underwaterExtinction = value; } get { return underwaterExtinction; } } [SerializeField] private Vector4 underwaterExtinction = new Vector4(1.0f, 1.0f, 1.0f, 0.1f);
-
-		/// <summary>The extinction amount will be calculated at this distance from the camera.</summary>
-		public float UnderwaterExtinctionRange { set { underwaterExtinctionRange = value; } get { return underwaterExtinctionRange; } } [SerializeField] private float underwaterExtinctionRange = 10.0f;
-
-		/// <summary>The density of the water when viewed from under the surface.</summary>
-		public float UnderwaterDensity { set { underwaterDensity = value; } get { return underwaterDensity; } } [SerializeField] private float underwaterDensity = 0.5f;
-
-		/// <summary>The minimum opacity of the water when viewed from under the surface.</summary>
-		public float UnderwaterMinimumOpacity { set { underwaterMinimumOpacity = value; } get { return underwaterMinimumOpacity; } } [SerializeField] [Range(0.0f, 1.0f)] private float underwaterMinimumOpacity;
 
 		/// <summary>The sharpness of the underwater lighting.</summary>
 		public float UnderwaterLightingSharpness { set { underwaterLightingSharpness = value; } get { return underwaterLightingSharpness; } } [SerializeField] [Range(1.0f, 20.0f)] private float underwaterLightingSharpness = 5.0f;
@@ -96,82 +56,82 @@ namespace SpaceGraphicsToolkit.Ocean
 		/// <summary>The distance from the camera the cloud shadow calculations will use. This should approximately be the underwater fog distance (4.6 * density).</summary>
 		public float UnderwaterShadowRange { set { underwaterShadowRange = value; } get { return underwaterShadowRange; } } [SerializeField] private float underwaterShadowRange = 10.0f;
 
-		/// <summary>The waves normal map texture.</summary>
-		public Texture2D WavesTexture { set { wavesTexture = value; } get { return wavesTexture; } } [SerializeField] private Texture2D wavesTexture;
+		/// <summary>The maximum +- height displacement of the waves in world space.</summary>
+		public float WavesDisplacement { set { wavesDisplacement = value; } get { return wavesDisplacement; } } [SerializeField] [Range(0.0f, 20.0f)] private float wavesDisplacement = 1.0f;
 
-		/// <summary>The texture used to break up the tiling of the wave animation. This should be a Red seamless texture.</summary>
-		public Texture2D WavesOffset { set { wavesOffset = value; } get { return wavesOffset; } } [SerializeField] private Texture2D wavesOffset;
+		/// <summary>The amount of waves there are on the ocean surface.</summary>
+		public float WavesScale { set { wavesScale = value; } get { return wavesScale; } } [SerializeField] [Range(0.01f, 10.0f)] private float wavesScale = 0.2f;
 
-		/// <summary>The waves texture will animate at this speed.</summary>
-		public float WavesSpeed { set { wavesSpeed = value; } get { return wavesSpeed; } } [SerializeField] private float wavesSpeed = 3.0f;
+		/// <summary>The steepness of the waves.</summary>
+		public float WavesSteepness { set { wavesSteepness = value; } get { return wavesSteepness; } } [SerializeField] [Range(0.0f, 1.0f)] private float wavesSteepness = 0.5f;
 
-		/// <summary>The wave texture gets tiled around the planet this many times.</summary>
-		public float WavesTiling { set { wavesTiling = value; } get { return wavesTiling; } } [SerializeField] private float wavesTiling = 1000.0f;
+		/// <summary>The animation speed of the waves.</summary>
+		public float WavesSpeed { set { wavesSpeed = value; } get { return wavesSpeed; } } [SerializeField] [Range(0.0f, 10.0f)] private float wavesSpeed = 1.0f;
 
-		/// <summary>The waves will displace the ocean mesh by this distance.
-		/// NOTE: This setting requires your <b>SurfaceMaterial</b> to have the <b>Displacement</b> setting enabled.</summary>
-		public float WavesDisplacement { set { wavesDisplacement = value; } get { return wavesDisplacement; } } [SerializeField] private float wavesDisplacement;
+		/// <summary>The amount of combined wave layers.</summary>
+		public int WavesQuality { set { wavesQuality = value; } get { return wavesQuality; } } [SerializeField] [Range(1, 3)] private int wavesQuality = 3;
+
+		/// <summary>The size of the shore texture in world space.</summary>
+		public float ShoreScale { set { shoreScale = value; } get { return shoreScale; } } [SerializeField] private float shoreScale = 1.0f;
+
+		/// <summary>The animation speed of the shore.</summary>
+		public float ShoreSpeed { set { shoreSpeed = value; } get { return shoreSpeed; } } [SerializeField] [Range(0.0f, 2.0f)] private float shoreSpeed = 0.75f;
+
+		/// <summary>Apply small ripple details to the ocean surface?</summary>
+		public bool Ripples { set { ripples = value; } get { return ripples; } } [SerializeField] private bool ripples = true;
+
+		/// <summary>The dual normal map texture for ripples.
+		/// RG = 0..1 NormalA.xy
+		/// BA = 0..1 NormalB.xy</summary>
+		public Texture2D RipplesTexture { set { ripplesTexture = value; } get { return ripplesTexture; } } [SerializeField] [UnityEngine.Serialization.FormerlySerializedAs("wavesTexture")] private Texture2D ripplesTexture;
+
+		/// <summary>The size of the ripple texture in world space.</summary>
+		public float RipplesScale { set { ripplesScale = value; } get { return ripplesScale; } } [SerializeField] private float ripplesScale = 1.0f;
+
+		/// <summary>The animation speed of the ripples.</summary>
+		public float RipplesSpeed { set { ripplesSpeed = value; } get { return ripplesSpeed; } } [SerializeField] [Range(0.0f, 2.0f)] private float ripplesSpeed = 0.75f;
 
 		/// <summary>The ripples texture strength will be multiplied by this.</summary>
-		public float RipplesStrength { set { ripplesStrength = value; } get { return ripplesStrength; } } [SerializeField] [Range(0.01f, 5.0f)] private float ripplesStrength = 0.5f;
+		public float RipplesStrength { set { ripplesStrength = value; } get { return ripplesStrength; } } [SerializeField] [Range(0.01f, 1.0f)] private float ripplesStrength = 0.5f;
 
-		/// <summary>The ripple texture is tiled this many times relative to the <b>WavesTiling</b> value.</summary>
-		public int RipplesTiling { set { ripplesTiling = value; } get { return ripplesTiling; } } [SerializeField] [Range(1, 16)] private int ripplesTiling = 1;
-
-		/// <summary>Should the ocean fade out based on camera distance?
-		/// NOTE: This requires the <b>SurfaceMaterial</b> to have the FADE setting enabled.</summary>
+		/// <summary>Ocean rendering can look bat at extreme distances, so fade it out.
+		/// NOTE: If you enable this, your landscape should use the <b>OceanFade</b> setting.</summary>
 		public bool Fade { set { fade = value; } get { return fade; } } [SerializeField] private bool fade;
 
 		/// <summary>The ocean will completely disappear at this distance in world space.</summary>
-		public float FadeDistance { set { fadeDistance = value; } get { return fadeDistance; } } [SerializeField] private float fadeDistance = 1000.0f;
+		public float FadeDistance { set { fadeDistance = value; } get { return fadeDistance; } } [SerializeField] private float fadeDistance = 200.0f;
 
-		/// <summary>Render underwater caustics effects?
-		/// NOTE: This requires the <b>SurfaceMaterial</b> to have the <b>CAUSTICS</b> setting enabled.</summary>
-		public bool Caustics { set { caustics = value; } get { return caustics; } } [SerializeField] private bool caustics = true;
+		/// <summary>The deep ocean surface effect will be fully revealed at this distance in world space.</summary>
+		public float FadeDeepDistance { set { fadeDeepDistance = value; } get { return fadeDeepDistance; } } [SerializeField] private float fadeDeepDistance = 10000.0f;
 
-		/// <summary>If you want the ocean to apply caustics to the underlying geometry, specify it here.</summary>
-		public Texture3D CausticsTexture { set { causticsTexture = value; } get { return causticsTexture; } } [SerializeField] private Texture3D causticsTexture;
+		/// <summary>The deep ocean surface effect will have this density.</summary>
+		public float FadeDeepDensity { set { fadeDeepDensity = value; } get { return fadeDeepDensity; } } [SerializeField] private float fadeDeepDensity = 0.1f;
 
 		/// <summary>The light source for the caustics.</summary>
 		public SgtLight CausticsLight { set { causticsLight = value; } get { return causticsLight; } } [SerializeField] private SgtLight causticsLight;
 
-		/// <summary>The caustics texture will animate at this speed.</summary>
-		public float CausticsSpeed { set { causticsSpeed = value; } get { return causticsSpeed; } } [SerializeField] private float causticsSpeed = 0.5f;
+		/// <summary>The size of the caustics texture in world space.</summary>
+		public float CausticsScale { set { causticsScale = value; } get { return causticsScale; } } [SerializeField] private float causticsScale = 1.0f;
 
-		/// <summary>The caustics texture will be tiled this many times around the planet.</summary>
-		public float CausticsTiling { set { causticsTiling = value; } get { return causticsTiling; } } [SerializeField] private float causticsTiling = 0.5f;
+		/// <summary>The animation speed of the caustics.</summary>
+		public float CausticsSpeed { set { causticsSpeed = value; } get { return causticsSpeed; } } [SerializeField] [Range(0.0f, 2.0f)] private float causticsSpeed = 0.05f;
 
-		/// <summary>The caustics texture will be fade in/out by this amount.</summary>
-		public float CausticsOpacity { set { causticsOpacity = value; } get { return causticsOpacity; } } [SerializeField] [Range(0.0f, 1.0f)] private float causticsOpacity = 1.0f;
+		private static float sphereInflate = 1.02f;
 
-		/// <summary>The caustics texture smoothness/sharpness.</summary>
-		public float CausticsPower { set { causticsPower = value; } get { return causticsPower; } } [SerializeField] [Range(1.0f, 10.0f)] private float causticsPower = 2.0f;
+		[System.NonSerialized] private static Texture3D noiseTex;
+		[System.NonSerialized] private static bool      noiseTexCreated;
 
-		/// <summary>This allows you to control how deep below the surface caustics can reach.</summary>
-		public float CausticsMaxDepth { set { causticsMaxDepth = value; } get { return causticsMaxDepth; } } [SerializeField] private float causticsMaxDepth = 10.0f;
+		[SerializeField]
+		private SgtOceanModel model;
 
-		/// <summary>This allows you to control how quickly caustics fade in based on ocean depth.</summary>
-		public float CausticsSurfaceSharpness { set { causticsSurfaceSharpness = value; } get { return causticsSurfaceSharpness; } } [SerializeField] private float causticsSurfaceSharpness = 10.0f;
-
-		/// <summary>This allows you to control how quickly caustics fade out based on ocean depth.</summary>
-		public float CausticsDeepSharpness { set { causticsDeepSharpness = value; } get { return causticsDeepSharpness; } } [SerializeField] private float causticsDeepSharpness = 10.0f;
-
-		//public float RefractionStrength { set { refractionStrength = value; } get { return refractionStrength; } } [SerializeField] private float refractionStrength;
+		[System.NonSerialized]
+		private MaterialPropertyBlock properties;
 
 		[System.NonSerialized]
 		private float underwaterBrightness;
 
 		[System.NonSerialized]
-		private RenderTexture causticsSlice;
-
-		[System.NonSerialized]
-		private RenderTexture wavesSlice;
-
-		[System.NonSerialized]
-		private float causticsPosition;
-
-		[System.NonSerialized]
-		private float wavesPosition;
+		private float landscapeOpacity = -0.01f;
 
 		[System.NonSerialized]
 		private Material blitMaterial;
@@ -188,9 +148,6 @@ namespace SpaceGraphicsToolkit.Ocean
 		[System.NonSerialized] private NativeList<Triangle> statusDiffs;
 
 		[System.NonSerialized]
-		private MaterialPropertyBlock properties;
-
-		[System.NonSerialized]
 		private JobHandle updateHandle;
 
 		[System.NonSerialized]
@@ -200,11 +157,80 @@ namespace SpaceGraphicsToolkit.Ocean
 		private List<Batch> batches = new List<Batch>();
 
 		[System.NonSerialized]
+		private float wavesPosition;
+
+		[System.NonSerialized] private Matrix4x4 ripplesMatrixA;
+		[System.NonSerialized] private Matrix4x4 ripplesMatrixB;
+		[System.NonSerialized] private float     ripplesBlend = -1.0f;
+		[System.NonSerialized] private float     ripplesPosition;
+
+		[System.NonSerialized] private Matrix4x4 shoreMatrixA;
+		[System.NonSerialized] private Matrix4x4 shoreMatrixB;
+		[System.NonSerialized] private float     shoreBlend = -1.0f;
+		[System.NonSerialized] private float     shorePosition;
+
+		[System.NonSerialized] private Matrix4x4 causticsMatrixA;
+		[System.NonSerialized] private Matrix4x4 causticsMatrixB;
+		[System.NonSerialized] private float     causticsBlend = -1.0f;
+		[System.NonSerialized] private float     causticsPosition;
+
+		[System.NonSerialized]
 		private Dictionary<TriangleHash, Batch> triangleBatches = new Dictionary<TriangleHash, Batch>();
 
-		private static readonly int _SGT_CausticsTexure = Shader.PropertyToID("_SGT_CausticsTexure");
-		private static readonly int _SGT_CausticsData   = Shader.PropertyToID("_SGT_CausticsData");
 		private static readonly int _SGT_CausticsDirection = Shader.PropertyToID("_SGT_CausticsDirection");
+		private static readonly int _SGT_FadeOpacity       = Shader.PropertyToID("_SGT_FadeOpacity");
+		private static readonly int _SGT_FadeDensity       = Shader.PropertyToID("_SGT_FadeDensity");
+
+		private static readonly int _SGT_SurfaceColor             = Shader.PropertyToID("_SGT_SurfaceColor");
+		private static readonly int _SGT_SurfaceScattering        = Shader.PropertyToID("_SGT_SurfaceScattering");
+		private static readonly int _SGT_SurfaceDensity           = Shader.PropertyToID("_SGT_SurfaceDensity");
+		private static readonly int _SGT_SurfaceSmoothness        = Shader.PropertyToID("_SGT_SurfaceSmoothness");
+
+		private static readonly int _SGT_RipplesMatrixA   = Shader.PropertyToID("_SGT_RipplesMatrixA");
+		private static readonly int _SGT_RipplesMatrixB   = Shader.PropertyToID("_SGT_RipplesMatrixB");
+		private static readonly int _SGT_RipplesBlend     = Shader.PropertyToID("_SGT_RipplesBlend");
+
+		private static readonly int _SGT_ShoreMatrixA   = Shader.PropertyToID("_SGT_ShoreMatrixA");
+		private static readonly int _SGT_ShoreMatrixB   = Shader.PropertyToID("_SGT_ShoreMatrixB");
+		private static readonly int _SGT_ShoreBlend     = Shader.PropertyToID("_SGT_ShoreBlend");
+
+		private static readonly int _SGT_CausticsMatrixA   = Shader.PropertyToID("_SGT_CausticsMatrixA");
+		private static readonly int _SGT_CausticsMatrixB   = Shader.PropertyToID("_SGT_CausticsMatrixB");
+		private static readonly int _SGT_CausticsBlend     = Shader.PropertyToID("_SGT_CausticsBlend");
+
+		private static readonly int _SGT_WavesMatrixA   = Shader.PropertyToID("_SGT_WavesMatrixA");
+		private static readonly int _SGT_WavesMatrixB   = Shader.PropertyToID("_SGT_WavesMatrixB");
+		private static readonly int _SGT_WavesBlend     = Shader.PropertyToID("_SGT_WavesBlend");
+
+		private static readonly int _SGT_SphereData   = Shader.PropertyToID("_SGT_SphereData");
+		private static readonly int _SGT_PlaneData    = Shader.PropertyToID("_SGT_PlaneData");
+
+		protected static readonly int _SGT_CloudTex     = Shader.PropertyToID("_SGT_CloudTex");
+		protected static readonly int _SGT_CloudMatrix  = Shader.PropertyToID("_SGT_CloudMatrix");
+		protected static readonly int _SGT_CloudOpacity = Shader.PropertyToID("_SGT_CloudOpacity");
+		protected static readonly int _SGT_UnderwaterShadowRange = Shader.PropertyToID("_SGT_UnderwaterShadowRange");
+
+		private static readonly int _SGT_ObjectToWorld         = Shader.PropertyToID("_SGT_ObjectToWorld");
+		private static readonly int _SGT_WorldToObject         = Shader.PropertyToID("_SGT_WorldToObject");
+
+		protected static readonly int _SGT_OceanDistance       = Shader.PropertyToID("_SGT_OceanDistance");
+		protected static readonly int _SGT_OceanDensity        = Shader.PropertyToID("_SGT_OceanDensity");
+		protected static readonly int _SGT_OceanHeight         = Shader.PropertyToID("_SGT_OceanHeight");
+		protected static readonly int _SGT_OceanLightDirection = Shader.PropertyToID("_SGT_OceanLightDirection");
+		protected static readonly int _SGT_OceanLightColor     = Shader.PropertyToID("_SGT_OceanLightColor");
+		protected static readonly int _SGT_OceanColor          = Shader.PropertyToID("_SGT_OceanColor");
+		protected static readonly int _SGT_OceanMinimum        = Shader.PropertyToID("_SGT_OceanMinimum");
+		protected static readonly int _SGT_OceanSmoothness     = Shader.PropertyToID("_SGT_OceanSmoothness");
+		protected static readonly int _SGT_OceanRadius         = Shader.PropertyToID("_SGT_OceanRadius");
+
+		private static readonly int _SGT_WaveData       = Shader.PropertyToID("_SGT_WaveData");
+		private static readonly int _SGT_RipplesTexture = Shader.PropertyToID("_SGT_RipplesTexture");
+		private static readonly int _SGT_NoiseTex       = Shader.PropertyToID("_SGT_NoiseTex");
+		private static readonly int _SGT_RipplesData    = Shader.PropertyToID("_SGT_RipplesData");
+
+		private static readonly int _SGT_Offset       = Shader.PropertyToID("_SGT_Offset");
+		private static readonly int _SGT_Radius       = Shader.PropertyToID("_SGT_Radius");
+
 		private static readonly int _SGT_Origins        = Shader.PropertyToID("_SGT_Origins");
 		private static readonly int _SGT_PositionsA     = Shader.PropertyToID("_SGT_PositionsA");
 		private static readonly int _SGT_PositionsB     = Shader.PropertyToID("_SGT_PositionsB");
@@ -213,60 +239,35 @@ namespace SpaceGraphicsToolkit.Ocean
 		private static readonly int _SGT_CoordsY        = Shader.PropertyToID("_SGT_CoordsY");
 		private static readonly int _SGT_CoordsZ        = Shader.PropertyToID("_SGT_CoordsZ");
 		private static readonly int _SGT_CoordsW        = Shader.PropertyToID("_SGT_CoordsW");
-		private static readonly int _SGT_FadeDistance   = Shader.PropertyToID("_SGT_FadeDistance");
 
-		private static readonly int _SGT_SurfaceColor             = Shader.PropertyToID("_SGT_SurfaceColor");
-		private static readonly int _SGT_SurfaceDensity           = Shader.PropertyToID("_SGT_SurfaceDensity");
-		private static readonly int _SGT_SurfaceMinimumOpacity    = Shader.PropertyToID("_SGT_SurfaceMinimumOpacity");
-		private static readonly int _SGT_SurfaceSmoothness        = Shader.PropertyToID("_SGT_SurfaceSmoothness");
-		private static readonly int _SGT_SurfaceTexture           = Shader.PropertyToID("_SGT_SurfaceTexture");
-		private static readonly int _SGT_SurfaceTiling            = Shader.PropertyToID("_SGT_SurfaceTiling");
-		private static readonly int _SGT_SurfaceRange             = Shader.PropertyToID("_SGT_SurfaceRange");
-		private static readonly int _SGT_SurfaceStrength          = Shader.PropertyToID("_SGT_SurfaceStrength");
-
-		private static readonly int _SGT_UnderwaterColor          = Shader.PropertyToID("_SGT_UnderwaterColor");
-		private static readonly int _SGT_UnderwaterExtinction     = Shader.PropertyToID("_SGT_UnderwaterExtinction");
-		private static readonly int _SGT_UnderwaterDensity        = Shader.PropertyToID("_SGT_UnderwaterDensity");
-		private static readonly int _SGT_UnderwaterMinimumOpacity = Shader.PropertyToID("_SGT_UnderwaterMinimumOpacity");
-		private static readonly int _SGT_UnderwaterBrightness     = Shader.PropertyToID("_SGT_UnderwaterBrightness");
-
-		private static readonly int _SGT_WaveTexture = Shader.PropertyToID("_SGT_WaveTexture");
-		private static readonly int _SGT_WaveData    = Shader.PropertyToID("_SGT_WaveData");
-
-		private static readonly int _SGT_Offset       = Shader.PropertyToID("_SGT_Offset");
-		private static readonly int _SGT_Radius       = Shader.PropertyToID("_SGT_Radius");
-
-		protected static readonly int _SGT_CloudTex     = Shader.PropertyToID("_SGT_CloudTex");
-		protected static readonly int _SGT_CloudMatrix  = Shader.PropertyToID("_SGT_CloudMatrix");
-		protected static readonly int _SGT_CloudOpacity = Shader.PropertyToID("_SGT_CloudOpacity");
-		protected static readonly int _SGT_CloudWarp    = Shader.PropertyToID("_SGT_CloudWarp");
-		protected static readonly int _SGT_UnderwaterShadowRange = Shader.PropertyToID("_SGT_UnderwaterShadowRange");
-		
-		private static readonly int _SGT_Texture    = Shader.PropertyToID("_SGT_Texture");
-		private static readonly int _SGT_OffsetTex  = Shader.PropertyToID("_SGT_OffsetTex");
-
-		private static readonly int _SGT_ObjectToOcean = Shader.PropertyToID("_SGT_ObjectToOcean");
-		private static readonly int _SGT_OceanToObject = Shader.PropertyToID("_SGT_OceanToObject");
-		private static readonly int _SGT_WorldToLocal  = Shader.PropertyToID("_SGT_WorldToLocal");
-
-		private static readonly int _SGT_Object2World         = Shader.PropertyToID("_SGT_Object2World");
-		private static readonly int _SGT_World2Object         = Shader.PropertyToID("_SGT_World2Object");
 		private static readonly int _SGT_World2View           = Shader.PropertyToID("_SGT_World2View");
 		private static readonly int _SGT_WCam                 = Shader.PropertyToID("_SGT_WCam");
 
-		public RenderTexture CausticsSlice
+		public Texture3D NoiseTex
 		{
 			get
 			{
-				return causticsSlice;
-			}
-		}
+				if (noiseTexCreated == false)
+				{
+					noiseTex = new Texture3D(16, 16, 16, TextureFormat.R8, false);
+					noiseTex.hideFlags = HideFlags.DontSave;
+					noiseTex.wrapMode  = TextureWrapMode.Repeat;
 
-		public RenderTexture WavesSlice
-		{
-			get
-			{
-				return wavesSlice;
+					var pixels = new NativeArray<byte>(noiseTex.width * noiseTex.height * noiseTex.depth, Allocator.Temp);
+					var rng    = new Unity.Mathematics.Random(1337);
+
+					for (var i = 0; i < pixels.Length; i++)
+					{
+						pixels[i] = (byte)rng.NextInt(0, 256);
+					}
+
+					noiseTex.SetPixelData(pixels, 0);
+					noiseTex.Apply(false, true);
+
+					noiseTexCreated = true;
+				}
+
+				return noiseTex;
 			}
 		}
 
@@ -278,53 +279,168 @@ namespace SpaceGraphicsToolkit.Ocean
 			}
 		}
 
-		private void DrawTriangles()
+		public float LandscapeOpacity
 		{
-			if (batches.Count > 0)
+			get
 			{
-				if (updateRunning == false)
-				{
-					ScheduleUpdate(detail);
-				}
-
-				if (updateHandle.IsCompleted == true)
-				{
-					CompleteAndRebuildBatches();
-				}
+				return landscapeOpacity;
 			}
-			else
-			{
-				ScheduleUpdate(0.01f);
-				CompleteAndRebuildBatches();
-			}
-			//ScheduleUpdate(meshDetail);
-			//CompleteAndRebuildBatches();
+		}
 
-			var bounds = new Bounds(Vector3.zero, Vector3.one * 10000.0f);
-			var o2w    = RemoveTranslation(transform.localToWorldMatrix);
-			var w2o    = RemoveTranslation(transform.worldToLocalMatrix);
-			var rot    = Quaternion.Inverse(transform.rotation) * transform.position;
+		public bool HasChild(CwChild child)
+		{
+			return child == model;
+		}
 
-			properties.SetMatrix(_SGT_ObjectToOcean, o2w);
-			properties.SetMatrix(_SGT_OceanToObject, w2o);
-			properties.SetMatrix(_SGT_WorldToLocal, transform.worldToLocalMatrix);
-			properties.SetVector(_SGT_Offset, rot);
-			properties.SetFloat(_SGT_Radius, radius);
+		public void RandomizeHue()
+		{
+			var h = 0.0f;
+			var s = 0.0f;
+			var v = 0.0f;
 
-			ApplyCloudShadowSettings(properties);
+			Color.RGBToHSV(surfaceColor, out h, out s, out v);
 
-			DrawTriangles(batches, surfaceMaterial);
+			var newH = UnityEngine.Random.value;
+
+			surfaceColor = Color.HSVToRGB(newH, s, v);
 		}
 
 		public void ApplyCloudShadowSettings(MaterialPropertyBlock properties)
 		{
-			if (cloudShadow != null && cloudShadow.GeneratedTexture != null)
+			if (cloudShadow != null)
 			{
-				properties.SetTexture(_SGT_CloudTex, cloudShadow.GeneratedTexture);
-				properties.SetMatrix(_SGT_CloudMatrix, cloudShadow.GeneratedMatrix);
-				properties.SetVector(_SGT_CloudOpacity, cloudShadow.GeneratedOpacity);
-				properties.SetFloat(_SGT_CloudWarp, cloudShadow.Warp);
+				cloudShadow.ApplyShadowSettings(properties);
+
 				properties.SetFloat(_SGT_UnderwaterShadowRange, underwaterShadowRange);
+			}
+		}
+
+		private void HandleCameraPreRender(Camera camera)
+		{
+			var eye = camera.transform.position;
+
+			if (cameraOffset != 0.0f)
+			{
+				var direction = Vector3.Normalize(eye - transform.position);
+
+				model.transform.position = transform.position + direction * cameraOffset;
+			}
+			else
+			{
+				model.transform.localPosition = Vector3.zero;
+			}
+		}
+
+		/// <summary>This will tell you the +- altitude of the input worldPoint relative to the surface of the ocean without displacement.</summary>
+		public float CalculateWorldAltitude(Vector3 worldPoint)
+		{
+			var localPoint   = transform.InverseTransformPoint(worldPoint);
+			var localSurface = localPoint.normalized * radius;
+			var worldSurface = transform.TransformPoint(localSurface);
+
+			return Vector3.Distance(worldPoint, worldSurface) * Mathf.Sign(localPoint.magnitude - radius);
+		}
+
+		public static SgtOcean Create(int layer = 0, Transform parent = null)
+		{
+			return Create(layer, parent, Vector3.zero, Quaternion.identity, Vector3.one);
+		}
+
+		public static SgtOcean Create(int layer, Transform parent, Vector3 localPosition, Quaternion localRotation, Vector3 localScale)
+		{
+			return CwHelper.CreateGameObject("Ocean", layer, parent, localPosition, localRotation, localScale).AddComponent<SgtOcean>();
+		}
+
+		protected override void OnEnable()
+		{
+			base.OnEnable();
+
+			topology            = new NativeList<Triangle>(8, AllocatorManager.Persistent);
+			cameraPositions     = new NativeList<double3>(1, AllocatorManager.Persistent);
+
+			triangles   = new NativeList<Triangle>(1024, AllocatorManager.Persistent);
+			createDiffs = new NativeList<Triangle>(1024, AllocatorManager.Persistent);
+			deleteDiffs = new NativeList<Triangle>(1024, AllocatorManager.Persistent);
+			statusDiffs = new NativeList<Triangle>(1024, AllocatorManager.Persistent);
+
+			CwHelper.OnCameraPreRender += HandleCameraPreRender;
+
+			if (model == null)
+			{
+				model = SgtOceanModel.Create(this);
+			}
+
+			model.CachedMeshRenderer.enabled = true;
+
+			if (properties == null)
+			{
+				properties = new MaterialPropertyBlock();
+			}
+		}
+
+		protected override void OnDisable()
+		{
+			base.OnDisable();
+
+			CwHelper.OnCameraPreRender -= HandleCameraPreRender;
+
+			if (model != null)
+			{
+				model.CachedMeshRenderer.enabled = false;
+			}
+
+			if (sky != null)
+			{
+				sky.Model.CachedMeshRenderer.enabled = true;
+			}
+
+			if (updateRunning == true)
+			{
+				updateHandle.Complete();
+				updateRunning = false;
+			}
+
+			topology.Dispose();
+
+			cameraPositions.Dispose();
+
+			triangles.Dispose();
+			
+			createDiffs.Dispose();
+			deleteDiffs.Dispose();
+			statusDiffs.Dispose();
+
+			foreach (var batch in batches) { Batch.Pool.Push(batch); } batches.Clear();
+
+			triangleBatches.Clear();
+		}
+
+		[System.NonSerialized]
+		private Vector3 expectedPosition;
+
+		private void UpdatePosition()
+		{
+			var newPosition = transform.position;
+
+			if (newPosition != expectedPosition)
+			{
+				var delta = Matrix4x4.Translate(expectedPosition - newPosition);
+
+				expectedPosition = newPosition;
+
+				ripplesMatrixA *= delta;
+				ripplesMatrixB *= delta;
+
+				shoreMatrixA *= delta;
+				shoreMatrixB *= delta;
+
+				causticsMatrixA *= delta;
+				causticsMatrixB *= delta;
+
+				for (int i = 0; i < waveCount; i++)
+				{
+					matrixBuffer[i] *= delta;
+				}
 			}
 		}
 
@@ -332,15 +448,9 @@ namespace SpaceGraphicsToolkit.Ocean
 		{
 			cameraPositions.Clear();
 
-			if (observers != null)
+			if (observer != null)
 			{
-				foreach (var observer in observers)
-				{
-					if (observer != null)
-					{
-						cameraPositions.Add((float3)transform.InverseTransformPoint(observer.position));
-					}
-				}
+				cameraPositions.Add((float3)transform.InverseTransformPoint(observer.transform.position));
 			}
 
 			if (cameraPositions.Length == 0 && Camera.main != null)
@@ -362,7 +472,7 @@ namespace SpaceGraphicsToolkit.Ocean
 			trianglesJob.CameraDetailSq  = 1.0f / (detail * detail);
 			trianglesJob.Deform          = DeformType.Sphere;
 			trianglesJob.Radius          = radius;
-			trianglesJob.MaxDepth        = 40;
+			trianglesJob.MaxDepth        = 50;
 			trianglesJob.MaxSteps        = 100;
 
 			trianglesJob.Triangles   = triangles;
@@ -421,7 +531,7 @@ namespace SpaceGraphicsToolkit.Ocean
 		{
 			var batch = GetBatch(batches);
 
-			batch.AddTriangle(triangle, (int4)new float4(wavesTiling, surfaceTiling.y, surfaceTiling.z, surfaceTiling.w), radius);
+			batch.AddTriangle(triangle, radius / 1.0, 1, radius);
 
 			triangleBatches.Add(triangle.Hash, batch);
 		}
@@ -458,28 +568,6 @@ namespace SpaceGraphicsToolkit.Ocean
 			return newBatch;
 		}
 
-		private void DrawTriangles(List<Batch> batches, Material material)
-		{
-			if (material != null)
-			{
-				var bounds = new Bounds(transform.position, Vector3.one * radius * 2.0f);
-
-				foreach (var batch in batches)
-				{
-					properties.SetVectorArray(_SGT_Origins, batch.PositionsO);
-					properties.SetVectorArray(_SGT_PositionsA, batch.PositionsA);
-					properties.SetVectorArray(_SGT_PositionsB, batch.PositionsB);
-					properties.SetVectorArray(_SGT_PositionsC, batch.PositionsC);
-					properties.SetMatrixArray(_SGT_CoordsX, batch.CoordX);
-					properties.SetMatrixArray(_SGT_CoordsY, batch.CoordY);
-					properties.SetMatrixArray(_SGT_CoordsZ, batch.CoordZ);
-					properties.SetMatrixArray(_SGT_CoordsW, batch.CoordW);
-
-					Graphics.DrawMeshInstancedProcedural(GetMesh(), 0, material, bounds, batch.Count, properties, UnityEngine.Rendering.ShadowCastingMode.Off, true, gameObject.layer);
-				}
-			}
-		}
-
 		private Matrix4x4 RemoveTranslation(Matrix4x4 matrix)
 		{
 			matrix.m03 = 0;
@@ -489,76 +577,328 @@ namespace SpaceGraphicsToolkit.Ocean
 			return matrix;
 		}
 
-		public float CalculateWorldAltitude(Vector3 worldPoint)
+		private int waveCount = 3;
+		private float lifetime = 12.0f;
+
+		private float globalTimer = -1f;
+		private Matrix4x4[] matrixBuffer;
+		private Vector4[] dataBuffer;
+
+		private void UpdateWaves()
 		{
-			var localPoint   = transform.InverseTransformPoint(worldPoint);
-			var localSurface = localPoint.normalized * radius;
-			var worldSurface = transform.TransformPoint(localSurface);
-
-			return Vector3.Distance(worldPoint, worldSurface);
-		}
-
-		public static SgtOcean Create(int layer = 0, Transform parent = null)
-		{
-			return Create(layer, parent, Vector3.zero, Quaternion.identity, Vector3.one);
-		}
-
-		public static SgtOcean Create(int layer, Transform parent, Vector3 localPosition, Quaternion localRotation, Vector3 localScale)
-		{
-			return CwHelper.CreateGameObject("Ocean", layer, parent, localPosition, localRotation, localScale).AddComponent<SgtOcean>();
-		}
-
-		protected override void OnEnable()
-		{
-			base.OnEnable();
-
-			topology            = new NativeList<Triangle>(8, AllocatorManager.Persistent);
-			cameraPositions     = new NativeList<double3>(1, AllocatorManager.Persistent);
-
-			triangles   = new NativeList<Triangle>(1024, AllocatorManager.Persistent);
-			createDiffs = new NativeList<Triangle>(1024, AllocatorManager.Persistent);
-			deleteDiffs = new NativeList<Triangle>(1024, AllocatorManager.Persistent);
-			statusDiffs = new NativeList<Triangle>(1024, AllocatorManager.Persistent);
-
-			if (properties == null)
+			if (globalTimer < 0f)
 			{
-				properties = new MaterialPropertyBlock();
+				globalTimer = 0f;
+				matrixBuffer = new Matrix4x4[waveCount];
+				dataBuffer = new Vector4[waveCount];
+				for (int i = 0; i < waveCount; i++)
+					matrixBuffer[i] = GenerateWaterMatrix(Camera.main, wavesScale, UnityEngine.Random.value * 360f);
+			}
+
+			float prevPhase = globalTimer / lifetime;
+			globalTimer += Time.deltaTime;
+			while (globalTimer >= lifetime)
+				globalTimer -= lifetime;
+			float phase = globalTimer / lifetime;
+
+			for (int i = 0; i < waveCount; i++)
+			{
+				float localPhase = (phase + (float)i / waveCount) % 1f;
+				float prevLocalPhase = (prevPhase + (float)i / waveCount) % 1f;
+
+				// Regenerate when phase wraps (at minimum weight)
+				if (localPhase < prevLocalPhase - 0.5f)
+					matrixBuffer[i] = GenerateWaterMatrix(Camera.main, wavesScale, UnityEngine.Random.value * 360f);
+
+				// Sine wave weight: sum of all weights = 1.0
+				float weight = (1f - Mathf.Cos(2f * Mathf.PI * localPhase)) / waveCount;
+				dataBuffer[i] = new Vector4(wavesScale, weight * wavesDisplacement, 0f, 0f);
 			}
 		}
 
-		protected override void OnDisable()
+		protected virtual void LateUpdate()
 		{
-			base.OnDisable();
-
-			if (causticsSlice != null)
+			if (model != null)
 			{
-				DestroyImmediate(causticsSlice);
+				model.CachedMeshFilter.sharedMesh = SgtSky.InvertedSphereMesh;
 			}
 
-			if (wavesSlice != null)
+			UpdateWaves();
+
+			UpdatePosition();
+
+			if (batches.Count > 0)
 			{
-				DestroyImmediate(wavesSlice);
+				if (updateRunning == false)
+				{
+					ScheduleUpdate(detail);
+				}
+
+				if (updateHandle.IsCompleted == true)
+				{
+					CompleteAndRebuildBatches();
+				}
+			}
+			else
+			{
+				ScheduleUpdate(0.01f);
+				CompleteAndRebuildBatches();
 			}
 
-			if (updateRunning == true)
+			wavesPosition += wavesSpeed * Time.deltaTime;
+
+			ripplesPosition += ripplesSpeed * Time.deltaTime;
+
+			causticsPosition += causticsSpeed * Time.deltaTime;
+
+			var finalCamera = observer != null ? observer : Camera.main;
+
+			if (material != null && sky != null && finalCamera != null)
 			{
-				updateHandle.Complete();
-				updateRunning = false;
+				model.transform.localScale = Vector3.one * CwHelper.Divide(sky.OuterRadius, 0.5f / sphereInflate);
+
+				var altitude    = CalculateWorldAltitude(finalCamera.transform.position);
+				var fadeOpacity = Mathf.InverseLerp(fadeDistance, 0.0f, altitude);
+				var targetLO    = altitude >= fadeDistance ? 1.0f : 0.0f;
+
+				if (landscapeOpacity >= 0.0f)
+				{
+					landscapeOpacity = Mathf.MoveTowards(landscapeOpacity, targetLO, Time.deltaTime);
+				}
+				else
+				{
+					landscapeOpacity = targetLO;
+				}
+
+				if (fade == true && landscapeOpacity >= 1.0f)
+				{
+					model.CachedMeshRenderer.enabled = false;
+					sky.Model.CachedMeshRenderer.enabled = true;
+				}
+				else
+				{
+					model.CachedMeshRenderer.enabled = true;
+					sky.Model.CachedMeshRenderer.enabled = false;
+				}
+
+				sky.ClipRadius = math.lerp(radius, -1.0f, fadeOpacity);
+
+				model.CachedMeshRenderer.sharedMaterial = material;
+
+				model.CachedMeshRenderer.GetPropertyBlock(properties);
+
+				sky.ApplySettings(properties);
+
+				underwaterBrightness = CalculateUnderwaterBrightness();
+
+				var o2w   = RemoveTranslation(transform.localToWorldMatrix);
+				var w2o   = RemoveTranslation(transform.worldToLocalMatrix);
+				var rot   = Quaternion.Inverse(transform.rotation) * transform.position;
+
+				var scale      = radius * 2.0f;
+				var worldToSky = Matrix4x4.Scale(new Vector3(scale, scale, scale)) * transform.worldToLocalMatrix;
+				var center     = (double3)(float3)transform.position;
+				var delta      = (double3)(float3)finalCamera.transform.position - center;
+				var normal     = math.normalize(delta);
+				var planeW     = -math.dot(normal, center + normal * radius);
+				//var planeD     = (float)(math.length(delta) - radius);
+				
+				properties.SetMatrix(_SGT_ObjectToWorld, o2w);
+				properties.SetMatrix(_SGT_WorldToObject, w2o);
+
+				properties.SetColor(_SGT_SurfaceColor, surfaceColor);
+				properties.SetColor(_SGT_SurfaceScattering, surfaceScattering * surfaceScattering.a);
+				properties.SetFloat(_SGT_SurfaceDensity, surfaceDensity);
+				properties.SetFloat(_SGT_SurfaceSmoothness, surfaceSmoothness);
+				properties.SetVector(_SGT_FadeOpacity, new Vector2(fadeOpacity, landscapeOpacity));
+				properties.SetFloat(_SGT_FadeDensity, fadeDeepDensity);
+
+				if (ripplesBlend >= 0.0f)
+				{
+					ripplesBlend += Time.deltaTime * ripplesSpeed;
+
+					if (ripplesBlend > 1.0f)
+					{
+						ripplesMatrixA = ripplesMatrixB;
+						ripplesMatrixB = GenerateWaterMatrix(finalCamera, ripplesScale, UnityEngine.Random.value * 360.0f);
+						ripplesBlend  %= 1.0f;
+					}
+				}
+				else
+				{
+					ripplesMatrixA = GenerateWaterMatrix(finalCamera, ripplesScale, UnityEngine.Random.value * 360.0f);
+					ripplesMatrixB = GenerateWaterMatrix(finalCamera, ripplesScale, UnityEngine.Random.value * 360.0f);
+					ripplesBlend   = 0.0f;
+				}
+
+				properties.SetMatrixArray("_WaveMatrices", matrixBuffer);
+				properties.SetVectorArray("_WaveData", dataBuffer);
+				properties.SetTexture(_SGT_NoiseTex, NoiseTex);
+
+				properties.SetMatrix(_SGT_RipplesMatrixA, ripplesMatrixA);
+				properties.SetMatrix(_SGT_RipplesMatrixB, ripplesMatrixB);
+				properties.SetFloat(_SGT_RipplesBlend, ripplesBlend);
+				properties.SetVector(_SGT_RipplesData, new Vector4(ripplesStrength, ripplesPosition * Mathf.PI, 0.0f, 0.0f));
+
+				if (shoreBlend >= 0.0f)
+				{
+					shoreBlend += Time.deltaTime * shoreSpeed;
+
+					if (shoreBlend > 1.0f)
+					{
+						shoreMatrixA = shoreMatrixB;
+						shoreMatrixB = GenerateWaterMatrix(finalCamera, shoreScale, UnityEngine.Random.value * 360.0f);
+						shoreBlend  %= 1.0f;
+					}
+				}
+				else
+				{
+					shoreMatrixA = GenerateWaterMatrix(finalCamera, shoreScale, UnityEngine.Random.value * 360.0f);
+					shoreMatrixB = GenerateWaterMatrix(finalCamera, shoreScale, UnityEngine.Random.value * 360.0f);
+					shoreBlend   = 0.0f;
+				}
+
+				properties.SetMatrix(_SGT_ShoreMatrixA, shoreMatrixA);
+				properties.SetMatrix(_SGT_ShoreMatrixB, shoreMatrixB);
+				properties.SetFloat(_SGT_ShoreBlend, shoreBlend);
+
+				//properties.SetColor("_LightColor0", Color.yellow);
+
+				if (causticsBlend >= 0.0f)
+				{
+					causticsBlend += Time.deltaTime;
+
+					if (causticsBlend > 1.0f)
+					{
+						causticsMatrixA = causticsMatrixB;
+						causticsMatrixB = GenerateWaterMatrix(finalCamera, causticsScale, UnityEngine.Random.value * 360.0f);
+						causticsBlend  %= 1.0f;
+					}
+				}
+				else
+				{
+					causticsMatrixA = GenerateWaterMatrix(finalCamera, causticsScale, UnityEngine.Random.value * 360.0f);
+					causticsMatrixB = GenerateWaterMatrix(finalCamera, causticsScale, UnityEngine.Random.value * 360.0f);
+					causticsBlend   = 0.0f;
+				}
+
+				properties.SetMatrix(_SGT_CausticsMatrixA, causticsMatrixA);
+				properties.SetMatrix(_SGT_CausticsMatrixB, causticsMatrixB);
+				properties.SetFloat(_SGT_CausticsBlend, causticsBlend);
+
+				properties.SetVector(_SGT_CausticsDirection, GetLightDirection());
+
+				properties.SetVector(_SGT_SphereData, new Vector4((float)center.x, (float)center.y, (float)center.z, radius));
+				properties.SetVector(_SGT_PlaneData, new Vector4((float)normal.x, (float)normal.y, (float)normal.z, (float)planeW));
+				properties.SetVector(_SGT_WaveData, new Vector4(0.0f, ripplesStrength, wavesDisplacement, 0.5f / wavesDisplacement));
+
+				model.CachedMeshRenderer.SetPropertyBlock(properties);
+			}
+		}
+
+		public override void CalculateSortDistance(Vector3 worldPoint)
+		{
+			sortDistance = Vector3.Distance(worldPoint, transform.position);
+		}
+
+		public override void RenderOceanBuffer(SgtVolumeManager manager, Camera finalCamera, int frame, Vector2Int renderSize)
+		{
+			if (blitMaterial == null)
+			{
+				blitMaterial = CwHelper.CreateTempMaterial("SgtOcean", "Hidden/SgtOcean");
 			}
 
-			topology.Dispose();
+			blitMaterial.SetVector(_SGT_WCam, finalCamera.transform.position);
 
-			cameraPositions.Dispose();
+			blitMaterial.SetFloat(_SGT_SurfaceDensity, surfaceDensity);
 
-			triangles.Dispose();
+			blitMaterial.EnableKeyword("_SGT_SHAPE_SPHERE");
+
+			if (wavesDisplacement > 0.0f)
+			{
+				blitMaterial.EnableKeyword("_SGT_DISPLACEMENT_ON");
+			}
+			else
+			{
+				blitMaterial.DisableKeyword("_SGT_DISPLACEMENT_ON");
+			}
+
+			if (wavesQuality == 1)
+			{
+				blitMaterial.EnableKeyword("_SGT_WAVES_1");
+				blitMaterial.DisableKeyword("_SGT_WAVES_2");
+				blitMaterial.DisableKeyword("_SGT_WAVES_3");
+			}
+			else if (wavesQuality == 2)
+			{
+				blitMaterial.DisableKeyword("_SGT_WAVES_1");
+				blitMaterial.EnableKeyword("_SGT_WAVES_2");
+				blitMaterial.DisableKeyword("_SGT_WAVES_3");
+			}
+			else if (wavesQuality == 3)
+			{
+				blitMaterial.DisableKeyword("_SGT_WAVES_1");
+				blitMaterial.DisableKeyword("_SGT_WAVES_2");
+				blitMaterial.EnableKeyword("_SGT_WAVES_3");
+			}
+
+			if (ripples == true && ripplesTexture != null)
+			{
+				blitMaterial.SetTexture(_SGT_RipplesTexture, ripplesTexture);
+				blitMaterial.SetTexture(_SGT_NoiseTex, NoiseTex);
+
+				blitMaterial.EnableKeyword("_SGT_RIPPLES_ON");
+			}
+			else
+			{
+				blitMaterial.DisableKeyword("_SGT_RIPPLES_ON");
+			}
+
+			var distance = Vector3.Distance(finalCamera.transform.position, transform.position);
+			var altitude = distance - radius;
+
+			if (Mathf.Abs(altitude) > radius * 0.001f)
+			{
+				blitMaterial.EnableKeyword("_SGT_SNAP_ON");
+			}
+			else
+			{
+				blitMaterial.DisableKeyword("_SGT_SNAP_ON");
+			}
+
+			var bounds = new Bounds(transform.position, Vector3.one * radius * 2.0f);
 			
-			createDiffs.Dispose();
-			deleteDiffs.Dispose();
-			statusDiffs.Dispose();
+			blitMaterial.enableInstancing = true;
 
-			foreach (var batch in batches) { Batch.Pool.Push(batch); } batches.Clear();
+			var o2w   = RemoveTranslation(transform.localToWorldMatrix);
+			var w2o   = RemoveTranslation(transform.worldToLocalMatrix);
+			var rot   = Quaternion.Inverse(transform.rotation) * transform.position;
 
-			triangleBatches.Clear();
+			properties.SetMatrix(_SGT_ObjectToWorld, o2w);
+			properties.SetMatrix(_SGT_WorldToObject, w2o);
+			properties.SetVector(_SGT_Offset, rot);
+			properties.SetFloat(_SGT_Radius, radius);
+			properties.SetVector(_SGT_WaveData, new Vector4(wavesDisplacement, wavesSteepness, wavesPosition, 0.0f));
+			properties.SetVector(_SGT_RipplesData, new Vector4(ripplesStrength, ripplesPosition * Mathf.PI, 0.0f, 0.0f));
+
+			foreach (var batch in batches)
+			{
+				properties.SetVectorArray(_SGT_Origins, batch.PositionsO);
+				properties.SetVectorArray(_SGT_PositionsA, batch.PositionsA);
+				properties.SetVectorArray(_SGT_PositionsB, batch.PositionsB);
+				properties.SetVectorArray(_SGT_PositionsC, batch.PositionsC);
+				properties.SetMatrixArray(_SGT_CoordsX, batch.CoordX);
+				properties.SetMatrixArray(_SGT_CoordsY, batch.CoordY);
+				properties.SetMatrixArray(_SGT_CoordsZ, batch.CoordZ);
+				properties.SetMatrixArray(_SGT_CoordsW, batch.CoordW);
+
+				SgtVolumeCamera.AddDrawMeshInstancedProcedural(GetMesh(), 0, blitMaterial, 2, batch.Count, properties);
+			}
+		}
+
+		private Matrix4x4 GenerateWaterMatrix(Camera finalCamera, float scale, float degrees)
+		{
+			return Matrix4x4.Rotate(Quaternion.Euler(0.0f, 0.0f, degrees)) * Matrix4x4.LookAt(transform.position, finalCamera.transform.position, Vector3.up).inverse * Matrix4x4.Scale(Vector3.one / scale);
 		}
 
 		private float CalculateUnderwaterBrightness(Vector3 worldPoint)
@@ -623,157 +963,6 @@ namespace SpaceGraphicsToolkit.Ocean
 
 			return Vector3.forward;
 		}
-
-		protected virtual void LateUpdate()
-		{
-			UpdateDetail();
-
-			underwaterBrightness = CalculateUnderwaterBrightness();
-
-			properties.SetColor(_SGT_SurfaceColor, surfaceColor);
-			properties.SetFloat(_SGT_SurfaceDensity, surfaceDensity);
-			properties.SetFloat(_SGT_SurfaceMinimumOpacity, surfaceMinimumOpacity);
-			properties.SetFloat(_SGT_SurfaceSmoothness, surfaceSmoothness);
-			properties.SetTexture(_SGT_SurfaceTexture, surfaceTexture != null ? surfaceTexture : Texture2D.normalTexture);
-			properties.SetVector(_SGT_SurfaceTiling, (float4)(int4)(float4)surfaceTiling);
-			properties.SetVector(_SGT_SurfaceRange, surfaceRange);
-			properties.SetVector(_SGT_SurfaceStrength, surfaceStrength);
-			properties.SetFloat(_SGT_FadeDistance, fadeDistance);
-
-			properties.SetColor(_SGT_UnderwaterColor, underwaterColor);
-			properties.SetVector(_SGT_UnderwaterExtinction, new Vector4(underwaterExtinction.x * underwaterExtinction.w, underwaterExtinction.y * underwaterExtinction.w, underwaterExtinction.z * underwaterExtinction.w, underwaterExtinctionRange));
-			properties.SetFloat(_SGT_UnderwaterDensity, underwaterDensity);
-			properties.SetFloat(_SGT_UnderwaterMinimumOpacity, underwaterMinimumOpacity);
-			properties.SetFloat(_SGT_UnderwaterBrightness, underwaterBrightness);
-
-			if (caustics == true && causticsSlice != null)
-			{
-				properties.SetTexture(_SGT_CausticsTexure, causticsSlice);
-				properties.SetVector(_SGT_CausticsData, new Vector4(causticsMaxDepth, causticsSurfaceSharpness, causticsDeepSharpness, causticsTiling));
-				properties.SetVector(_SGT_CausticsDirection, GetLightDirection());
-			}
-
-			properties.SetTexture(_SGT_WaveTexture, wavesSlice != null ? wavesSlice : Texture2D.normalTexture);
-			properties.SetVector(_SGT_WaveData, new Vector4(wavesTiling, wavesDisplacement, ripplesTiling, ripplesStrength));
-
-			DrawTriangles();
-		}
-
-		public override void RenderWaterBuffers(SgtVolumeManager manager, Camera finalCamera, int frame, Vector2Int renderSize)
-		{
-			if (blitMaterial == null)
-			{
-				blitMaterial = CwHelper.CreateTempMaterial("SgtOcean", "Hidden/SgtOcean");
-			}
-
-			blitMaterial.SetMatrix(_SGT_World2View, finalCamera.worldToCameraMatrix);
-			blitMaterial.SetVector(_SGT_WCam, finalCamera.transform.position);
-
-			blitMaterial.SetFloat(_SGT_SurfaceDensity, surfaceDensity);
-			blitMaterial.SetFloat(_SGT_SurfaceMinimumOpacity, surfaceMinimumOpacity);
-
-			blitMaterial.SetFloat(_SGT_UnderwaterDensity, underwaterDensity);
-			blitMaterial.SetFloat(_SGT_UnderwaterMinimumOpacity, underwaterMinimumOpacity);
-
-			blitMaterial.EnableKeyword("_SGT_SHAPE_SPHERE");
-
-			if (wavesDisplacement > 0.0f)
-			{
-				blitMaterial.EnableKeyword("_SGT_DISPLACEMENT_ON");
-			}
-			else
-			{
-				blitMaterial.DisableKeyword("_SGT_DISPLACEMENT_ON");
-			}
-
-			var bounds = new Bounds(transform.position, Vector3.one * radius * 2.0f);
-			
-			blitMaterial.enableInstancing = true;
-
-			foreach (var batch in batches)
-			{
-				properties.SetVectorArray(_SGT_Origins, batch.PositionsO);
-				properties.SetVectorArray(_SGT_PositionsA, batch.PositionsA);
-				properties.SetVectorArray(_SGT_PositionsB, batch.PositionsB);
-				properties.SetVectorArray(_SGT_PositionsC, batch.PositionsC);
-				properties.SetMatrixArray(_SGT_CoordsX, batch.CoordX);
-				properties.SetMatrixArray(_SGT_CoordsY, batch.CoordY);
-				properties.SetMatrixArray(_SGT_CoordsZ, batch.CoordZ);
-				properties.SetMatrixArray(_SGT_CoordsW, batch.CoordW);
-
-				SgtVolumeCamera.AddDrawMeshInstancedProcedural(GetMesh(), 0, blitMaterial, 2, false, batch.Count, properties);
-			}
-		}
-
-		public override void RenderBuffers(SgtVolumeManager manager, Camera finalCamera, int frame, Vector2Int renderSize)
-		{
-		}
-
-		public void UpdateDetail()
-		{
-			if (blitMaterial == null)
-			{
-				blitMaterial = CwHelper.CreateTempMaterial("SgtOcean", "Hidden/SgtOcean");
-			}
-
-			var oldActive = RenderTexture.active;
-
-			if (caustics == true && causticsTexture != null)
-			{
-				if (causticsSlice == null)
-				{
-					var desc = new RenderTextureDescriptor(causticsTexture.width, causticsTexture.height, RenderTextureFormat.R8, 0, 8);
-
-					desc.sRGB = false;
-
-					causticsSlice = new RenderTexture(desc);
-					causticsSlice.wrapMode         = TextureWrapMode.Repeat;
-					causticsSlice.useMipMap        = true;
-					causticsSlice.autoGenerateMips = false;
-
-					causticsSlice.Create();
-				}
-
-				causticsPosition += causticsSpeed * Time.deltaTime;
-
-				blitMaterial.SetTexture(_SGT_CausticsTexure, causticsTexture);
-				blitMaterial.SetVector(_SGT_CausticsData, new Vector4(causticsPosition, causticsOpacity, causticsPower));
-
-				Graphics.Blit(default(Texture), causticsSlice, blitMaterial, 0);
-
-				causticsSlice.GenerateMips();
-			}
-
-			if (wavesTexture != null)
-			{
-				if (wavesSlice == null)
-				{
-					var mips = Mathf.FloorToInt(Mathf.Log(Mathf.Max(wavesTexture.width, wavesTexture.height), 2)) + 1;
-					var desc = new RenderTextureDescriptor(wavesTexture.width, wavesTexture.height, RenderTextureFormat.ARGB32, 0, mips);
-					
-					desc.useMipMap        = true;
-					desc.autoGenerateMips = false;
-					desc.sRGB             = false;
-
-					wavesSlice = new RenderTexture(desc);
-					wavesSlice.wrapMode = TextureWrapMode.Repeat;
-
-					wavesSlice.Create();
-				}
-
-				wavesPosition += wavesSpeed * Time.deltaTime;
-
-				blitMaterial.SetTexture(_SGT_Texture, wavesTexture);
-				blitMaterial.SetTexture(_SGT_OffsetTex, wavesOffset);
-				blitMaterial.SetVector(_SGT_WaveData, new Vector4(wavesPosition, ripplesStrength, 1.0f));
-
-				Graphics.Blit(default(Texture), wavesSlice, blitMaterial, 1);
-
-				wavesSlice.GenerateMips();
-			}
-
-			RenderTexture.active = oldActive;
-		}
 	}
 }
 
@@ -789,88 +978,114 @@ namespace SpaceGraphicsToolkit.Ocean
 			SgtOcean tgt; SgtOcean[] tgts; GetTargets(out tgt, out tgts);
 
 			var markForRebuild = false;
+			var markParentForRebuild = false;
 
+			BeginError(Any(tgts, t => t.Material == null));
+				Draw("material", "The material used to render the fluid surface.\n\nNOTE: This must use the <b>SGT/Ocean</b> shader.");
+			EndError();
+			BeginError(Any(tgts, t => t.Sky == null));
+				Draw("sky");
+			EndError();
 			Draw("radius", "The radius of the ocean.");
 			Draw("detail", "The overall detail of the ocean relative to the camera distance. The higher you set this, the more triangles it will have.");
 			Draw("cloudShadow", "If you want cloud shadows to appear on the surface of the ocean, specify them here.");
-			Draw("observers", "The LOD will be based on these transform positions.\n\nNone/null = The GameObject with the <b>MainCamera</b> tag will be used.");
+
+			Separator();
+			
+			Draw("observer", "The camera rendering this ocean.\n\nNone/null = The GameObject with the <b>MainCamera</b> tag will be used.");
+			Draw("cameraOffset", "This allows you to offset the camera distance in world space when rendering the ocean, giving you fine control over the render order.");
+			BeginDisabled();
+				var finalCamera = tgt.Observer != null ? tgt.Observer : Camera.main;
+				if (finalCamera != null)
+				{
+					UnityEditor.EditorGUILayout.FloatField("Camera Altitude", tgt.CalculateWorldAltitude(finalCamera.transform.position));
+				}
+			EndDisabled();
 
 			Separator();
 
-			BeginError(Any(tgts, t => t.SurfaceMaterial == null));
-				Draw("surfaceMaterial", "The material used to render the fluid surface.\n\nNOTE: This must use the <b>SGT/OceanSurface</b> shader.");
-			EndError();
 			Draw("surfaceColor", "The color of the fluid when viewed from above the surface.");
+			Draw("surfaceScattering", "The color of the sub surface scattering.");
 			Draw("surfaceDensity", "The density of the water when viewed from above the surface.");
-			Draw("surfaceMinimumOpacity", "The minimum opacity of the water when viewed from above the surface.");
 			Draw("surfaceSmoothness", "The PBR smoothness of the surface material.");
-			Draw("surfaceTexture", "The waves normal map texture.");
-			if (DrawVector4("surfaceTiling", "The wave texture gets tiled around the planet this many times.\n\nX = First layer.\n\nY = Second layer.\n\nZ = Third layer.\n\nW = Fourth layer.\n\nNOTE: The <b>SurfaceMaterial</b> has the <b>Layers</b> setting, which allows you to choose how many are used.") == true) { markForRebuild = true; }
-			DrawVector4("surfaceRange", "The wave texture gets tiled around the planet this many times.\n\nX = First layer.\n\nY = Second layer.\n\nZ = Third layer.\n\nW = Fourth layer.\n\nNOTE: The <b>SurfaceMaterial</b> has the <b>Layers</b> setting, which allows you to choose how many are used.");
-			DrawVector4("surfaceStrength", "The wave texture gets tiled around the planet this many times.\n\nX = First layer.\n\nY = Second layer.\n\nZ = Third layer.\n\nW = Fourth layer.\n\nNOTE: The <b>SurfaceMaterial</b> has the <b>Layers</b> setting, which allows you to choose how many are used.");
 
 			Separator();
 
-			Draw("underwaterColor", "The color of the water when viewed from below the surface.");
-			DrawVector4("underwaterExtinction", "The <b>UnderwaterColor</b> will fade out using these value.\\nX = Red Extinction.\\nY = Green Extinction.\\nZ = Blue Extinction.\\nW = RGB Multiplier.");
-			Draw("underwaterExtinctionRange", "The extinction amount will be calculated at this distance from the camera.");
-			Draw("underwaterDensity", "The density of the water when viewed from under the surface.");
-			Draw("underwaterMinimumOpacity", "The minimum opacity of the water when viewed from under the surface.");
 			Draw("underwaterLightingSharpness", "The sharpness of the underwater lighting.");
 			Draw("underwaterShadowRange", "The distance from the camera the cloud shadow calculations will use. This should approximately be the underwater fog distance (4.6 * density).");
 
 			Separator();
 
-			BeginError(Any(tgts, t => t.WavesTexture == null));
-				Draw("wavesTexture", "The waves normal map texture.");
-			EndError();
-			BeginError(Any(tgts, t => t.WavesOffset == null));
-				Draw("wavesOffset", "The texture used to break up the tiling of the wave animation. This should be a Red seamless texture.");
-			EndError();
-			Draw("wavesSpeed", "The waves texture will animate at this speed.");
-			Draw("wavesTiling", ref markForRebuild, "The wave texture gets tiled around the planet this many times.");
-			Draw("wavesDisplacement", "The waves will displace the ocean mesh by this distance.\n\nNOTE: This setting requires your <b>SurfaceMaterial</b> to have the <b>Displacement</b> setting enabled.");
+			Draw("wavesDisplacement", "The maximum +- height displacement of the waves in world space.");
+			Draw("wavesScale");
+			Draw("wavesSteepness", "The steepness of the waves.");
+			Draw("wavesSpeed", "The animation speed of the waves.");
+			Draw("wavesQuality", "The amount of combined wave layers.");
 
 			Separator();
 
-			Draw("ripplesTiling", "The ripple texture is tiled this many times relative to the <b>WavesTiling</b> value.");
-			Draw("ripplesStrength", "The ripples texture strength will be multiplied by this.");
+			Draw("shoreScale", "The size of the shore texture in world space.");
+			Draw("shoreSpeed", "The animation speed of the shore.");
 
 			Separator();
 
-			Draw("fade", "Should the ocean fade out based on camera distance?\n\nNOTE: This requires the <b>SurfaceMaterial</b> to have the FADE setting enabled.");
+			Draw("ripples", "Apply small ripple details to the ocean surface?");
+			if (Any(tgts, t => t.Ripples == true))
+			{
+				BeginIndent();
+					BeginError(Any(tgts, t => t.RipplesTexture == null));
+						Draw("ripplesTexture", "The dual normal map texture for ripples.\n\nRG = 0..1 NormalA.xy\n\nBA = 0..1 NormalB.xy", "Texture");
+					EndError();
+					Draw("ripplesSpeed", "The animation speed of the ripples.", "Speed");
+					Draw("ripplesScale", "The size of the ripple texture in world space.", "Scale");
+					Draw("ripplesStrength", "The ripples texture strength will be multiplied by this.", "Strength");
+				EndIndent();
+			}
 
+			Separator();
+
+			Draw("fade", "Ocean rendering can look bat at extreme distances, so fade it out.\n\nNOTE: If you enable this, your landscape should use the <b>OceanFade</b> setting.");
 			if (Any(tgts, t => t.Fade == true))
 			{
 				BeginIndent();
 					Draw("fadeDistance", "The ocean will completely disappear at this distance in world space.");
+					Draw("fadeDeepDistance", "The deep ocean surface effect will be fully revealed at this distance in world space.", "Deep Distance");
+					Draw("fadeDeepDensity", ref markParentForRebuild, "The deep ocean surface effect will have this density.", "Deep Density");
 				EndIndent();
 			}
 
 			Separator();
 
-			Draw("caustics", "Render underwater caustics effects?\n\nNOTE: This requires the <b>SurfaceMaterial</b> to have the <b>CAUSTICS</b> setting enabled.");
-
-			if (Any(tgts, t => t.Caustics == true))
-			{
-				BeginIndent();
-					BeginError(Any(tgts, t => t.CausticsTexture == null));
-						Draw("causticsTexture", "If you want the ocean to apply caustics to the underlying geometry, specify it here.", "Texture");
-					EndError();
-					Draw("causticsLight", "The light source for the caustics.", "Lights");
-					Draw("causticsSpeed", "The caustics texture will animate at this speed.", "Speed");
-					Draw("causticsTiling", "The caustics texture will be tiled this many times around the planet.", "Tiling");
-					Draw("causticsOpacity", "The caustics texture will be fade in/out by this amount.", "Opacity");
-					Draw("causticsPower", "The caustics texture smoothness/sharpness.", "Power");
-					Draw("causticsMaxDepth", "This allows you to control how deep below the surface caustics can reach.", "Max Depth");
-					Draw("causticsSurfaceSharpness", "This allows you to control how quickly caustics fade in based on ocean depth.", "Surface Sharpness");
-					Draw("causticsDeepSharpness", "This allows you to control how quickly caustics fade out based on ocean depth.", "Deep Sharpness");
-				EndIndent();
-			}
+			Draw("causticsLight", "The light source for the caustics.");
+			Draw("causticsScale", "The size of the caustics texture in world space.");
+			Draw("causticsSpeed", "The animation speed of the caustics.");
 
 			if (markForRebuild == true)
 			{
 				//Each(tgts, t => t.reb);
+			}
+
+			if (markParentForRebuild == true)
+			{
+				foreach (var landscape in SgtLandscape.AllLandscapes)
+				{
+					if (landscape is SgtSphereLandscape)
+					{
+						var sphereLandscape = (SgtSphereLandscape)landscape;
+
+						if (sphereLandscape.OceanFade != null && System.Array.IndexOf(tgts, sphereLandscape.OceanFade) >= 0)
+						{
+							sphereLandscape.MarkForRebuild();
+						}
+					}
+				}
+			}
+
+			Separator();
+
+			if (Button("Randomize Hue") == true)
+			{
+				Each(tgts, t => t.RandomizeHue(), true, true);
 			}
 		}
 

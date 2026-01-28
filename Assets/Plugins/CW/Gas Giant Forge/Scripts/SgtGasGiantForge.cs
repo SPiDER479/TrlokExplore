@@ -82,11 +82,11 @@ namespace SpaceGraphicsToolkit
 
 			cloud.Coverage       = true;
 			cloud.CoverageBundle = ExampleBundle;
-			cloud.CoverageLayers.Add(new SgtCloud.AlbedoLayerType() { Visual = 10, Height = 0.40f, Thickness = 0.032f, Offset = 0.0f, Speed = 0.0f, Tiling = 1, Opacity = 1.0f, Layers = Vector4.one });
-			cloud.CoverageLayers.Add(new SgtCloud.AlbedoLayerType() { Visual = 10, Height = 0.45f, Thickness = 0.032f, Offset = 0.0f, Speed = 0.0f, Tiling = 1, Opacity = 1.0f, Layers = Vector4.one });
-			cloud.CoverageLayers.Add(new SgtCloud.AlbedoLayerType() { Visual = 10, Height = 0.50f, Thickness = 0.032f, Offset = 0.0f, Speed = 0.0f, Tiling = 1, Opacity = 1.0f, Layers = Vector4.one });
-			cloud.CoverageLayers.Add(new SgtCloud.AlbedoLayerType() { Visual = 10, Height = 0.55f, Thickness = 0.032f, Offset = 0.0f, Speed = 0.0f, Tiling = 1, Opacity = 1.0f, Layers = Vector4.one });
-			cloud.CoverageLayers.Add(new SgtCloud.AlbedoLayerType() { Visual = 10, Height = 0.60f, Thickness = 0.032f, Offset = 0.0f, Speed = 0.0f, Tiling = 1, Opacity = 1.0f, Layers = Vector4.one });
+			cloud.CoverageLayers.Add(new SgtCloud.CoverageLayerType() { Visual = 10, Height = 0.40f, Thickness = 0.032f, Offset = 0.0f, Speed = 0.0f, Tiling = 1, Opacity = 1.0f, Layers = Vector4.one });
+			cloud.CoverageLayers.Add(new SgtCloud.CoverageLayerType() { Visual = 10, Height = 0.45f, Thickness = 0.032f, Offset = 0.0f, Speed = 0.0f, Tiling = 1, Opacity = 1.0f, Layers = Vector4.one });
+			cloud.CoverageLayers.Add(new SgtCloud.CoverageLayerType() { Visual = 10, Height = 0.50f, Thickness = 0.032f, Offset = 0.0f, Speed = 0.0f, Tiling = 1, Opacity = 1.0f, Layers = Vector4.one });
+			cloud.CoverageLayers.Add(new SgtCloud.CoverageLayerType() { Visual = 10, Height = 0.55f, Thickness = 0.032f, Offset = 0.0f, Speed = 0.0f, Tiling = 1, Opacity = 1.0f, Layers = Vector4.one });
+			cloud.CoverageLayers.Add(new SgtCloud.CoverageLayerType() { Visual = 10, Height = 0.60f, Thickness = 0.032f, Offset = 0.0f, Speed = 0.0f, Tiling = 1, Opacity = 1.0f, Layers = Vector4.one });
 		}
 
 		private void CreateGasGiant_FullFluidSim(float radius)
@@ -128,19 +128,14 @@ namespace SpaceGraphicsToolkit
 
 			sky.InnerMeshRadius = radius * 0.95f;
 			sky.Height          = radius - sky.InnerMeshRadius;
-			sky.Clouds          = cloud;
-			sky.UpperColor      = Color.white;
-			sky.LowerColor      = Color.white;
-			sky.Density         = 100.0f;
-			sky.Lighting        = SgtLight.InstanceCount > 0;
+			sky.Density         = 10.0f;
 
-			cloud.Density           = 5000.0f;
-			cloud.Albedo            = true;
-			cloud.AlbedoGradientTex = ExampleAlbedoGradient;
-			cloud.AlbedoVariationX  = 0.986801f;
-			cloud.AlbedoVariationY  = 0.06925857f;
-			cloud.AlbedoStrataY     = 0.075f;
-			cloud.CloudLayers.Add(new SgtCloud.CloudLayerType() { Height = 0.5f, Thickness = 0.5f, Density = 1.0f, Shadow = 2.0f, Shape = 1.0f });
+			cloud.Density     = 500.0f;
+			cloud.Color       = Color.red;
+			cloud.Color2      = Color.blue;
+			cloud.Coverage    = true;
+			cloud.InnerRadius = sky.Height / 10.0f;
+			cloud.OuterRadius = sky.InnerMeshRadius + sky.Height;
 
 			ringS.RadiusInner        = radius * 1.5f;
 			ringS.RadiusOuter        = radius * 2.5f;

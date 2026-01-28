@@ -48,11 +48,13 @@ Shader "Hidden/SgtSquareLandscape"
 				float3 position   = _CwPositionA * weights.x + _CwPositionB * weights.y + _CwPositionC * weights.z;
 				float2 coord      = position.xz / _CwSquareSize + 0.5f;
 				float4 albedo     = CW_SampleCubic(_CwAlbedo, coord, _CwAlbedoSize);
-				float  occlusion  = 0.0f;
+				float  occlusion  = 1.0f;
 				float  emission   = 0.0f;
 				float  smoothness = 0.0f;
 				float4 topology   = CW_SampleCubic(_CwTopology, coord, _CwTopologySize);
 				float  strata     = _CwTopologyData.z * topology.w;
+
+				topology.xy /= _CwTopologyData.xy;
 
 				float2 coordX = mul(_CwCoordX, float4(weights, 0)).xy;
 				float2 coordY = mul(_CwCoordY, float4(weights, 0)).xy;
@@ -65,15 +67,17 @@ Shader "Hidden/SgtSquareLandscape"
 					0,0,0,0,
 					0,0,0,0);
 
-				topology.xyz = normalize(float3(topology.xy / _CwTopologyData.xy, 1.0f));
-
 				float4 localPos = float4(position, 1.0f);
 
 				float4 globalCoord = float4(coord, coord);
 
 				float2 globalOffset = float2(0.0f, 0.0f);
 
-				CW_ContributeFeatures(albedo, occlusion, emission, smoothness, topology, strata, coordM, localPos, globalCoord, globalOffset, float2(1.0f, 1.0f), 0.0f);
+				CW_ContributeTopologyFeatures(albedo, occlusion, emission, smoothness, topology, strata, coordM, localPos, globalCoord, globalOffset, float2(1.0f, 1.0f), 0.0f);
+
+				topology.xyz = normalize(float3(-topology.xy, 1.0));
+
+				CW_ContributeColorFeatures(albedo, occlusion, emission, smoothness, topology, strata, coordM, localPos, globalCoord, globalOffset, float2(1.0f, 1.0f), 0.0f);
 
 				albedo *= occlusion;
 

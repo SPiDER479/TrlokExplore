@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd468269495eb464ab757495e9cad8f9, type: 3}
+  m_Name: SGT_OceanSurface
+  m_EditorClassIdentifier: Assembly-CSharp::SimpleShaderSystem
+  shaderTemplate: {fileID: -6465566751694194690, guid: 04a6672b7c2579443bbab23fcb052210,
+    type: 3}
+  shaderFiles:
+  - {fileID: 10900000, guid: b3e8fc45341f0f444ba3ffa518ba9c4c, type: 3}
+  - {fileID: 10900000, guid: 1ff0513d39e4a684eb0e8fd36de5d7eb, type: 3}
+  - {fileID: 10900000, guid: ed64468c4e24ed74faa0a23c544573d5, type: 3}
+  - {fileID: 10900000, guid: 4dac0d4577d9fea43881d38f48128fe8, type: 3}
+  outputShader: {fileID: 4800000, guid: 69e66e7ae071ae34580f6076eadfc5aa, type: 3}
+  outputTitle: Space Graphics Toolkit/OceanSurface

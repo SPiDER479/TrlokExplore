@@ -9,7 +9,7 @@ namespace SpaceGraphicsToolkit.Sky
 	[AddComponentMenu("")]
 	[RequireComponent(typeof(MeshFilter))]
 	[RequireComponent(typeof(MeshRenderer))]
-	public class SgtSkyModel : MonoBehaviour
+	public class SgtSkyModel : CwChild
 	{
 		[SerializeField]
 		private SgtSky parent;
@@ -36,6 +36,13 @@ namespace SpaceGraphicsToolkit.Sky
 			}
 		}
 
+		protected override void Start()
+		{
+			base.Start();
+
+			DestroyGameObjectIfInvalid();
+		}
+
 		public static SgtSkyModel Create(SgtSky parent)
 		{
 			var gameObject = CwHelper.CreateGameObject("SgtSkyModel", parent.gameObject.layer, parent.transform);
@@ -46,6 +53,11 @@ namespace SpaceGraphicsToolkit.Sky
 			instance.cachedMeshRenderer = instance.GetComponent<MeshRenderer>();
 
 			return instance;
+		}
+
+		protected override IHasChildren GetParent()
+		{
+			return parent;
 		}
 	}
 }

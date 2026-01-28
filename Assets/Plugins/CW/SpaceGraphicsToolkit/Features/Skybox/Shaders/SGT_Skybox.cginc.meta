@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b8f00a1d34502c74ca83e2a6723a976d
+ShaderIncludeImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.11
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Skybox/Shaders/SGT_Skybox.cginc
+  uploadId: 852530

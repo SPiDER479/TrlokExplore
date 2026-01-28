@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 71897bae9cbd64a4caefb6c1432e66da
+ShaderIncludeImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.11
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Volumetrics/Required/Shaders/SGT_VolumeDepth.cginc
+  uploadId: 852530

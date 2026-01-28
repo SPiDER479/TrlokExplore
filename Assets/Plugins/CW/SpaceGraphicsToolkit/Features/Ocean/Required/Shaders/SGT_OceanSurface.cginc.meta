@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 4dac0d4577d9fea43881d38f48128fe8
+ShaderIncludeImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.11
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Ocean/Required/Shaders/SGT_OceanSurface.cginc
+  uploadId: 852530

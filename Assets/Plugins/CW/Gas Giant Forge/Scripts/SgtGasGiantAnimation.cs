@@ -2,10 +2,10 @@ using UnityEngine;
 using System.Collections.Generic;
 using Unity.Mathematics;
 
-namespace SpaceGraphicsToolkit.Cloud
+namespace SpaceGraphicsToolkit.Sky
 {
-	/// <summary>This component allows you to add a texture animation sequence to a <b>SgtCloudBundle</b>.</summary>
-	[RequireComponent(typeof(SgtCloud))]
+	/// <summary>This component allows you to add a texture animation sequence to a <b>SgtSky</b> component's <b>AlbedoTex</b> setting.</summary>
+	[RequireComponent(typeof(SgtSky))]
 	[AddComponentMenu("Space Graphics Toolkit/SGT Gas Giant Animation")]
 	public class SgtGasGiantAnimation : MonoBehaviour
 	{
@@ -21,7 +21,7 @@ namespace SpaceGraphicsToolkit.Cloud
 		public List<Texture> SourceFrames { get { return sourceFrames; } } [SerializeField] private List<Texture> sourceFrames;
 
 		[System.NonSerialized]
-		private SgtCloud cachedCloud;
+		private SgtSky cachedSky;
 
 		[System.NonSerialized]
 		private Material blitMaterial;
@@ -31,9 +31,9 @@ namespace SpaceGraphicsToolkit.Cloud
 
 		protected virtual void OnEnable()
 		{
-			if (cachedCloud == null)
+			if (cachedSky == null)
 			{
-				cachedCloud = GetComponent<SgtCloud>();
+				cachedSky = GetComponent<SgtSky>();
 			}
 
 			if (blitMaterial == null)
@@ -47,7 +47,6 @@ namespace SpaceGraphicsToolkit.Cloud
 		private static int _SGT_OldDataTex       = Shader.PropertyToID("_SGT_OldDataTex");
 		private static int _SGT_NewDataTex       = Shader.PropertyToID("_SGT_NewDataTex");
 		private static int _SGT_OldNewTransition = Shader.PropertyToID("_SGT_OldNewTransition");
-		private static int _SGT_Power            = Shader.PropertyToID("_SGT_Power");
 		private static int _SGT_DataSize         = Shader.PropertyToID("_SGT_DataSize");
 
 		protected virtual void Update()
@@ -85,7 +84,7 @@ namespace SpaceGraphicsToolkit.Cloud
 
 						RenderTexture.active = oldActive;
 
-						cachedCloud.CoverageTex = midTexture;
+						cachedSky.AlbedoTex = midTexture;
 					}
 				}
 			}
@@ -106,7 +105,7 @@ namespace SpaceGraphicsToolkit.Cloud
 }
 
 #if UNITY_EDITOR
-namespace SpaceGraphicsToolkit.Cloud
+namespace SpaceGraphicsToolkit.Sky
 {
 	[UnityEditor.CanEditMultipleObjects]
 	[UnityEditor.CustomEditor(typeof(SgtGasGiantAnimation))]

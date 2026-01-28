@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 8092c90a01dae15409a12363255f4fe9
+guid: 1e7069b38412799449859e1e592cec28
 NativeFormatImporter:
   externalObjects: {}
   mainObjectFileID: 11400000
@@ -10,6 +10,6 @@ AssetOrigin:
   serializedVersion: 1
   productId: 127671
   packageName: Planet Forge
-  packageVersion: 1.3.26
+  packageVersion: 1.6.11
   assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Landscape/Required/Shaders/SGT_Landscape.asset
-  uploadId: 775926
+  uploadId: 852530

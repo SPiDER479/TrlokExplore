@@ -151,7 +151,7 @@ Transform:
   m_GameObject: {fileID: 616667778}
   m_LocalRotation: {x: 0, y: 1, z: 0, w: -0.00000004371139}
   m_LocalPosition: {x: 0, y: 0, z: -0.1}
-  m_LocalScale: {x: 510, y: 510, z: 510}
+  m_LocalScale: {x: 1040.4, y: 1040.4, z: 1040.4}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 970346960}
@@ -221,7 +221,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 616667778}
-  m_Mesh: {fileID: -1086744806390364007, guid: 85e7b0bd229113941869a11455180727, type: 3}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &626535954
 GameObject:
   m_ObjectHideFlags: 0
@@ -473,36 +473,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c045983184b273146aa6b17b4293937b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sourceMaterial: {fileID: 2100000, guid: d0470dd0285dc2a4685aa8b900ea0cc4, type: 2}
-  upperColor: {r: 0.7294118, g: 1, b: 0.2901961, a: 1}
-  lowerColor: {r: 0.7372549, g: 0.7372549, b: 0.7372549, a: 1}
+  material: {fileID: 2100000, guid: d0470dd0285dc2a4685aa8b900ea0cc4, type: 2}
+  color: {r: 1, g: 1, b: 1, a: 1}
   brightness: 1
   innerMeshRadius: 500
-  outerMesh: {fileID: -1086744806390364007, guid: 85e7b0bd229113941869a11455180727,
-    type: 3}
-  outerMeshRadius: 1
   height: 10
-  density: 10
-  clouds: {fileID: 0}
-  weight: 3
-  colorWeight: 3
-  detail: 2
-  surfaceScattering: 0.01
+  density: 0.1
   cameraOffset: 0.1
   depthOpaque: 5
-  lighting: 1
-  lightingStart: 0.35
-  lightingEnd: 0.77
-  lightingSharpnessR: 1.9430566
-  lightingSharpnessG: 2.7126448
-  lightingSharpnessB: 2.344298
-  scatteringStart: 0.35
-  scatteringEnd: 0.75
-  scatteringSharpnessR: 1
-  scatteringSharpnessG: 2
-  scatteringSharpnessB: 1
-  scatteringTerms: {x: 500, y: 100, z: 2, w: -2}
-  scatteringPower: {x: 5, y: 5, z: 1, w: 0.1}
+  rayleighColor: {r: 1, g: 0.26301616, b: 0.17647058, a: 1}
+  rayleighMultiplier: 33.1
+  rayleighHeight: 0.503
+  mieAbsorb: 4.4
+  mieMultiplier: 21
+  mieHeight: 0.096
+  mieAsymmetry: 0.76
+  mieAsymmetry2: 0.999
+  ozoneColor: {r: 0.345, g: 1, b: 0.045, a: 1}
+  ozoneMultiplier: 1.881
+  ozoneHeight: 0.25
+  ozoneThickness: 0.15
+  albedoTex: {fileID: 0}
+  exposure: 20
   model: {fileID: 616667780}
 --- !u!1 &1749954448
 GameObject:
@@ -638,6 +630,7 @@ MonoBehaviour:
   editorDetail: 3.2
   initDetail: 0
   detail: 4
+  boostMultiplier: 1.75
   minimumTriangleSize: 0.01
   lodBudget: 0.001
   lodSteps: 30
@@ -651,7 +644,9 @@ MonoBehaviour:
   castShadows: 1
   receiveShadows: 1
   radius: 500
+  sky: {fileID: 970346961}
   cloudShadow: {fileID: 0}
+  oceanFade: {fileID: 0}
   albedoTex: {fileID: 0}
   heightTex: {fileID: 0}
   heightMidpoint: 0

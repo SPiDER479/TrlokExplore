@@ -16,6 +16,21 @@ Shader "Hidden/SgtVolumeFilter"
 			sampler2D_float _SGT_Volumetrics_DepthTex_Old;
 			sampler2D       _SGT_Volumetrics_ColorTex_Old;
 
+			sampler2D _SGT_Volumetrics_ShaftMask;
+
+			sampler2D_float _SGT_SceneDepthTexture;
+
+			// DITHER
+			sampler2D _SGT_BlueNoiseTex; // Global
+			float     _SGT_Frame; // Global
+	
+			float SGT_DitherBlue(float2 screenUV)
+			{
+				float2 pixel = floor(screenUV * _ScreenParams.xy);
+				float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
+				return frac(noise + _SGT_Frame / sqrt(0.5f));
+			}
+
 			float4 GetFullScreenTriangleVertexPosition(uint vertexID, float z)
 			{
 				// note: the triangle vertex position coordinates are x2 so the returned UV coordinates are in range -1, 1 on the screen.
@@ -39,7 +54,12 @@ Shader "Hidden/SgtVolumeFilter"
 				UNITY_VERTEX_OUTPUT_STEREO
 			};
 
-			struct MRT
+			struct MRT1
+			{
+				float4 color : SV_Target0;
+			};
+
+			struct MRT2
 			{
 				float4 color : SV_Target0;
 				float2 depth : SV_Target1;
@@ -147,11 +167,11 @@ Shader "Hidden/SgtVolumeFilter"
 				}
 
 				// write whole
-				MRT Frag(Varyings varyings)
+				MRT2 Frag(Varyings varyings)
 				{
 					UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(varyings);
 			
-					MRT m;
+					MRT2 m;
 
 					float4 newColor = SGT_SampleCloudColor0(_SGT_Volumetrics_ColorTex_Temp, varyings.texcoord0);
 					float4 oldColor = SGT_SampleOldColor(varyings.texcoord0, newColor);
@@ -177,14 +197,102 @@ Shader "Hidden/SgtVolumeFilter"
 				#pragma fragment Frag
 
 				// write old
-				MRT Frag(Varyings varyings)
+				MRT2 Frag(Varyings varyings)
 				{
 					UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(varyings);
 			
-					MRT m;
+					MRT2 m;
 			
 					m.color = SGT_SampleCloudColor0(_SGT_Volumetrics_ColorTex     , varyings.texcoord0);
 					m.depth = SGT_SampleCloudDepth0(_SGT_Volumetrics_DepthTex_Temp, varyings.texcoord0);
+			
+					return m;
+				}
+			ENDHLSL
+		}
+
+		Pass
+		{
+			Name "SunMask"
+			ZWrite Off
+			ZTest Always
+			Blend Off
+			Cull Off
+
+			HLSLPROGRAM
+				#pragma vertex   Vert
+				#pragma fragment Frag
+
+				MRT1 Frag(Varyings varyings)
+				{
+					UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(varyings);
+
+					MRT1 m;
+
+					float occlusion = 0.0f;
+
+					// Clouds
+					float clouds = SGT_SampleCloudColor0(_SGT_Volumetrics_ColorTex, varyings.texcoord0).w;
+
+					occlusion = lerp(occlusion, 1.0f, saturate(clouds));
+
+					// Geometry
+					float sceneDepth = tex2D(_SGT_SceneDepthTexture, varyings.texcoord0).x;
+					float geometry   = sceneDepth > 0.0f && sceneDepth < 1000000000.0f;
+
+					occlusion = lerp(occlusion, 1.0f, saturate(geometry));
+
+					// Output
+					m.color = float4(occlusion, 0.0f, 0.0f, 1.0f);
+
+					return m;
+				}
+			ENDHLSL
+		}
+
+		Pass
+		{
+			Name "SunShafts"
+			ZWrite Off
+			ZTest Always
+			Blend Off
+			Cull Off
+
+			HLSLPROGRAM
+				#pragma vertex   Vert
+				#pragma fragment Frag
+
+				float3 _SGT_SunUV;
+
+				MRT1 Frag(Varyings varyings)
+				{
+					UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(varyings);
+			
+					MRT1 m;
+
+					float shafts = 1.0f;
+
+					if (_SGT_SunUV.z > 0.0f)
+					{
+						int    stepCount = 32;
+						float2 delta     = (_SGT_SunUV - varyings.texcoord0) / stepCount;
+						float  total     = 0.0f;
+						float  dither    = SGT_DitherBlue(varyings.texcoord0);
+						float2 uv        = varyings.texcoord0 + delta * dither;
+
+						for (int i = 0; i < stepCount; i++)
+						{
+							total += tex2D(_SGT_Volumetrics_ShaftMask, uv).x;
+
+							uv += delta;
+						}
+
+						shafts = 1.0f - total / stepCount;
+
+						shafts = lerp(1.0f, shafts, _SGT_SunUV.z);
+					}
+			
+					m.color = float4(shafts, 0.0f, 0.0f, 1.0f);
 			
 					return m;
 				}

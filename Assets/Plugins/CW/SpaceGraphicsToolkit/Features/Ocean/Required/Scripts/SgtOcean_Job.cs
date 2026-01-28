@@ -177,7 +177,7 @@ namespace SpaceGraphicsToolkit.Ocean
 				return new double4(u, v * 0.5f, d.xz * 0.25);
 			}
 
-			public void AddTriangle(Triangle triangle, int4 globalTiling, float radius)
+			public void AddTriangle(Triangle triangle, double wavesTiling, double noiseTiling, float radius)
 			{
 				var positionA = triangle.PositionA;
 				var positionB = triangle.PositionB;
@@ -195,35 +195,39 @@ namespace SpaceGraphicsToolkit.Ocean
 				var coordB = triangleD.x > 0.0f ? CalculateCoord(positionB.xyz) : CalculateCoord2(positionB.xyz);
 				var coordC = triangleD.x > 0.0f ? CalculateCoord(positionC.xyz) : CalculateCoord2(positionC.xyz);
 
-				var coordX = math.floor(coordA * globalTiling.x);
-				var coordY = math.floor(coordA * globalTiling.y);
-				var coordZ = math.floor(coordA * globalTiling.z);
-				var coordW = math.floor(coordA * globalTiling.w);
+				var noiseA = math.normalize(positionA.xyz) * noiseTiling;
+				var noiseB = math.normalize(positionB.xyz) * noiseTiling;
+				var noiseC = math.normalize(positionC.xyz) * noiseTiling;
 
-				var coordXA = coordA * globalTiling.x - coordX;
-				var coordXB = coordB * globalTiling.x - coordX;
-				var coordXC = coordC * globalTiling.x - coordX;
+				var coordX = math.floor(coordA * wavesTiling);
+				//var coordY = math.floor(coordA * globalTiling.y);
+				//var coordZ = math.floor(coordA * globalTiling.z);
+				//var coordW = math.floor(coordA * globalTiling.w);
 
-				var coordYA = coordA * globalTiling.y - coordY;
-				var coordYB = coordB * globalTiling.y - coordY;
-				var coordYC = coordC * globalTiling.y - coordY;
+				var coordXA = coordA * wavesTiling - coordX;
+				var coordXB = coordB * wavesTiling - coordX;
+				var coordXC = coordC * wavesTiling - coordX;
 
-				var coordZA = coordA * globalTiling.z - coordZ;
-				var coordZB = coordB * globalTiling.z - coordZ;
-				var coordZC = coordC * globalTiling.z - coordZ;
+				var coordYA = noiseA - math.floor(noiseA);
+				var coordYB = noiseB - math.floor(noiseA);
+				var coordYC = noiseC - math.floor(noiseA);
 
-				var coordWA = coordA * globalTiling.w - coordW;
-				var coordWB = coordB * globalTiling.w - coordW;
-				var coordWC = coordC * globalTiling.w - coordW;
+				//var coordZA = coordA * globalTiling.z - coordZ;
+				//var coordZB = coordB * globalTiling.z - coordZ;
+				//var coordZC = coordC * globalTiling.z - coordZ;
+
+				//var coordWA = coordA * globalTiling.w - coordW;
+				//var coordWB = coordB * globalTiling.w - coordW;
+				//var coordWC = coordC * globalTiling.w - coordW;
 				
 				PositionsO[Count] = new float4(origin, triangle.Depth);
 				PositionsA[Count] = (Vector3)(float3)(positionA.xyz - origin);
 				PositionsB[Count] = (Vector3)(float3)(positionB.xyz - origin);
 				PositionsC[Count] = (Vector3)(float3)(positionC.xyz - origin);
 				CoordX[Count] = new Matrix4x4((Vector4)(float4)coordXA, (Vector4)(float4)coordXB, (Vector4)(float4)coordXC, default(Vector4));
-				CoordY[Count] = new Matrix4x4((Vector4)(float4)coordYA, (Vector4)(float4)coordYB, (Vector4)(float4)coordYC, default(Vector4));
-				CoordZ[Count] = new Matrix4x4((Vector4)(float4)coordZA, (Vector4)(float4)coordZB, (Vector4)(float4)coordZC, default(Vector4));
-				CoordW[Count] = new Matrix4x4((Vector4)(float4)coordWA, (Vector4)(float4)coordWB, (Vector4)(float4)coordWC, default(Vector4));
+				CoordY[Count] = new Matrix4x4((Vector3)(float3)coordYA, (Vector3)(float3)coordYB, (Vector3)(float3)coordYC, default(Vector4));
+				//CoordZ[Count] = new Matrix4x4((Vector4)(float4)coordZA, (Vector4)(float4)coordZB, (Vector4)(float4)coordZC, default(Vector4));
+				//CoordW[Count] = new Matrix4x4((Vector4)(float4)coordWA, (Vector4)(float4)coordWB, (Vector4)(float4)coordWC, default(Vector4));
 				Hashes[Count] = triangle.Hash;
 
 				Count += 1;

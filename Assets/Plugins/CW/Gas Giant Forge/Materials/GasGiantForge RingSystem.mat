@@ -12,19 +12,24 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
-  - _ENABLE_FOG_ON_TRANSPARENT
   - _SGT_LIGHTING
-  - _SGT_SPHEREMASK_OFF
-  - _TRANSPARENT_WRITES_MOTION_VEC
+  - _SURFACE_TYPE_TRANSPARENT
   m_InvalidKeywords:
   - _CW_REFRACTION_OFF
   - _SGT_DETAIL_OFF
+  - _SGT_SPHEREMASK_OFF
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
+  m_CustomRenderQueue: 3000
+  stringTagMap:
+    MotionVector: User
+    RenderType: Transparent
+  disabledShaderPasses:
+  - TransparentDepthPrepass
+  - TransparentDepthPostpass
+  - TransparentBackface
+  - MOTIONVECTORS
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
@@ -81,7 +86,15 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SGT_RingMainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _SGT_RingShadowTexture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_RingThicknessTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -101,11 +114,13 @@ Material:
     m_Floats:
     - _AddPrecomputedVelocity: 0
     - _AlphaCutoffEnable: 0
-    - _AlphaDstBlend: 0
+    - _AlphaDstBlend: 10
     - _AlphaSrcBlend: 1
     - _AlphaToMask: 0
     - _AlphaToMaskInspectorValue: 0
-    - _BlendMode: 0
+    - _BUILTIN_QueueControl: 0
+    - _BUILTIN_QueueOffset: 0
+    - _BlendMode: 4
     - _BumpScale: 1
     - _CW_AddPrecomputedVelocity: 0
     - _CW_DisableDecals: 0
@@ -115,26 +130,37 @@ Material:
     - _CW_DisableTransparentFog: 0
     - _CW_DisableTransparentMV: 1
     - _CW_Refraction: 0
+    - _ConservativeDepthOffsetEnable: 0
+    - _CullMode: 2
+    - _CullModeForward: 2
     - _Cutoff: 0.5
     - _DepthOffsetEnable: 0
     - _DetailNormalMapScale: 1
-    - _DstBlend: 0
+    - _DoubleSidedEnable: 0
+    - _DoubleSidedGIMode: 0
+    - _DoubleSidedNormalMode: 2
+    - _DstBlend: 10
+    - _DstBlend2: 10
     - _EnableBlendModePreserveSpecularLighting: 1
-    - _EnableFogOnTransparent: 1
+    - _EnableFogOnTransparent: 0
+    - _ExcludeFromTUAndAA: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
+    - _OpaqueCullMode: 2
     - _Parallax: 0.02
+    - _PerPixelSorting: 0
     - _RayTracing: 0
     - _ReceivesSSR: 1
     - _ReceivesSSRTransparent: 0
     - _RefractionModel: 0
-    - _RenderQueueType: 1
+    - _RenderQueueType: 4
     - _RequireSplitLighting: 0
     - _SGT_Brightness: 0
+    - _SGT_Density: 0
     - _SGT_Detail: 0
     - _SGT_DetailTwist: 0
     - _SGT_DetailTwistBias: 0
@@ -144,6 +170,7 @@ Material:
     - _SGT_NearRangeRecip: 1
     - _SGT_RingShadowCount: 0
     - _SGT_Scattering: 0
+    - _SGT_Side: 0
     - _SGT_SphereMask: 0
     - _SGT_SphereMaskFalloff: 3
     - _SGT_SphereMaskRadius: 1
@@ -153,18 +180,19 @@ Material:
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _StencilRef: 0
-    - _StencilRefDepth: 8
+    - _StencilRefDepth: 1
     - _StencilRefDistortionVec: 4
     - _StencilRefGBuffer: 10
-    - _StencilRefMV: 40
+    - _StencilRefMV: 33
     - _StencilWriteMask: 6
-    - _StencilWriteMaskDepth: 8
+    - _StencilWriteMaskDepth: 9
     - _StencilWriteMaskDistortionVec: 4
     - _StencilWriteMaskGBuffer: 14
-    - _StencilWriteMaskMV: 40
+    - _StencilWriteMaskMV: 43
     - _SupportDecals: 1
-    - _SurfaceType: 0
+    - _SurfaceType: 1
     - _TransparentBackfaceEnable: 0
+    - _TransparentCullMode: 2
     - _TransparentDepthPostpassEnable: 0
     - _TransparentDepthPrepassEnable: 0
     - _TransparentSortPriority: 0
@@ -175,17 +203,21 @@ Material:
     - _ZTestDepthEqualForOpaque: 4
     - _ZTestGBuffer: 4
     - _ZTestTransparent: 4
-    - _ZWrite: 1
+    - _ZWrite: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
+    - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _SGT_AmbientColor: {r: 0, g: 0, b: 0, a: 0}
     - _SGT_Color: {r: 0, g: 0, b: 0, a: 1}
     - _SGT_DetailSpeed: {r: 1, g: 1, b: 0, a: 0}
     - _SGT_DetailTiling: {r: 1, g: 1, b: 0, a: 0}
     - _SGT_Radius: {r: 0, g: 0, b: 0, a: 1}
+    - _SGT_RingData: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_RingSize: {r: 0, g: 0, b: 0, a: 0}
     - _SGT_ScatteringStrengths: {r: 1, g: 0, b: 0, a: 0}
     - _SGT_ScatteringTerms: {r: 10, g: 1, b: 1, a: 1}
     - _SGT_SilhouetteRange: {r: 0, g: 0, b: 0, a: 0}
     - _SGT_SphereMaskPosition: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1

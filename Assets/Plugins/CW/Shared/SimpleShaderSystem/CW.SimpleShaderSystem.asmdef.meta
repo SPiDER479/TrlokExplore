@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 664f6d901a5f18b48b9c452f47137c46
+AssemblyDefinitionImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.11
+  assetPath: Assets/Plugins/CW/Shared/SimpleShaderSystem/CW.SimpleShaderSystem.asmdef
+  uploadId: 852530

@@ -14,6 +14,7 @@ namespace SpaceGraphicsToolkit.Landscape
 			[ReadOnly] public NativeList<Triangle> Topology;
 			[ReadOnly] public NativeList<double3>  CameraPositions;
 			[ReadOnly] public double               CameraDetailSq;
+			[ReadOnly] public double               BoostMultiplier;
 			[ReadOnly] public DeformType           Deform;
 			[ReadOnly] public double               Radius;
 			[ReadOnly] public int                  MaxDepth;
@@ -24,11 +25,11 @@ namespace SpaceGraphicsToolkit.Landscape
 			public NativeList<Triangle> DeleteDiffs;
 			public NativeList<Triangle> StatusDiffs;
 
-			private bool TooLarge(double3 a, double3 b, double3 c, double3 e)
+			private bool TooLarge(double3 a, double3 b, double3 c, double3 e, double scaleSq)
 			{
 				var m = (a + b + c) / 3.0f;
 
-				var r2 = math.max(math.distancesq(m, a), math.max(math.distancesq(m, b), math.distancesq(m, c)));
+				var r2 = math.max(math.distancesq(m, a), math.max(math.distancesq(m, b), math.distancesq(m, c))) * scaleSq;
 
 				var d2 = math.distancesq(e, m);
 
@@ -55,9 +56,13 @@ namespace SpaceGraphicsToolkit.Landscape
 					break;
 				}
 
+				var scaleSq = 1.0;
+
+				if (depth < 2) scaleSq = math.pow(BoostMultiplier, 2.0);
+
 				for (var i = 0; i < CameraPositions.Length; i++)
 				{
-					if (TooLarge(a, b, c, CameraPositions[i]) == true)
+					if (TooLarge(a, b, c, CameraPositions[i], scaleSq) == true)
 					{
 						return true;
 					}
@@ -409,6 +414,6 @@ namespace SpaceGraphicsToolkit.Landscape
 			return visual;
 		}
 
-		protected abstract JobHandle ScheduleUpdateTriangles(float detail, int maxSteps);
+		protected abstract JobHandle ScheduleUpdateTriangles(float detail, float boostMultiplier, int maxSteps);
 	}
 }

@@ -5,6 +5,7 @@ using Unity.Burst;
 using UnityEngine;
 using SpaceGraphicsToolkit.Cloud;
 using SpaceGraphicsToolkit.Ocean;
+using SpaceGraphicsToolkit.Sky;
 
 namespace SpaceGraphicsToolkit.Landscape
 {
@@ -14,6 +15,9 @@ namespace SpaceGraphicsToolkit.Landscape
 	{
 		/// <summary>The base radius of the landscape in local space.</summary>
 		public float Radius { set { radius = value; } get { return radius; } } [SerializeField] private float radius = 50;
+
+		/// <summary>If you want atmospheric effects to apply to this landscape, drag and drop it into here.</summary>
+		public SgtSky Sky { set { sky = value; } get { return sky; } } [SerializeField] private SgtSky sky;
 
 		/// <summary>If you want cloud shadows to appear on the surface of the planet, specify them here.</summary>
 		public SgtCloud CloudShadow { set { cloudShadow = value; } get { return cloudShadow; } } [SerializeField] protected SgtCloud cloudShadow;
@@ -83,7 +87,7 @@ namespace SpaceGraphicsToolkit.Landscape
 					Directions[i] = d;
 
 					Coords[i] = new double4(c.x, c.y, c.z, c.w);
-					DataA[i] = new double4(c.x, c.y * 2.0, t, 1.0 - t);
+					DataA[i] = new double4(c.x, c.y * 2.0, 1.0 - t, t);
 					DataB[i] = new double4(0.0, math.sign(d.y), 0.0, 0.0);
 				}
 			}
@@ -142,14 +146,14 @@ namespace SpaceGraphicsToolkit.Landscape
 				{
 					for (var i = 0; i < Heights.Length; i++)
 					{
-						Heights[i] = HeightRange.x + HeightRange.y * Sample_Cubic_WrapX(HeightData16, HeightSize, DataA[i].xy * HeightSize);
+						Heights[i] = HeightRange.x + HeightRange.y * Sample_Cubic_WrapX(HeightData16, HeightSize, DataA[i].xy);
 					}
 				}
 				else if (HeightData08.Length > 0)
 				{
 					for (var i = 0; i < Heights.Length; i++)
 					{
-						Heights[i] = HeightRange.x + HeightRange.y * Sample_Cubic_WrapX(HeightData08, HeightSize, DataA[i].xy * HeightSize);
+						Heights[i] = HeightRange.x + HeightRange.y * Sample_Cubic_WrapX(HeightData08, HeightSize, DataA[i].xy);
 					}
 				}
 				else
@@ -164,20 +168,23 @@ namespace SpaceGraphicsToolkit.Landscape
 
 		protected override void UpdateBatchBeforeRender(Batch batch)
 		{
-			if (cloudShadow != null && cloudShadow.GeneratedTexture != null)
+			if (cloudShadow != null && cloudShadow.isActiveAndEnabled == true)
 			{
-				batch.Properties.SetTexture(_SGT_CloudTex, cloudShadow.GeneratedTexture);
-				batch.Properties.SetMatrix(_SGT_CloudMatrix, cloudShadow.GeneratedMatrix);
-				batch.Properties.SetVector(_SGT_CloudOpacity, cloudShadow.GeneratedOpacity);
-				batch.Properties.SetFloat(_SGT_CloudWarp, cloudShadow.Warp);
+				cloudShadow.ApplyShadowSettings(batch.Properties);
+			}
+			else
+			{
+				SgtCloud.ClearShadowSettings(batch.Properties);
 			}
 
-			if (oceanFade != null)
+			if (oceanFade != null && sky != null)
 			{
-				batch.Properties.SetFloat(_SGT_OceanDistance, oceanFade.FadeDistance);
+				batch.Properties.SetVector(_SGT_OceanDistance, new Vector4(oceanFade.LandscapeOpacity, 1.0f / oceanFade.FadeDeepDistance));
 				batch.Properties.SetColor(_SGT_OceanColor, oceanFade.SurfaceColor);
-				batch.Properties.SetFloat(_SGT_OceanMinimum, oceanFade.SurfaceMinimumOpacity);
 				batch.Properties.SetFloat(_SGT_OceanSmoothness, oceanFade.SurfaceSmoothness);
+				batch.Properties.SetFloat(_SGT_OceanRadius, radius);
+				batch.Properties.SetVector(_SGT_OceanLightDirection, sky.LightDirection);
+				batch.Properties.SetColor(_SGT_OceanLightColor, sky.LightColor);
 			}
 		}
 
@@ -285,6 +292,15 @@ namespace SpaceGraphicsToolkit.Landscape
 			return blitMaterial;
 		}
 
+		protected override Bounds GetWorldBounds()
+		{
+			var scale    = transform.lossyScale;
+			var maxScale = Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
+			var worldRadius = radius * maxScale * 1.1f;
+    
+			return new Bounds(transform.position, Vector3.one * worldRadius * 2.0f);
+		}
+
 		protected override void Schedule(PendingTriangle pending)
 		{
 			var job = new TriangleJob();
@@ -362,12 +378,10 @@ namespace SpaceGraphicsToolkit.Landscape
 		{
 			var circ = 2.0 * math.PI_DBL * radius;
 			var tile = math.max(math.round(circ / (double4)(float4)globalSizes), 1);
-
-			globalSizesNormalized = (float4)(circ / tile);
-
-			globalTiling = (float4)tile;
-
-			globalTilingNormalized = (float4)(tile / circ) * 1000.0f;
+			
+			globalTiling           = (float4)tile;
+			globalTilingNormalized = (float4)(tile / circ);
+			globalSizesNormalized  = (float4)(circ / tile);
 
 			base.Prepare();
 
@@ -383,12 +397,13 @@ namespace SpaceGraphicsToolkit.Landscape
 			blitMaterial.SetTexture(_CwTopology, topologyData.Texture);
 			blitMaterial.SetVector(_CwTopologySize, (Vector2)topologyData.Size);
 			blitMaterial.SetVector(_CwTopologyData, (Vector3)topologyData.Data);
+			blitMaterial.SetVector(_CwTopologyRange, (Vector2)topologyData.Range);
 
 			blitMaterial.SetFloat(_CwRadius, radius);
 
 			if (oceanFade != null)
 			{
-				blitMaterial.SetFloat(_SGT_OceanDensity, oceanFade.SurfaceDensity);
+				blitMaterial.SetVector(_SGT_OceanDensity, new Vector4(oceanFade.SurfaceDensity, oceanFade.FadeDeepDensity));
 				blitMaterial.SetFloat(_SGT_OceanHeight, oceanFade.Radius - radius);
 			}
 
@@ -466,7 +481,7 @@ namespace SpaceGraphicsToolkit.Landscape
 			DestroyImmediate(blitMaterial);
 		}
 
-		protected override JobHandle ScheduleUpdateTriangles(float detail, int maxSteps)
+		protected override JobHandle ScheduleUpdateTriangles(float detail, float boostMultiplier, int maxSteps)
 		{
 			SchedulePoints(cameraPoints);
 			ScheduleBase(cameraPoints);
@@ -478,6 +493,7 @@ namespace SpaceGraphicsToolkit.Landscape
 			job.Topology        = topology;
 			job.CameraPositions = cameraPositions;
 			job.CameraDetailSq  = 1.0f / (detail * detail);
+			job.BoostMultiplier = boostMultiplier;
 			job.CreateDiffs     = createDiffs;
 			job.DeleteDiffs     = deleteDiffs;
 			job.StatusDiffs     = statusDiffs;
@@ -537,6 +553,7 @@ namespace SpaceGraphicsToolkit.Landscape
 			Separator();
 
 			Draw("radius", ref markForRebuild, "The base radius of the landscape in local space.");
+			Draw("sky", ref markForRebuild, "If you want atmospheric effects to apply to this landscape, drag and drop it into here.");
 			Draw("cloudShadow", ref markForRebuild, "If you want cloud shadows to appear on the surface of the planet, specify them here.");
 			Draw("oceanFade", ref markForRebuild, "If your planet is massive, and the ocean rendering begins to break down at a distance, you can use this setting to bake the ocean into the terrain when far away.\n\nNOTE: This requires the <b>Material</b> to have the OCEAN FADE setting enabled.");
 			Draw("albedoTex", ref markForRebuild, "The albedo texture given to the landscape.\n\nNone = White.\n\nNOTE: This texture must use equirectangular (cylindrical) projection.");

@@ -131,14 +131,14 @@ namespace SpaceGraphicsToolkit.Landscape
 				{
 					for (var i = 0; i < Heights.Length; i++)
 					{
-						Heights[i] = HeightRange.x + HeightRange.y * Sample_Cubic(HeightData16, HeightSize, HeightSize * DataA[i].xy);
+						Heights[i] = HeightRange.x + HeightRange.y * Sample_Cubic(HeightData16, HeightSize, DataA[i].xy);
 					}
 				}
 				else if (HeightData08.Length > 0)
 				{
 					for (var i = 0; i < Heights.Length; i++)
 					{
-						Heights[i] = HeightRange.x + HeightRange.y * Sample_Cubic(HeightData08, HeightSize, HeightSize * DataA[i].xy);
+						Heights[i] = HeightRange.x + HeightRange.y * Sample_Cubic(HeightData08, HeightSize, DataA[i].xy);
 					}
 				}
 				else
@@ -194,7 +194,7 @@ namespace SpaceGraphicsToolkit.Landscape
 
 		private double2 CalculateCoord(double3 position, float size)
 		{
-			return position.xz / size;
+			return position.xz / size + 0.5;
 		}
 
 		protected override Material GetVisualBlitMaterial(PendingTriangle pending)
@@ -203,26 +203,26 @@ namespace SpaceGraphicsToolkit.Landscape
 			blitMaterial.SetVector(_CwPositionB, (Vector3)(float3)pending.Triangle.PositionB);
 			blitMaterial.SetVector(_CwPositionC, (Vector3)(float3)pending.Triangle.PositionC);
 
-			var coordX = math.floor(CalculateCoord(pending.Triangle.PositionA, globalSizes.x));
-			var coordY = math.floor(CalculateCoord(pending.Triangle.PositionA, globalSizes.y));
-			var coordZ = math.floor(CalculateCoord(pending.Triangle.PositionA, globalSizes.z));
-			var coordW = math.floor(CalculateCoord(pending.Triangle.PositionA, globalSizes.w));
+			var coordX = math.floor(CalculateCoord(pending.Triangle.PositionA, globalSizesNormalized.x));
+			var coordY = math.floor(CalculateCoord(pending.Triangle.PositionA, globalSizesNormalized.y));
+			var coordZ = math.floor(CalculateCoord(pending.Triangle.PositionA, globalSizesNormalized.z));
+			var coordW = math.floor(CalculateCoord(pending.Triangle.PositionA, globalSizesNormalized.w));
 
-			var coordXA = CalculateCoord(pending.Triangle.PositionA, globalSizes.x) - coordX;
-			var coordXB = CalculateCoord(pending.Triangle.PositionB, globalSizes.x) - coordX;
-			var coordXC = CalculateCoord(pending.Triangle.PositionC, globalSizes.x) - coordX;
+			var coordXA = CalculateCoord(pending.Triangle.PositionA, globalSizesNormalized.x) - coordX;
+			var coordXB = CalculateCoord(pending.Triangle.PositionB, globalSizesNormalized.x) - coordX;
+			var coordXC = CalculateCoord(pending.Triangle.PositionC, globalSizesNormalized.x) - coordX;
 
-			var coordYA = CalculateCoord(pending.Triangle.PositionA, globalSizes.y) - coordY;
-			var coordYB = CalculateCoord(pending.Triangle.PositionB, globalSizes.y) - coordY;
-			var coordYC = CalculateCoord(pending.Triangle.PositionC, globalSizes.y) - coordY;
+			var coordYA = CalculateCoord(pending.Triangle.PositionA, globalSizesNormalized.y) - coordY;
+			var coordYB = CalculateCoord(pending.Triangle.PositionB, globalSizesNormalized.y) - coordY;
+			var coordYC = CalculateCoord(pending.Triangle.PositionC, globalSizesNormalized.y) - coordY;
 
-			var coordZA = CalculateCoord(pending.Triangle.PositionA, globalSizes.z) - coordZ;
-			var coordZB = CalculateCoord(pending.Triangle.PositionB, globalSizes.z) - coordZ;
-			var coordZC = CalculateCoord(pending.Triangle.PositionC, globalSizes.z) - coordZ;
+			var coordZA = CalculateCoord(pending.Triangle.PositionA, globalSizesNormalized.z) - coordZ;
+			var coordZB = CalculateCoord(pending.Triangle.PositionB, globalSizesNormalized.z) - coordZ;
+			var coordZC = CalculateCoord(pending.Triangle.PositionC, globalSizesNormalized.z) - coordZ;
 
-			var coordWA = CalculateCoord(pending.Triangle.PositionA, globalSizes.w) - coordW;
-			var coordWB = CalculateCoord(pending.Triangle.PositionB, globalSizes.w) - coordW;
-			var coordWC = CalculateCoord(pending.Triangle.PositionC, globalSizes.w) - coordW;
+			var coordWA = CalculateCoord(pending.Triangle.PositionA, globalSizesNormalized.w) - coordW;
+			var coordWB = CalculateCoord(pending.Triangle.PositionB, globalSizesNormalized.w) - coordW;
+			var coordWC = CalculateCoord(pending.Triangle.PositionC, globalSizesNormalized.w) - coordW;
 
 			blitMaterial.SetMatrix(_CwCoordX, new Matrix4x4((Vector2)(float2)coordXA, (Vector2)(float2)coordXB, (Vector2)(float2)coordXC, default(Vector4)));
 			blitMaterial.SetMatrix(_CwCoordY, new Matrix4x4((Vector2)(float2)coordYA, (Vector2)(float2)coordYB, (Vector2)(float2)coordYC, default(Vector4)));
@@ -319,18 +319,27 @@ namespace SpaceGraphicsToolkit.Landscape
 			return (float3)transform.TransformPoint(localPoint);
 		}
 
+		protected override Bounds GetWorldBounds()
+		{
+			var m = transform.localToWorldMatrix;
+			var h = new Vector3(size, heightRange * 2 + size * 0.1f, size) * 0.5f;
+    
+			Vector3 worldHalfExtents = new Vector3(
+				Mathf.Abs(m.m00 * h.x) + Mathf.Abs(m.m01 * h.y) + Mathf.Abs(m.m02 * h.z),
+				Mathf.Abs(m.m10 * h.x) + Mathf.Abs(m.m11 * h.y) + Mathf.Abs(m.m12 * h.z),
+				Mathf.Abs(m.m20 * h.x) + Mathf.Abs(m.m21 * h.y) + Mathf.Abs(m.m22 * h.z)
+			);
+    
+			return new Bounds(transform.position, worldHalfExtents * 2.0f);
+		}
+
 		protected override void Prepare()
 		{
 			var tile = math.max(math.round(size / (double4)(float4)globalSizes), 1);
 
-			globalSizesNormalized = (float4)(size / tile);
-
-			globalTiling = (float4)tile;
-
-			globalTilingNormalized = (float4)(tile / size) * 1000.0f;
-			//globalTiling = size / (float4)globalSizes;
-
-			//globalTilingNormalized = globalSizes * 1000.0f;
+			globalTiling           = (float4)tile;
+			globalTilingNormalized = (float4)(tile / size);
+			globalSizesNormalized  = (float4)(size / tile);
 
 			base.Prepare();
 
@@ -384,7 +393,7 @@ namespace SpaceGraphicsToolkit.Landscape
 			DestroyImmediate(blitMaterial);
 		}
 
-		protected override JobHandle ScheduleUpdateTriangles(float detail, int maxSteps)
+		protected override JobHandle ScheduleUpdateTriangles(float detail, float boostMultiplier, int maxSteps)
 		{
 			SchedulePoints(cameraPoints);
 			ScheduleBase(cameraPoints);
@@ -396,6 +405,7 @@ namespace SpaceGraphicsToolkit.Landscape
 			job.Topology        = topology;
 			job.CameraPositions = cameraPositions;
 			job.CameraDetailSq  = 1.0f / (detail * detail);
+			job.BoostMultiplier = boostMultiplier;
 			job.CreateDiffs     = createDiffs;
 			job.DeleteDiffs     = deleteDiffs;
 			job.StatusDiffs     = statusDiffs;

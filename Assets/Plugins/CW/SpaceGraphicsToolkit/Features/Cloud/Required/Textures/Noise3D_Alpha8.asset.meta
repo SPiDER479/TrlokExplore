@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 89c9ed444962dd345a6bfd934cede832
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11700000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.11
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Cloud/Required/Textures/Noise3D_Alpha8.asset
+  uploadId: 852530

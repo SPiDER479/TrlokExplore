@@ -320,8 +320,9 @@ namespace SpaceGraphicsToolkit.Landscape
 			{
 				var index = 0;
 				var mips  = Mathf.FloorToInt(Mathf.Log(Mathf.Max(atlasSize.x, atlasSize.y), 2)) + 1;
+				var desc  = new RenderTextureDescriptor(atlasSize.x, atlasSize.y, RenderTextureFormat.ARGB64, 0, mips); desc.sRGB = false;
 
-				heightTopologyAtlas = new RenderTexture(atlasSize.x, atlasSize.y, 0, RenderTextureFormat.ARGBFloat, mips);
+				heightTopologyAtlas = new RenderTexture(desc);
 				heightTopologyAtlas.hideFlags         = HideFlags.DontSave;
 				heightTopologyAtlas.dimension         = UnityEngine.Rendering.TextureDimension.Tex2DArray;
 				heightTopologyAtlas.volumeDepth       = atlasDepth;
@@ -367,7 +368,7 @@ namespace SpaceGraphicsToolkit.Landscape
 			{
 				var index = 0;
 				var mips  = 0;
-				var desc  = new RenderTextureDescriptor(atlasSize.x, atlasSize.y, RenderTextureFormat.ARGBFloat, 0, mips);
+				var desc  = new RenderTextureDescriptor(atlasSize.x, atlasSize.y, RenderTextureFormat.ARGBHalf, 0, mips);
 
 				maskTopologyAtlas = new RenderTexture(desc);
 				maskTopologyAtlas.hideFlags         = HideFlags.DontSave;
@@ -400,6 +401,27 @@ namespace SpaceGraphicsToolkit.Landscape
 						index += 1;
 					}
 				}
+
+				maskTopologyAtlas.GenerateMips();
+			}
+			else
+			{
+				var tex  = Texture2D.whiteTexture;
+				var desc = new RenderTextureDescriptor(tex.width, tex.height, RenderTextureFormat.ARGBHalf, 0, 0);
+
+				maskTopologyAtlas = new RenderTexture(desc);
+				maskTopologyAtlas.hideFlags         = HideFlags.DontSave;
+				maskTopologyAtlas.dimension         = UnityEngine.Rendering.TextureDimension.Tex2DArray;
+				maskTopologyAtlas.volumeDepth       = 1;
+				maskTopologyAtlas.enableRandomWrite = true;
+				maskTopologyAtlas.wrapMode          = TextureWrapMode.Repeat;
+				maskTopologyAtlas.useMipMap         = true;
+				maskTopologyAtlas.autoGenerateMips  = false;
+				maskTopologyAtlas.Create();
+
+				maskTopologyAtlasSize = new Vector4(maskTopologyAtlas.width, maskTopologyAtlas.height, 1.0f / maskTopologyAtlas.width, 1.0f / maskTopologyAtlas.height);
+
+				Graphics.Blit(tex, maskTopologyAtlas, 0, 0);
 
 				maskTopologyAtlas.GenerateMips();
 			}

@@ -1,6 +1,7 @@
 using UnityEngine;
 using CW.Common;
 using System.Collections.Generic;
+using SpaceGraphicsToolkit.LightAndShadow;
 
 namespace SpaceGraphicsToolkit.Volumetrics
 {
@@ -22,7 +23,7 @@ namespace SpaceGraphicsToolkit.Volumetrics
 		public int Downscale { set { downscale = value; } get { return downscale; } } [SerializeField] [Range(1, 10)] private int downscale = 2;
 
 		/// <summary>Smooth volumetric effects over time?</summary>
-		public float TAA { set { taa = value; } get { return taa; } } [SerializeField] [Range(0.0f, 1.0f)] private float taa;
+		//public float TAA { set { taa = value; } get { return taa; } } [SerializeField] [Range(0.0f, 1.0f)] private float taa;
 
 		/// <summary>This allows you to apply a smoothing pass to the clouds.
 		/// Box5x5 = Aggressive smoothing that can look good up close, but not recommended for distant effects.
@@ -41,25 +42,10 @@ namespace SpaceGraphicsToolkit.Volumetrics
 		private RenderTexture wholeDepth;
 
 		[System.NonSerialized]
-		private RenderTexture oldColor;
-
-		[System.NonSerialized]
-		private RenderTexture oldDepth;
-
-		[System.NonSerialized]
-		private RenderTexture waterDepth;
-
-		[System.NonSerialized]
-		private RenderTexture waterAlpha;
+		private RenderTexture oceanDepth;
 
 		[System.NonSerialized]
 		private RenderTexture sceneDepth;
-
-		[System.NonSerialized]
-		private RenderTexture tempColor;
-
-		[System.NonSerialized]
-		private RenderTexture tempDepth;
 
 		[System.NonSerialized]
 		private float smoothRange;
@@ -73,11 +59,25 @@ namespace SpaceGraphicsToolkit.Volumetrics
 		[System.NonSerialized]
 		private static int passSceneDepth;
 
+		/*
+		[System.NonSerialized]
+		private RenderTexture tempColor;
+
+		[System.NonSerialized]
+		private RenderTexture tempDepth;
+
+		[System.NonSerialized]
+		private RenderTexture oldColor;
+
+		[System.NonSerialized]
+		private RenderTexture oldDepth;
+
 		[System.NonSerialized]
 		private static int passTAA;
 
 		[System.NonSerialized]
 		private static int passTAA2;
+		*/
 
 		[System.NonSerialized]
 		private static Texture2D blueNoiseTex;
@@ -92,10 +92,15 @@ namespace SpaceGraphicsToolkit.Volumetrics
 		private static int _SGT_Volumetrics_ColorSize = Shader.PropertyToID("_SGT_Volumetrics_ColorSize");
 		private static int _SGT_Volumetrics_DepthTex  = Shader.PropertyToID("_SGT_Volumetrics_DepthTex");
 		private static int _SGT_Volumetrics_DepthSize = Shader.PropertyToID("_SGT_Volumetrics_DepthSize");
+		private static int _SGT_Volumetrics_OceanTex  = Shader.PropertyToID("_SGT_Volumetrics_OceanTex");
+		private static int _SGT_Volumetrics_OceanSize = Shader.PropertyToID("_SGT_Volumetrics_OceanSize");
+		private static int _SGT_Volumetrics_VP        = Shader.PropertyToID("_SGT_Volumetrics_VP");
+		private static int _SGT_Volumetrics_IVP       = Shader.PropertyToID("_SGT_Volumetrics_IVP");
+		private static int _SGT_Volumetrics_IP        = Shader.PropertyToID("_SGT_Volumetrics_IP");
+		private static int _SGT_Volumetrics_Downscale = Shader.PropertyToID("_SGT_Volumetrics_Downscale");
 		private static int _SGT_SceneDepthTexture     = Shader.PropertyToID("_SGT_SceneDepthTexture");
-		private static int _SGT_WaterDepthTexture     = Shader.PropertyToID("_SGT_WaterDepthTexture");
-		private static int _SGT_WaterAlphaTexture     = Shader.PropertyToID("_SGT_WaterAlphaTexture");
-		private static int _SGT_Downscale             = Shader.PropertyToID("_SGT_Downscale");
+		private static int _SGT_BlueNoiseTex          = Shader.PropertyToID("_SGT_BlueNoiseTex");
+		private static int _SGT_Frame                 = Shader.PropertyToID("_SGT_Frame");
 
 		public RenderTexture WholeColor
 		{
@@ -113,27 +118,19 @@ namespace SpaceGraphicsToolkit.Volumetrics
 			}
 		}
 
+		public RenderTexture OceanDepth
+		{
+			get
+			{
+				return oceanDepth;
+			}
+		}
+
 		public RenderTexture SceneDepth
 		{
 			get
 			{
 				return sceneDepth;
-			}
-		}
-
-		public RenderTexture WaterDepth
-		{
-			get
-			{
-				return waterDepth;
-			}
-		}
-
-		public RenderTexture WaterAlpha
-		{
-			get
-			{
-				return waterAlpha;
 			}
 		}
 
@@ -221,15 +218,16 @@ namespace SpaceGraphicsToolkit.Volumetrics
 
 		private void Release()
 		{
-			RenderTexture.ReleaseTemporary(oldColor); oldColor = null;
-			RenderTexture.ReleaseTemporary(oldDepth); oldDepth = null;
 			RenderTexture.ReleaseTemporary(wholeColor); wholeColor = null;
 			RenderTexture.ReleaseTemporary(wholeDepth); wholeDepth = null;
+			RenderTexture.ReleaseTemporary(oceanDepth); oceanDepth = null;
 			RenderTexture.ReleaseTemporary(sceneDepth); sceneDepth = null;
-			RenderTexture.ReleaseTemporary(waterDepth); waterDepth = null;
-			RenderTexture.ReleaseTemporary(waterAlpha); waterAlpha = null;
+			/*
+			RenderTexture.ReleaseTemporary(oldColor); oldColor = null;
+			RenderTexture.ReleaseTemporary(oldDepth); oldDepth = null;
 			RenderTexture.ReleaseTemporary(tempColor); tempColor = null;
 			RenderTexture.ReleaseTemporary(tempDepth); tempDepth = null;
+			*/
 		}
 
 		protected virtual void OnEnable()
@@ -254,12 +252,15 @@ namespace SpaceGraphicsToolkit.Volumetrics
 				var currVP    = cameraP * cameraV;
 				var currInvVP = currVP.inverse;
 
+				Shader.SetGlobalTexture(_SGT_BlueNoiseTex, BlueNoiseTex);
+				Shader.SetGlobalFloat(_SGT_Frame, Time.frameCount);
+
 				Shader.SetGlobalMatrix("_SGT_ViewProj", currVP);
 				if (filterMaterial != null)
 				{
 					filterMaterial.SetMatrix("_SGT_InvViewProj", currInvVP);
 					filterMaterial.SetMatrix("_SGT_PrevViewProj", prevVP);
-					filterMaterial.SetFloat("_SGT_TAA", Mathf.Lerp(1.0f, 0.01f, taa));
+					//filterMaterial.SetFloat("_SGT_TAA", Mathf.Lerp(1.0f, 0.01f, taa));
 				}
 
 				prevVP = currVP;
@@ -281,8 +282,8 @@ namespace SpaceGraphicsToolkit.Volumetrics
 				passSceneDepth = depthMaterial.FindPass("SceneDepth");
 				
 				filterMaterial = CwHelper.CreateTempMaterial("Filter Mat", "Hidden/SgtVolumeFilter");
-				passTAA        = filterMaterial.FindPass("TAA");
-				passTAA2       = filterMaterial.FindPass("TAA2");
+				//passTAA        = filterMaterial.FindPass("TAA");
+				//passTAA2       = filterMaterial.FindPass("TAA2");
 			}
 
 			var smallW = CurrentCamera.pixelWidth  / downscale;
@@ -292,8 +293,8 @@ namespace SpaceGraphicsToolkit.Volumetrics
 
 			if (downscale > 1)
 			{
-				if (smallW % 2 == 0) smallW -= 1;
-				if (smallH % 2 == 0) smallH -= 1;
+			//	if (smallW % 2 == 0) smallW -= 1;
+			//	if (smallH % 2 == 0) smallH -= 1;
 			}
 
 			var format = highPrecision == true ? RenderTextureFormat.ARGBFloat : RenderTextureFormat.ARGB32;
@@ -306,25 +307,28 @@ namespace SpaceGraphicsToolkit.Volumetrics
 			if (wholeColor == null)
 			{
 				var wholeColorDesc = new RenderTextureDescriptor(smallW, smallH, format, 0, 0) { sRGB = false };
-				var wholeDepthDesc = new RenderTextureDescriptor(smallW, smallH, RenderTextureFormat.RGFloat, 0, 0) { sRGB = false };
-				var waterDepthDesc = new RenderTextureDescriptor(wholeW, wholeH, RenderTextureFormat.RFloat, 24, 0) { sRGB = false };
-				var waterAlphaDesc = new RenderTextureDescriptor(wholeW, wholeH, RenderTextureFormat.R8, 0, 0) { sRGB = false };
+				var wholeDepthDesc = new RenderTextureDescriptor(smallW, smallH, RenderTextureFormat.RFloat, 0, 0) { sRGB = false };
 
 				wholeColor = RenderTexture.GetTemporary(wholeColorDesc);
 				wholeDepth = RenderTexture.GetTemporary(wholeDepthDesc);
 				sceneDepth = RenderTexture.GetTemporary(smallW, smallH, 0, RenderTextureFormat.RFloat);
-				waterDepth = RenderTexture.GetTemporary(waterDepthDesc);
-				waterAlpha = RenderTexture.GetTemporary(waterAlphaDesc);
 			}
 
-			Shader.SetGlobalFloat(_SGT_Downscale, downscale);
+			if (oceanDepth == null)
+			{
+				var oceanDepthDesc = new RenderTextureDescriptor(wholeW, wholeH, RenderTextureFormat.ARGBHalf, 24, 0) { sRGB = false };
+
+				oceanDepth = RenderTexture.GetTemporary(oceanDepthDesc);
+			}
+
+			Shader.SetGlobalFloat(_SGT_Volumetrics_Downscale, downscale);
 			Shader.SetGlobalTexture(_SGT_SceneDepthTexture, sceneDepth);
-			Shader.SetGlobalTexture(_SGT_WaterDepthTexture, waterDepth);
-			Shader.SetGlobalTexture(_SGT_WaterAlphaTexture, waterAlpha);
 			Shader.SetGlobalTexture(_SGT_Volumetrics_ColorTex, wholeColor);
 			Shader.SetGlobalVector(_SGT_Volumetrics_ColorSize, new Vector4(wholeColor.width, wholeColor.height, 1.0f / wholeColor.width, 1.0f / wholeColor.height));
 			Shader.SetGlobalTexture(_SGT_Volumetrics_DepthTex, wholeDepth);
 			Shader.SetGlobalVector(_SGT_Volumetrics_DepthSize, new Vector4(wholeDepth.width, wholeDepth.height, 1.0f / wholeDepth.width, 1.0f / wholeDepth.height));
+			Shader.SetGlobalTexture(_SGT_Volumetrics_OceanTex, oceanDepth);
+			Shader.SetGlobalVector(_SGT_Volumetrics_OceanSize, new Vector4(oceanDepth.width, oceanDepth.height, 1.0f / oceanDepth.width, 1.0f / oceanDepth.height));
 
 			return true;
 		}
@@ -348,12 +352,12 @@ namespace SpaceGraphicsToolkit.Volumetrics
 
 			foreach (var volumeEffect in SgtVolumeEffect.Instances)
 			{
-				volumeEffect.sortDistance = Vector3.Distance(CurrentCamera.transform.position, volumeEffect.transform.position);
+				volumeEffect.CalculateSortDistance(CurrentCamera.transform.position);
 
 				tempVolumeEffects.Add(volumeEffect);
 			}
 
-			tempVolumeEffects.Sort((a, b) => b.sortDistance.CompareTo(a.sortDistance));
+			tempVolumeEffects.Sort((a, b) => b.SortDistance.CompareTo(a.SortDistance));
 			
 			/*
 			var cameraV           = CurrentCamera.worldToCameraMatrix;
@@ -375,15 +379,18 @@ namespace SpaceGraphicsToolkit.Volumetrics
 
 			prevVP = currVP;
 			*/
+			
+			Shader.SetGlobalMatrix(_SGT_Volumetrics_VP, (CurrentCamera.projectionMatrix * CurrentCamera.worldToCameraMatrix));
+			Shader.SetGlobalMatrix(_SGT_Volumetrics_IVP, (CurrentCamera.projectionMatrix * CurrentCamera.worldToCameraMatrix).inverse);
 
-			// Render volume
-			SgtVolumeCamera.AddMRT(waterDepth.colorBuffer, waterAlpha.colorBuffer, waterDepth.depthBuffer, new Color(float.PositiveInfinity, 0.0f, 0.0f, 0.0f));
+			SgtVolumeCamera.AddMRT(oceanDepth.colorBuffer, oceanDepth.colorBuffer, Color.clear);
 
 			foreach (var volumeEffect in tempVolumeEffects)
 			{
-				volumeEffect.RenderWaterBuffers(this, CurrentCamera, 0, renderSize);
+				volumeEffect.RenderOceanBuffer(this, CurrentCamera, 0, renderSize);
 			}
 
+			/*
 			if (taa > 0.0f)
 			{
 				if (tempColor == null) { tempColor = RenderTexture.GetTemporary(wholeColor.descriptor); filterMaterial.SetTexture("_SGT_Volumetrics_ColorTex_Temp", tempColor); }
@@ -413,6 +420,7 @@ namespace SpaceGraphicsToolkit.Volumetrics
 				SgtVolumeCamera.AddMRT(wholeColor.colorBuffer, wholeDepth.colorBuffer, wholeDepth.depthBuffer);
 			}
 			else
+			*/
 			{
 				SgtVolumeCamera.AddMRT(wholeColor.colorBuffer, wholeDepth.colorBuffer, wholeDepth.depthBuffer, Color.clear);
 
@@ -458,29 +466,36 @@ namespace SpaceGraphicsToolkit.Volumetrics
 			}
 		}
 
+		private static bool debug;
+
 		protected override void OnInspector()
 		{
 			SgtVolumeManager tgt; SgtVolumeManager[] tgts; GetTargets(out tgt, out tgts);
 
 			Draw("downscale", "This allows you to specify how the width/height of the volumetric effects are divided. For example, a value of 1 means no downscaling, and 5 means 1/5 width and height or 1/25 of the total pixels.");
-			Draw("taa", "Smooth volumetric effects over time?");
+			//Draw("taa", "Smooth volumetric effects over time?");
 			//Draw("smooth", "This allows you to apply a smoothing pass to the clouds.\n\nox5x5 = Aggressive smoothing that can look good up close, but not recommended for distant effects.\n\nBicubic = Retains most detail and provides some smoothing.");
 			Draw("highPrecision", "Use a higher precision color buffer for smoother volumetrics?");
 
+			Separator();
 
-			BeginDisabled();
-				UnityEditor.EditorGUILayout.ObjectField(tgt.WholeColor, typeof(RenderTexture), true);
-				UnityEditor.EditorGUILayout.ObjectField(tgt.WholeDepth, typeof(RenderTexture), true);
+			debug = UnityEditor.EditorGUILayout.Toggle("Debug", debug);
 
-				Separator();
+			if (debug == true)
+			{
+				BeginDisabled();
+					UnityEditor.EditorGUILayout.ObjectField("Color", tgt.WholeColor, typeof(RenderTexture), true);
+					UnityEditor.EditorGUILayout.ObjectField("Depth", tgt.WholeDepth, typeof(RenderTexture), true);
 
-				UnityEditor.EditorGUILayout.ObjectField(tgt.WaterDepth, typeof(RenderTexture), true);
-				UnityEditor.EditorGUILayout.ObjectField(tgt.WaterAlpha, typeof(RenderTexture), true);
+					Separator();
 
-				Separator();
+					UnityEditor.EditorGUILayout.ObjectField("SceneDepth", tgt.SceneDepth, typeof(RenderTexture), true);
 
-				UnityEditor.EditorGUILayout.ObjectField(tgt.SceneDepth, typeof(RenderTexture), true);
-			EndDisabled();
+					Separator();
+
+					UnityEditor.EditorGUILayout.ObjectField("Ocean", tgt.OceanDepth, typeof(RenderTexture), true);
+				EndDisabled();
+			}
 		}
 	}
 }

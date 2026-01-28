@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 65dbb718bd179ae49a97270d82b16d94
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.11
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Sky/Required/Shaders/SGT_Sky.asset
+  uploadId: 852530

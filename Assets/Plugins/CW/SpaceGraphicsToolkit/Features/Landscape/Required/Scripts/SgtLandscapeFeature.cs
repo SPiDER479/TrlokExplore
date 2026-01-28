@@ -18,7 +18,7 @@ namespace SpaceGraphicsToolkit.Landscape
 		{
 			var localSize = (float3)transform.localScale;
 
-			return 0.1f / localSize.xy / (float2)tiling / heightRange;
+			return (float2)tiling * heightRange / localSize.xy;
 		}
 
 		public Matrix4x4 CalculateMatrix()

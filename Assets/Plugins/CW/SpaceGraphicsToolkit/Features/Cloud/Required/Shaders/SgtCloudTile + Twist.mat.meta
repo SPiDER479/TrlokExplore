@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: e7b848f81f47f314cbb8d6c6f9c89294
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.11
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Cloud/Required/Shaders/SgtCloudTile
+    + Twist.mat
+  uploadId: 852530

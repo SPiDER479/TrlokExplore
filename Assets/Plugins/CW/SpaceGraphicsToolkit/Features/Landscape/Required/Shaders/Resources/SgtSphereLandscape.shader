@@ -20,8 +20,8 @@ Shader "Hidden/SgtSphereLandscape"
 			#define CW_TWO_COORDS
 			#include "SgtFeature.cginc"
 
-			float _SGT_OceanHeight;
-			float _SGT_OceanDensity;
+			float  _SGT_OceanHeight;
+			float4 _SGT_OceanDensity;
 
 			float  _CwRadius;
 			int    _CwDepth;
@@ -44,6 +44,7 @@ Shader "Hidden/SgtSphereLandscape"
 			sampler2D_float _CwTopology;
 			float2          _CwTopologySize;
 			float3          _CwTopologyData;
+			float2          _CwTopologyRange;
 
 			float3 CW_FixDirection(float3 direction)
 			{
@@ -76,6 +77,28 @@ Shader "Hidden/SgtSphereLandscape"
 				return float4(u, v * 0.5f, direction.xz * 0.25f);
 			}
 
+			float CW_EncodeWaterDepth(float depthInMeters)
+			{
+				return saturate(depthInMeters / 30.0f);
+			}
+
+			float CW_EncodeWaterDepth2(float depthInMeters)
+			{
+				const float THRESHOLD = 30.0;
+				const float SHARP_KNEE = 5.0;
+				const float SMOOTH_KNEE = 100.0;
+				const float SCALE = (THRESHOLD + SHARP_KNEE) / THRESHOLD;
+    
+				float absDepth = -min(0.0, depthInMeters);
+				float mask = step(THRESHOLD, absDepth);
+    
+				float sharp = (absDepth / (absDepth + SHARP_KNEE)) * SCALE * 0.5;
+				float extra = max(0.0, absDepth - THRESHOLD);
+				float smooth = 0.5 + (extra / (extra + SMOOTH_KNEE)) * 0.5;
+    
+				return lerp(sharp, smooth, mask);
+			}
+
 			void CW_Frag(v2f i, out f2g o)
 			{
 				float3 weights    = tex2Dlod(_SGT_WeightTex, float4(i.coord, 0.0f, 0.0f)).xyz;
@@ -89,6 +112,12 @@ Shader "Hidden/SgtSphereLandscape"
 				float4 topology   = CW_SampleCubic(_CwTopology, coord.xy, _CwTopologySize);
 				float  pole       = smoothstep(0.0f, 1.0f, saturate((abs(direction.y) - 0.7f) * 30.0f));
 				float  strata     = _CwTopologyData.z * topology.w;
+
+				topology.xy -= 0.5;
+				topology.x  /= length(direction.xz);
+				topology.xy /= _CwTopologyData.xy;
+				topology.w = _CwTopologyRange.x + _CwTopologyRange.y * topology.w;
+				//topology.w = topology.w - 0.5f;
 
 				float4 coordX = mul(_CwCoordX, float4(weights, 0));
 				float4 coordY = mul(_CwCoordY, float4(weights, 0));
@@ -120,9 +149,6 @@ Shader "Hidden/SgtSphereLandscape"
 					coordX.z, coordY.z, coordZ.z, coordW.z,
 					coordX.w, coordY.w, coordZ.w, coordW.w);
 
-				topology.x  /= length(direction.xz);
-				topology.xyz = normalize(float3(topology.xy / _CwTopologyData.xy, 1.0f));
-
 				float4 localPos = float4(direction * _CwRadius, 1.0f);
 
 				float4 globalCoord = float4(coord.xy, coord.x, coord.y * 0.5f);
@@ -133,11 +159,22 @@ Shader "Hidden/SgtSphereLandscape"
 
 				float ang1 = atan2(-direction.x, -direction.z);
 
-				CW_ContributeFeatures(albedo, occlusion, emission, smoothness, topology, strata, coordM, localPos, globalCoord, globalOffset, pole2, ang1);
+				CW_ContributeTopologyFeatures(albedo, occlusion, emission, smoothness, topology, strata, coordM, localPos, globalCoord, globalOffset, pole2, ang1);
+
+				float4 distortion = 1.0;
+
+				distortion.x /= length(direction.xz);
+				distortion.zw = float2(length(direction.yz * 1.6), length(direction.xy * 1.6));
+				distortion.w *= direction.y > 0.0 ? 1.0 : -1.0;
+
+				topology.xy *= distortion.xy * pole2.x + distortion.zw * pole2.y;
+				topology.xyz = normalize(float3(topology.xy, 1.0));
+
+				CW_ContributeColorFeatures(albedo, occlusion, emission, smoothness, topology, strata, coordM, localPos, globalCoord, globalOffset, pole2, ang1);
 
 				albedo *= occlusion;
 
-				float ocean = 1-exp(min(0.0f, (topology.w - _SGT_OceanHeight) * _SGT_OceanDensity));
+				float ocean = CW_EncodeWaterDepth(_SGT_OceanHeight - topology.w);
 
 				o.rgbo = float4(albedo.xyz, ocean);
 				o.nnes = float4(topology.xy * 0.5f + 0.5f, emission, smoothness);

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 47cdcf11bb549794baeb3afb12eb44be
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.11
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Cloud/Required/Shaders/SgtCloud.mat
+  uploadId: 852530

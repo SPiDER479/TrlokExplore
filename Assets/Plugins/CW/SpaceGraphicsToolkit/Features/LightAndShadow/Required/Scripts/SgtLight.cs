@@ -19,6 +19,12 @@ namespace SpaceGraphicsToolkit.LightAndShadow
 		/// <summary>If you enable this setting, SGT components will use the sibling <b>Light.intensity</b> value multiplied by the <b>Brightness</b> value.</summary>
 		public bool UseLightIntensity { set { useLightIntensity = value; } get { return useLightIntensity; } } [SerializeField] private bool useLightIntensity = true;
 
+		/// <summary>If you enable this setting, the final light color will be multiplied by the Light component's Color setting.</summary>
+		public bool UseLightColor { set { useLightColor = value; } get { return useLightColor; } } [SerializeField] private bool useLightColor = true;
+
+		/// <summary>The final light color will be multiplied by this.</summary>
+		public Color Tint { set { tint = value; } get { return tint; } } [SerializeField] private Color tint = Color.white;
+
 		/// <summary>The brightness value of this light as seen by SGT components.
 		/// NOTE: If you enable the <b>UseLightIntensity</b> setting, then this value will be multiplied by the sibling <b>Light.intensity</b> value.</summary>
 		public float Brightness { set { brightness = value; } get { return brightness; } } [SerializeField] private float brightness = 1.0f;
@@ -48,6 +54,9 @@ namespace SpaceGraphicsToolkit.LightAndShadow
 #endif
 
 		private static List<SgtLight> tempLights = new List<SgtLight>();
+
+		private static readonly int _SGT_SunPosition = Shader.PropertyToID("_SGT_SunPosition");
+		private static readonly int _SGT_SunColor    = Shader.PropertyToID("_SGT_SunColor");
 
 		public static int InstanceCount
 		{
@@ -104,6 +113,14 @@ namespace SpaceGraphicsToolkit.LightAndShadow
 			}
 		}
 
+		public Color CachedLightColor
+		{
+			get
+			{
+				return cachedLight.color;
+			}
+		}
+
 		protected virtual void OnEnable()
 		{
 			node = instances.AddLast(this);
@@ -116,6 +133,22 @@ namespace SpaceGraphicsToolkit.LightAndShadow
 			instances.Remove(node);
 			
 			node = null;
+		}
+
+		protected virtual void Update()
+		{
+			if (instances.First == node)
+			{
+				var position  = default(Vector3);
+				var direction = default(Vector3);
+				var color     = default(Color);
+				var intensity = default(float);
+
+				Calculate(this, transform.position, 0.0f, null, null, ref position, ref direction, ref color, ref intensity);
+
+				Shader.SetGlobalVector(_SGT_SunPosition, new Vector4(position.x, position.y, position.z));
+				Shader.SetGlobalColor(_SGT_SunColor, new Vector4(color.r, color.g, color.b, intensity));
+			}
 		}
 
 		private static Vector3 compareDistanceCenter;
@@ -175,8 +208,13 @@ namespace SpaceGraphicsToolkit.LightAndShadow
 
 				direction = -light.transform.forward;
 				position  = light.transform.position;
-				color     = cachedLight.color;
+				color     = light.tint;
 				intensity = light.brightness;
+
+				if (light.useLightColor == true)
+				{
+					color *= light.CachedLightColor;
+				}
 
 				if (light.useLightIntensity == true)
 				{
@@ -223,7 +261,7 @@ namespace SpaceGraphicsToolkit.LightAndShadow
 						}
 						else
 						{
-							position = center + direction * 10000000.0f;
+							position = center + direction * 1000000000.0f;
 						}
 					}
 					break;
@@ -316,6 +354,8 @@ namespace SpaceGraphicsToolkit.LightAndShadow
 
 			Draw("treatAsPoint", "If the <b>Light</b> component alongside this component is directional, but it's constantly rotated toward the camera to give the illusion of it being a point light, then you should enable this setting.");
 			Draw("useLightIntensity", "If you enable this setting, SGT components will use the sibling <b>Light.intensity</b> value multiplied by the <b>Brightness</b> value.");
+			Draw("useLightColor", "If you enable this setting, the final light color will be multiplied by the Light component's Color setting.");
+			Draw("tint", "The final light color will be multiplied by this.");
 			Draw("brightness", "The brightness value of this light as seen by SGT components.\n\nNOTE: If you enable the <b>UseLightIntensity</b> setting, then this value will be multiplied by the sibling <b>Light.intensity</b> value.");
 		}
 	}

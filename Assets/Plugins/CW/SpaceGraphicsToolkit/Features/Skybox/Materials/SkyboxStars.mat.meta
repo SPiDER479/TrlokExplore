@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 926af9e4bb31a4d409583e4899e89ac0
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.11
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Skybox/Materials/SkyboxStars.mat
+  uploadId: 852530

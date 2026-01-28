@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 084dc6eaf9dd17344b8feef2f1250e0f
+AssemblyDefinitionImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.11
+  assetPath: Assets/Plugins/CW/Shared/SimpleOriginSystem/CW.SimpleOriginSystem.asmdef
+  uploadId: 852530

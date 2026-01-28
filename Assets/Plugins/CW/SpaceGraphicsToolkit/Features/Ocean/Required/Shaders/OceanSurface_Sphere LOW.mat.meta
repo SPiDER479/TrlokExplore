@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 8d6f3b52356be1147847cb311e61b73d
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.11
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Ocean/Required/Shaders/OceanSurface_Sphere
+    LOW.mat
+  uploadId: 852530

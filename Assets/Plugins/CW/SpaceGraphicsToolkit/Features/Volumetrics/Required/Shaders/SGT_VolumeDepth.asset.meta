@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 289ec82ae0f2f93478e299be0ed2c5f0
+guid: 5ae4def27b7e3294d85c3732ac7888ed
 NativeFormatImporter:
   externalObjects: {}
   mainObjectFileID: 11400000
@@ -10,6 +10,6 @@ AssetOrigin:
   serializedVersion: 1
   productId: 127671
   packageName: Planet Forge
-  packageVersion: 1.3.26
+  packageVersion: 1.6.11
   assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Volumetrics/Required/Shaders/SGT_VolumeDepth.asset
-  uploadId: 775926
+  uploadId: 852530

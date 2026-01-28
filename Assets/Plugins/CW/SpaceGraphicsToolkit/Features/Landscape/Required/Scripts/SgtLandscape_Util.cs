@@ -5,54 +5,59 @@ namespace SpaceGraphicsToolkit.Landscape
 {
 	public partial class SgtLandscape
 	{
+		private static float4 Cubic_Normalized(float v)
+		{
+			var n = new float4(1.0f, 2.0f, 3.0f, 4.0f) - v;
+			var s = n * n * n;
+
+			float4 o;
+
+			o.x = s.x;
+			o.y = s.y - 4.0f * s.x;
+			o.z = s.z - 4.0f * s.y + 6.0f * s.x;
+			o.w = 6.0f - o.x - o.y - o.z;
+        
+			return o / 6.0f;
+		}
+
 		public static float Sample_Cubic_Equirectangular(NativeArray<ushort> data, int2 size, double3 direction)
 		{
-			var s  = size / new double2(math.PI * 2.0, math.PI);
+			var s  = 1.0 / new double2(math.PI * 2.0, math.PI);
 			var u  = (math.PI * 1.5 - math.atan2(direction.x, direction.z)) * s.x;
 			var v  = (math.asin(direction.y) + math.PI * 0.5) * s.y;
 			var uv = new double2(u, v);
 
-			var fracX = (float)((uv.x % 1.0 + 1.0) % 1.0);
-			var fracY = (float)((uv.y % 1.0 + 1.0) % 1.0);
-			var x     = (long)math.floor(uv.x % size.x);
-			var y     = (long)math.floor(uv.y % size.y);
+			var pixelCoords = uv * size - 0.5;
+			var x           = (long)math.floor(pixelCoords.x);
+			var y           = (long)math.floor(pixelCoords.y);
+			var weightsX    = Cubic_Normalized((float)(pixelCoords.x - x));
+			var weightsY    = Cubic_Normalized((float)(pixelCoords.y - y));
+			var rowA        = new float4(Sample_WrapX(data, size, x - 1, y - 1), Sample_WrapX(data, size, x + 0, y - 1), Sample_WrapX(data, size, x + 1, y - 1), Sample_WrapX(data, size, x + 2, y - 1));
+			var rowB        = new float4(Sample_WrapX(data, size, x - 1, y + 0), Sample_WrapX(data, size, x + 0, y + 0), Sample_WrapX(data, size, x + 1, y + 0), Sample_WrapX(data, size, x + 2, y + 0));
+			var rowC        = new float4(Sample_WrapX(data, size, x - 1, y + 1), Sample_WrapX(data, size, x + 0, y + 1), Sample_WrapX(data, size, x + 1, y + 1), Sample_WrapX(data, size, x + 2, y + 1));
+			var rowD        = new float4(Sample_WrapX(data, size, x - 1, y + 2), Sample_WrapX(data, size, x + 0, y + 2), Sample_WrapX(data, size, x + 1, y + 2), Sample_WrapX(data, size, x + 2, y + 2));
 
-			var aa = Sample_WrapX(data, size, x - 1, y - 1); var ba = Sample_WrapX(data, size, x, y - 1); var ca = Sample_WrapX(data, size, x + 1, y - 1); var da = Sample_WrapX(data, size, x + 2, y - 1);
-			var ab = Sample_WrapX(data, size, x - 1, y    ); var bb = Sample_WrapX(data, size, x, y    ); var cb = Sample_WrapX(data, size, x + 1, y    ); var db = Sample_WrapX(data, size, x + 2, y    );
-			var ac = Sample_WrapX(data, size, x - 1, y + 1); var bc = Sample_WrapX(data, size, x, y + 1); var cc = Sample_WrapX(data, size, x + 1, y + 1); var dc = Sample_WrapX(data, size, x + 2, y + 1);
-			var ad = Sample_WrapX(data, size, x - 1, y + 2); var bd = Sample_WrapX(data, size, x, y + 2); var cd = Sample_WrapX(data, size, x + 1, y + 2); var dd = Sample_WrapX(data, size, x + 2, y + 2);
-
-			var a = Hermite(aa, ba, ca, da, fracX);
-			var b = Hermite(ab, bb, cb, db, fracX);
-			var c = Hermite(ac, bc, cc, dc, fracX);
-			var d = Hermite(ad, bd, cd, dd, fracX);
-
-			return Hermite(a, b, c, d, fracY);
+			return math.dot(new float4(math.dot(rowA, weightsX), math.dot(rowB, weightsX), math.dot(rowC, weightsX), math.dot(rowD, weightsX)), weightsY);
 		}
 
 		public static float Sample_Cubic_Equirectangular(NativeArray<byte> data, int2 size, double3 direction)
 		{
-			var s  = size / new double2(math.PI * 2.0, math.PI);
+			var s  = 1.0 / new double2(math.PI * 2.0, math.PI);
 			var u  = (math.PI * 1.5 - math.atan2(direction.x, direction.z)) * s.x;
 			var v  = (math.asin(direction.y) + math.PI * 0.5) * s.y;
 			var uv = new double2(u, v);
 
-			var fracX = (float)((uv.x % 1.0 + 1.0) % 1.0);
-			var fracY = (float)((uv.y % 1.0 + 1.0) % 1.0);
-			var x     = (long)math.floor(uv.x % size.x);
-			var y     = (long)math.floor(uv.y % size.y);
+			var pixelCoords = uv * size - 0.5;
+			var x           = (long)math.floor(pixelCoords.x);
+			var y           = (long)math.floor(pixelCoords.y);
+			var weightsX    = Cubic_Normalized((float)(pixelCoords.x - x));
+			var weightsY    = Cubic_Normalized((float)(pixelCoords.y - y));
+			var rowA        = new float4(Sample_WrapX(data, size, x - 1, y - 1), Sample_WrapX(data, size, x + 0, y - 1), Sample_WrapX(data, size, x + 1, y - 1), Sample_WrapX(data, size, x + 2, y - 1));
+			var rowB        = new float4(Sample_WrapX(data, size, x - 1, y + 0), Sample_WrapX(data, size, x + 0, y + 0), Sample_WrapX(data, size, x + 1, y + 0), Sample_WrapX(data, size, x + 2, y + 0));
+			var rowC        = new float4(Sample_WrapX(data, size, x - 1, y + 1), Sample_WrapX(data, size, x + 0, y + 1), Sample_WrapX(data, size, x + 1, y + 1), Sample_WrapX(data, size, x + 2, y + 1));
+			var rowD        = new float4(Sample_WrapX(data, size, x - 1, y + 2), Sample_WrapX(data, size, x + 0, y + 2), Sample_WrapX(data, size, x + 1, y + 2), Sample_WrapX(data, size, x + 2, y + 2));
 
-			var aa = Sample_WrapX(data, size, x - 1, y - 1); var ba = Sample_WrapX(data, size, x, y - 1); var ca = Sample_WrapX(data, size, x + 1, y - 1); var da = Sample_WrapX(data, size, x + 2, y - 1);
-			var ab = Sample_WrapX(data, size, x - 1, y    ); var bb = Sample_WrapX(data, size, x, y    ); var cb = Sample_WrapX(data, size, x + 1, y    ); var db = Sample_WrapX(data, size, x + 2, y    );
-			var ac = Sample_WrapX(data, size, x - 1, y + 1); var bc = Sample_WrapX(data, size, x, y + 1); var cc = Sample_WrapX(data, size, x + 1, y + 1); var dc = Sample_WrapX(data, size, x + 2, y + 1);
-			var ad = Sample_WrapX(data, size, x - 1, y + 2); var bd = Sample_WrapX(data, size, x, y + 2); var cd = Sample_WrapX(data, size, x + 1, y + 2); var dd = Sample_WrapX(data, size, x + 2, y + 2);
-
-			var a = Hermite(aa, ba, ca, da, fracX);
-			var b = Hermite(ab, bb, cb, db, fracX);
-			var c = Hermite(ac, bc, cc, dc, fracX);
-			var d = Hermite(ad, bd, cd, dd, fracX);
-
-			return Hermite(a, b, c, d, fracY);
+			return math.dot(new float4(math.dot(rowA, weightsX), math.dot(rowB, weightsX), math.dot(rowC, weightsX), math.dot(rowD, weightsX)), weightsY);
 		}
 
 		public static float Sample_Point(NativeArray<ushort> data, int2 size, int x, int y)
@@ -60,84 +65,64 @@ namespace SpaceGraphicsToolkit.Landscape
 			return data[x + y * size.x] / 65535.0f;
 		}
 
-		public static float Sample_Cubic(NativeArray<ushort> data, int2 size, double2 pixel)
+		public static float Sample_Cubic(NativeArray<ushort> data, int2 size, double2 uv)
 		{
-			var fracX = (float)((pixel.x % 1.0 + 1.0) % 1.0);
-			var fracY = (float)((pixel.y % 1.0 + 1.0) % 1.0);
-			var x     = (long)math.floor(pixel.x % size.x);
-			var y     = (long)math.floor(pixel.y % size.y);
+			var pixelCoords = uv * size - 0.5;
+			var x           = (long)math.floor(pixelCoords.x);
+			var y           = (long)math.floor(pixelCoords.y);
+			var weightsX    = Cubic_Normalized((float)(pixelCoords.x - x));
+			var weightsY    = Cubic_Normalized((float)(pixelCoords.y - y));
+			var rowA        = new float4(Sample_Wrap(data, size, x - 1, y - 1), Sample_Wrap(data, size, x + 0, y - 1), Sample_Wrap(data, size, x + 1, y - 1), Sample_Wrap(data, size, x + 2, y - 1));
+			var rowB        = new float4(Sample_Wrap(data, size, x - 1, y + 0), Sample_Wrap(data, size, x + 0, y + 0), Sample_Wrap(data, size, x + 1, y + 0), Sample_Wrap(data, size, x + 2, y + 0));
+			var rowC        = new float4(Sample_Wrap(data, size, x - 1, y + 1), Sample_Wrap(data, size, x + 0, y + 1), Sample_Wrap(data, size, x + 1, y + 1), Sample_Wrap(data, size, x + 2, y + 1));
+			var rowD        = new float4(Sample_Wrap(data, size, x - 1, y + 2), Sample_Wrap(data, size, x + 0, y + 2), Sample_Wrap(data, size, x + 1, y + 2), Sample_Wrap(data, size, x + 2, y + 2));
 
-			var aa = Sample_Wrap(data, size, x - 1, y - 1); var ba = Sample_Wrap(data, size, x, y - 1); var ca = Sample_Wrap(data, size, x + 1, y - 1); var da = Sample_Wrap(data, size, x + 2, y - 1);
-			var ab = Sample_Wrap(data, size, x - 1, y    ); var bb = Sample_Wrap(data, size, x, y    ); var cb = Sample_Wrap(data, size, x + 1, y    ); var db = Sample_Wrap(data, size, x + 2, y    );
-			var ac = Sample_Wrap(data, size, x - 1, y + 1); var bc = Sample_Wrap(data, size, x, y + 1); var cc = Sample_Wrap(data, size, x + 1, y + 1); var dc = Sample_Wrap(data, size, x + 2, y + 1);
-			var ad = Sample_Wrap(data, size, x - 1, y + 2); var bd = Sample_Wrap(data, size, x, y + 2); var cd = Sample_Wrap(data, size, x + 1, y + 2); var dd = Sample_Wrap(data, size, x + 2, y + 2);
-
-			var a = Hermite(aa, ba, ca, da, fracX);
-			var b = Hermite(ab, bb, cb, db, fracX);
-			var c = Hermite(ac, bc, cc, dc, fracX);
-			var d = Hermite(ad, bd, cd, dd, fracX);
-
-			return Hermite(a, b, c, d, fracY);
+			return math.dot(new float4(math.dot(rowA, weightsX), math.dot(rowB, weightsX), math.dot(rowC, weightsX), math.dot(rowD, weightsX)), weightsY);
 		}
 
-		public static float Sample_Cubic(NativeArray<byte> data, int2 size, double2 pixel)
+		public static float Sample_Cubic(NativeArray<byte> data, int2 size, double2 uv)
 		{
-			var fracX = (float)((pixel.x % 1.0 + 1.0) % 1.0);
-			var fracY = (float)((pixel.y % 1.0 + 1.0) % 1.0);
-			var x     = (long)math.floor(pixel.x % size.x);
-			var y     = (long)math.floor(pixel.y % size.y);
+			var pixelCoords = uv * size - 0.5;
+			var x           = (long)math.floor(pixelCoords.x);
+			var y           = (long)math.floor(pixelCoords.y);
+			var weightsX    = Cubic_Normalized((float)(pixelCoords.x - x));
+			var weightsY    = Cubic_Normalized((float)(pixelCoords.y - y));
+			var rowA        = new float4(Sample_Wrap(data, size, x - 1, y - 1), Sample_Wrap(data, size, x + 0, y - 1), Sample_Wrap(data, size, x + 1, y - 1), Sample_Wrap(data, size, x + 2, y - 1));
+			var rowB        = new float4(Sample_Wrap(data, size, x - 1, y + 0), Sample_Wrap(data, size, x + 0, y + 0), Sample_Wrap(data, size, x + 1, y + 0), Sample_Wrap(data, size, x + 2, y + 0));
+			var rowC        = new float4(Sample_Wrap(data, size, x - 1, y + 1), Sample_Wrap(data, size, x + 0, y + 1), Sample_Wrap(data, size, x + 1, y + 1), Sample_Wrap(data, size, x + 2, y + 1));
+			var rowD        = new float4(Sample_Wrap(data, size, x - 1, y + 2), Sample_Wrap(data, size, x + 0, y + 2), Sample_Wrap(data, size, x + 1, y + 2), Sample_Wrap(data, size, x + 2, y + 2));
 
-			var aa = Sample_Wrap(data, size, x - 1, y - 1); var ba = Sample_Wrap(data, size, x, y - 1); var ca = Sample_Wrap(data, size, x + 1, y - 1); var da = Sample_Wrap(data, size, x + 2, y - 1);
-			var ab = Sample_Wrap(data, size, x - 1, y    ); var bb = Sample_Wrap(data, size, x, y    ); var cb = Sample_Wrap(data, size, x + 1, y    ); var db = Sample_Wrap(data, size, x + 2, y    );
-			var ac = Sample_Wrap(data, size, x - 1, y + 1); var bc = Sample_Wrap(data, size, x, y + 1); var cc = Sample_Wrap(data, size, x + 1, y + 1); var dc = Sample_Wrap(data, size, x + 2, y + 1);
-			var ad = Sample_Wrap(data, size, x - 1, y + 2); var bd = Sample_Wrap(data, size, x, y + 2); var cd = Sample_Wrap(data, size, x + 1, y + 2); var dd = Sample_Wrap(data, size, x + 2, y + 2);
-
-			var a = Hermite(aa, ba, ca, da, fracX);
-			var b = Hermite(ab, bb, cb, db, fracX);
-			var c = Hermite(ac, bc, cc, dc, fracX);
-			var d = Hermite(ad, bd, cd, dd, fracX);
-
-			return Hermite(a, b, c, d, fracY);
+			return math.dot(new float4(math.dot(rowA, weightsX), math.dot(rowB, weightsX), math.dot(rowC, weightsX), math.dot(rowD, weightsX)), weightsY);
 		}
 
-		public static float Sample_Cubic_WrapX(NativeArray<ushort> data, int2 size, double2 pixel)
+		public static float Sample_Cubic_WrapX(NativeArray<ushort> data, int2 size, double2 uv)
 		{
-			var fracX = (float)((pixel.x % 1.0 + 1.0) % 1.0);
-			var fracY = (float)((pixel.y % 1.0 + 1.0) % 1.0);
-			var x     = (long)math.floor(pixel.x % size.x);
-			var y     = (long)math.floor(pixel.y % size.y);
+			var pixelCoords = uv * size - 0.5;
+			var x           = (long)math.floor(pixelCoords.x);
+			var y           = (long)math.floor(pixelCoords.y);
+			var weightsX    = Cubic_Normalized((float)(pixelCoords.x - x));
+			var weightsY    = Cubic_Normalized((float)(pixelCoords.y - y));
+			var rowA        = new float4(Sample_WrapX(data, size, x - 1, y - 1), Sample_WrapX(data, size, x + 0, y - 1), Sample_WrapX(data, size, x + 1, y - 1), Sample_WrapX(data, size, x + 2, y - 1));
+			var rowB        = new float4(Sample_WrapX(data, size, x - 1, y + 0), Sample_WrapX(data, size, x + 0, y + 0), Sample_WrapX(data, size, x + 1, y + 0), Sample_WrapX(data, size, x + 2, y + 0));
+			var rowC        = new float4(Sample_WrapX(data, size, x - 1, y + 1), Sample_WrapX(data, size, x + 0, y + 1), Sample_WrapX(data, size, x + 1, y + 1), Sample_WrapX(data, size, x + 2, y + 1));
+			var rowD        = new float4(Sample_WrapX(data, size, x - 1, y + 2), Sample_WrapX(data, size, x + 0, y + 2), Sample_WrapX(data, size, x + 1, y + 2), Sample_WrapX(data, size, x + 2, y + 2));
 
-			var aa = Sample_WrapX(data, size, x - 1, y - 1); var ba = Sample_WrapX(data, size, x, y - 1); var ca = Sample_WrapX(data, size, x + 1, y - 1); var da = Sample_WrapX(data, size, x + 2, y - 1);
-			var ab = Sample_WrapX(data, size, x - 1, y    ); var bb = Sample_WrapX(data, size, x, y    ); var cb = Sample_WrapX(data, size, x + 1, y    ); var db = Sample_WrapX(data, size, x + 2, y    );
-			var ac = Sample_WrapX(data, size, x - 1, y + 1); var bc = Sample_WrapX(data, size, x, y + 1); var cc = Sample_WrapX(data, size, x + 1, y + 1); var dc = Sample_WrapX(data, size, x + 2, y + 1);
-			var ad = Sample_WrapX(data, size, x - 1, y + 2); var bd = Sample_WrapX(data, size, x, y + 2); var cd = Sample_WrapX(data, size, x + 1, y + 2); var dd = Sample_WrapX(data, size, x + 2, y + 2);
-
-			var a = Hermite(aa, ba, ca, da, fracX);
-			var b = Hermite(ab, bb, cb, db, fracX);
-			var c = Hermite(ac, bc, cc, dc, fracX);
-			var d = Hermite(ad, bd, cd, dd, fracX);
-
-			return Hermite(a, b, c, d, fracY);
+			return math.dot(new float4(math.dot(rowA, weightsX), math.dot(rowB, weightsX), math.dot(rowC, weightsX), math.dot(rowD, weightsX)), weightsY);
 		}
 
-		public static float Sample_Cubic_WrapX(NativeArray<byte> data, int2 size, double2 pixel)
+		public static float Sample_Cubic_WrapX(NativeArray<byte> data, int2 size, double2 uv)
 		{
-			var fracX = (float)((pixel.x % 1.0 + 1.0) % 1.0);
-			var fracY = (float)((pixel.y % 1.0 + 1.0) % 1.0);
-			var x     = (long)math.floor(pixel.x % size.x);
-			var y     = (long)math.floor(pixel.y % size.y);
+			var pixelCoords = uv * size - 0.5;
+			var x           = (long)math.floor(pixelCoords.x);
+			var y           = (long)math.floor(pixelCoords.y);
+			var weightsX    = Cubic_Normalized((float)(pixelCoords.x - x));
+			var weightsY    = Cubic_Normalized((float)(pixelCoords.y - y));
+			var rowA        = new float4(Sample_WrapX(data, size, x - 1, y - 1), Sample_WrapX(data, size, x + 0, y - 1), Sample_WrapX(data, size, x + 1, y - 1), Sample_WrapX(data, size, x + 2, y - 1));
+			var rowB        = new float4(Sample_WrapX(data, size, x - 1, y + 0), Sample_WrapX(data, size, x + 0, y + 0), Sample_WrapX(data, size, x + 1, y + 0), Sample_WrapX(data, size, x + 2, y + 0));
+			var rowC        = new float4(Sample_WrapX(data, size, x - 1, y + 1), Sample_WrapX(data, size, x + 0, y + 1), Sample_WrapX(data, size, x + 1, y + 1), Sample_WrapX(data, size, x + 2, y + 1));
+			var rowD        = new float4(Sample_WrapX(data, size, x - 1, y + 2), Sample_WrapX(data, size, x + 0, y + 2), Sample_WrapX(data, size, x + 1, y + 2), Sample_WrapX(data, size, x + 2, y + 2));
 
-			var aa = Sample_WrapX(data, size, x - 1, y - 1); var ba = Sample_WrapX(data, size, x, y - 1); var ca = Sample_WrapX(data, size, x + 1, y - 1); var da = Sample_WrapX(data, size, x + 2, y - 1);
-			var ab = Sample_WrapX(data, size, x - 1, y    ); var bb = Sample_WrapX(data, size, x, y    ); var cb = Sample_WrapX(data, size, x + 1, y    ); var db = Sample_WrapX(data, size, x + 2, y    );
-			var ac = Sample_WrapX(data, size, x - 1, y + 1); var bc = Sample_WrapX(data, size, x, y + 1); var cc = Sample_WrapX(data, size, x + 1, y + 1); var dc = Sample_WrapX(data, size, x + 2, y + 1);
-			var ad = Sample_WrapX(data, size, x - 1, y + 2); var bd = Sample_WrapX(data, size, x, y + 2); var cd = Sample_WrapX(data, size, x + 1, y + 2); var dd = Sample_WrapX(data, size, x + 2, y + 2);
-
-			var a = Hermite(aa, ba, ca, da, fracX);
-			var b = Hermite(ab, bb, cb, db, fracX);
-			var c = Hermite(ac, bc, cc, dc, fracX);
-			var d = Hermite(ad, bd, cd, dd, fracX);
-
-			return Hermite(a, b, c, d, fracY);
+			return math.dot(new float4(math.dot(rowA, weightsX), math.dot(rowB, weightsX), math.dot(rowC, weightsX), math.dot(rowD, weightsX)), weightsY);
 		}
 
 		public static float Sample_Linear(NativeArray<ushort> data, int2 size, double2 pixel)
@@ -258,22 +243,6 @@ namespace SpaceGraphicsToolkit.Landscape
 			y = (y % size.y + size.y) % size.y;
 
 			return data[(int)x + (int)y * size.x] / 255.0f;
-		}
-
-		public static float Hermite(float a, float b, float c, float d, float t)
-		{
-			var tt   = t * t;
-			var tt3  = tt * 3.0f;
-			var ttt  = t * tt;
-			var ttt2 = ttt * 2.0f;
-			var m0   = (c - a) * 0.5f;
-			var m1   = (d - b) * 0.5f;
-			var a0   =  ttt2 - tt3 + 1.0f;
-			var a1   =  ttt  - tt * 2.0f + t;
-			var a2   =  ttt  - tt;
-			var a3   = -ttt2 + tt3;
-
-			return a0 * b + a1 * m0 + a2 * m1 + a3 * c;
 		}
 
 		public static double4 GetEquirectangularCoord(double3 direction)

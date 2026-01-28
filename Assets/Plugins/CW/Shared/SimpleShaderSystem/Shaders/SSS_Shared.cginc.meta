@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: ff9c527177516934bae7bc69be2ba696
+ShaderIncludeImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.11
+  assetPath: Assets/Plugins/CW/Shared/SimpleShaderSystem/Shaders/SSS_Shared.cginc
+  uploadId: 852530

@@ -131,7 +131,6 @@ namespace SpaceGraphicsToolkit.RingSystem
 
 		private static int _SGT_Object2World     = Shader.PropertyToID("_SGT_Object2World");
 		private static int _SGT_World2Object     = Shader.PropertyToID("_SGT_World2Object");
-		private static int _SGT_BlueNoiseTex     = Shader.PropertyToID("_SGT_BlueNoiseTex");
 		private static int _SGT_Color            = Shader.PropertyToID("_SGT_Color");
 		private static int _SGT_Brightness       = Shader.PropertyToID("_SGT_Brightness");
 		private static int _SGT_RingSize         = Shader.PropertyToID("_SGT_RingSize");
@@ -140,7 +139,6 @@ namespace SpaceGraphicsToolkit.RingSystem
 		private static int _SGT_RingThicknessTex = Shader.PropertyToID("_SGT_RingThicknessTex");
 		private static int _SGT_Side             = Shader.PropertyToID("_SGT_Side");
 		private static int _SGT_Detail           = Shader.PropertyToID("_SGT_Detail");
-		private static int _SGT_Frame            = Shader.PropertyToID("_SGT_Frame");
 		private static int _SGT_ScatteringTerms  = Shader.PropertyToID("_SGT_ScatteringTerms");
 		private static int _SGT_ScatteringPower  = Shader.PropertyToID("_SGT_ScatteringPower");
 
@@ -692,8 +690,6 @@ namespace SpaceGraphicsToolkit.RingSystem
 			properties.SetFloat(_SGT_Brightness, brightness);
 			properties.SetMatrix(_SGT_Object2World, transform.localToWorldMatrix);
 			properties.SetMatrix(_SGT_World2Object, transform.worldToLocalMatrix);
-			properties.SetTexture(_SGT_BlueNoiseTex, SgtVolumeManager.BlueNoiseTex);
-			properties.SetFloat(_SGT_Frame, Time.frameCount);
 
 			ApplyRingSettings(properties, true, true);
 

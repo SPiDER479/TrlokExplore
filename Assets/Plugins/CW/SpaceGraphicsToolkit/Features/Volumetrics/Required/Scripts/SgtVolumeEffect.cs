@@ -8,15 +8,29 @@ namespace SpaceGraphicsToolkit.Volumetrics
 	{
 		public static LinkedList<SgtVolumeEffect> Instances = new LinkedList<SgtVolumeEffect>();
 
+		public float SortDistance
+		{
+			get
+			{
+				return sortDistance;
+			}
+		}
+
 		[System.NonSerialized]
-		public float sortDistance;
+		protected float sortDistance;
 
 		[System.NonSerialized]
 		private LinkedListNode<SgtVolumeEffect> node;
 
-		public abstract void RenderWaterBuffers(SgtVolumeManager manager, Camera finalCamera, int frame, Vector2Int renderSize);
+		public abstract void CalculateSortDistance(Vector3 worldPoint);
 
-		public abstract void RenderBuffers(SgtVolumeManager manager, Camera finalCamera, int frame, Vector2Int renderSize);
+		public virtual void RenderBuffers(SgtVolumeManager manager, Camera finalCamera, int frame, Vector2Int renderSize)
+		{
+		}
+
+		public virtual void RenderOceanBuffer(SgtVolumeManager manager, Camera finalCamera, int frame, Vector2Int renderSize)
+		{
+		}
 
 		protected virtual void OnEnable()
 		{

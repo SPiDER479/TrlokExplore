@@ -21,7 +21,7 @@ struct f2g
 
 #define VERTEX_COUNT 243
 
-#define GLOBAL_DETAIL_CAPACITY 8
+#define GLOBAL_DETAIL_CAPACITY 32
 #define LOCAL_DETAIL_CAPACITY 32
 #define GLOBAL_FLATTEN_CAPACITY 8
 #define LOCAL_FLATTEN_CAPACITY 32
@@ -33,6 +33,7 @@ float4 _CwGlobalDetailDataA[GLOBAL_DETAIL_CAPACITY];
 float4 _CwGlobalDetailDataB[GLOBAL_DETAIL_CAPACITY];
 float4 _CwGlobalDetailDataC[GLOBAL_DETAIL_CAPACITY];
 float4 _CwGlobalDetailDataD[GLOBAL_DETAIL_CAPACITY];
+float4 _CwGlobalDetailDataE[GLOBAL_DETAIL_CAPACITY];
 float4 _CwGlobalDetailLayer[GLOBAL_DETAIL_CAPACITY];
 
 int      _CwLocalDetailCount;
@@ -40,6 +41,7 @@ float4   _CwLocalDetailDataA[LOCAL_DETAIL_CAPACITY];
 float4   _CwLocalDetailDataB[LOCAL_DETAIL_CAPACITY];
 float4   _CwLocalDetailDataC[LOCAL_DETAIL_CAPACITY];
 float4   _CwLocalDetailDataD[LOCAL_DETAIL_CAPACITY];
+float4   _CwLocalDetailDataE[LOCAL_DETAIL_CAPACITY];
 float4x4 _CwLocalDetailMatrix[LOCAL_DETAIL_CAPACITY];
 
 int    _CwGlobalFlattenCount;
@@ -82,16 +84,14 @@ float           _CwSize;
 float4          _CwCoords[VERTEX_COUNT];
 float4          _CwWeights[VERTEX_COUNT];
 
-void CW_ContributeTopo(inout float4 cur, float4 add)
+void CW_ContributeTopo(inout float4 cur, float4 add, float replace, float mask)
 {
-	//cur.xyz = normalize(float3(cur.xy + add.xy, cur.z * add.z));
-	cur.xyz = normalize(float3(cur.xy * add.z + add.xy * cur.z, cur.z * add.z));
-	cur.w   = cur.w + add.w;
+	cur = lerp(cur, 0.0f, replace * mask) + add * mask;
 }
 
-void CW_ContributeStrata(inout float cur, float add)
+void CW_ContributeStrata(inout float cur, float add, float replace, float mask)
 {
-	cur = cur + add;
+	cur = lerp(cur, 0.0f, replace * mask) + add * mask;
 }
 
 void CW_Vert(a2v i, out v2f o)
@@ -128,7 +128,7 @@ float4 CW_SampleMaskTopology(float4 globalCoord, float2 globalOffset, float mask
 		}
 
 		//float mask = tex2Dlod(_CwMaskTex, float4(coord, 0.0f, 0.0f)).x;
-		maskTopology = UNITY_SAMPLE_TEX2DARRAY(_CwMaskTopologyAtlas, float3(globalCoord.xy + globalOffset * maskShift, maskIndex));
+		maskTopology = UNITY_SAMPLE_TEX2DARRAY_LOD(_CwMaskTopologyAtlas, float3(globalCoord.xy + globalOffset * maskShift, maskIndex), 0);
 
 		maskTopology.w = maskTopology.w * 2.0f - 1.0f;
 
@@ -144,7 +144,7 @@ float4 CW_SampleMaskTopology(float4 globalCoord, float2 globalOffset, float mask
 	return maskTopology;
 }
 
-void CW_ContributeFeatures(inout float4 finalAlbedo, inout float finalOcclusion, inout float finalEmission, inout float finalSmoothness, inout float4 finalTopology, inout float finalStrata, float4x4 coordM, float4 localPos, float4 globalCoord, float2 globalOffset, float2 pole2, float angle1)
+void CW_ContributeTopologyFeatures(inout float4 finalAlbedo, inout float finalOcclusion, inout float finalEmission, inout float finalSmoothness, inout float4 finalTopology, inout float finalStrata, float4x4 coordM, float4 localPos, float4 globalCoord, float2 globalOffset, float2 pole2, float angle1)
 {
 	int i;
 
@@ -155,6 +155,7 @@ void CW_ContributeFeatures(inout float4 finalAlbedo, inout float finalOcclusion,
 		float  strata      = _CwGlobalDetailDataB[i].x;
 		float  heightIndex = _CwGlobalDetailDataB[i].y;
 		float2 heightRange = _CwGlobalDetailDataB[i].zw;
+		float  replace     = _CwGlobalDetailDataE[i].x;
 
 		float  maskIndex        = _CwGlobalDetailDataC[i].x;
 		float  maskSharpness    = _CwGlobalDetailDataC[i].y;
@@ -167,22 +168,22 @@ void CW_ContributeFeatures(inout float4 finalAlbedo, inout float finalOcclusion,
 		float4 coord = mul(coordM, _CwGlobalDetailLayer[i]) * tile + _CwHeightTopologyAtlasSize.zwzw * 0.5f;
 
 		#ifdef CW_TWO_COORDS
-			float4 topologyA = UNITY_SAMPLE_TEX2DARRAY(_CwHeightTopologyAtlas, float3(coord.xy, heightIndex)) * pole2.x; topologyA.xy = CW_Rotate(topologyA.xy, angle1);
-			float4 topologyB = UNITY_SAMPLE_TEX2DARRAY(_CwHeightTopologyAtlas, float3(coord.zw, heightIndex)) * pole2.y;
-			float4 topology  = topologyA + topologyB;
+			float4 topologyA = UNITY_SAMPLE_TEX2DARRAY(_CwHeightTopologyAtlas, float3(coord.xy, heightIndex)); topologyA.xy -= 0.5;
+			float4 topologyB = UNITY_SAMPLE_TEX2DARRAY(_CwHeightTopologyAtlas, float3(coord.zw, heightIndex)); topologyB.xy -= 0.5; topologyB.xy = CW_Rotate(topologyB.xy, angle1);
+			float4 topology  = topologyA * pole2.x + topologyB * pole2.y;
 		#else
-			float4 topology = UNITY_SAMPLE_TEX2DARRAY(_CwHeightTopologyAtlas, float3(coord.xy, heightIndex));
+			float4 topology = UNITY_SAMPLE_TEX2DARRAY(_CwHeightTopologyAtlas, float3(coord.xy, heightIndex)); topology.xy -= 0.5;
 		#endif
 
 		float mask = CW_SampleMaskTopology(globalCoord, globalOffset, maskIndex, maskInvert, maskSharpness, maskShift, maskDetailIndex, maskDetailTiling, maskDetailOffset).w;
 		//float4 maskTopology = UNITY_SAMPLE_TEX2DARRAY(_CwMaskTopologyAtlas, float3(globalCoord.xy + globalOffset * maskShift, maskIndex));
+		
+		CW_ContributeStrata(finalStrata, strata * topology.w, replace, mask);
+		
+		topology.xy *= scale * _CwHeightTopologyAtlasSize.xy * 0.5;
+		topology.w   = heightRange.x + heightRange.y * topology.w;
 
-		CW_ContributeStrata(finalStrata, strata * topology.w * mask);
-
-		topology.xyz = normalize(float3((topology.xy * mask) / scale, 1.0f));
-		topology.w += (heightRange.x + heightRange.y * topology.w) * mask;
-
-		CW_ContributeTopo(finalTopology, topology);
+		CW_ContributeTopo(finalTopology, topology, replace, mask);
 	}
 
 	for (i = 0; i < _CwLocalDetailCount; i++)
@@ -197,6 +198,7 @@ void CW_ContributeFeatures(inout float4 finalAlbedo, inout float finalOcclusion,
 			float  strata      = _CwLocalDetailDataB[i].x;
 			float  heightIndex = _CwLocalDetailDataB[i].y;
 			float2 heightRange = _CwLocalDetailDataB[i].zw;
+			float  replace     = _CwLocalDetailDataE[i].x;
 
 			float  maskIndex        = _CwLocalDetailDataC[i].x;
 			float  maskSharpness    = _CwLocalDetailDataC[i].y;
@@ -206,17 +208,17 @@ void CW_ContributeFeatures(inout float4 finalAlbedo, inout float finalOcclusion,
 			float2 maskDetailTiling = _CwLocalDetailDataD[i].yz;
 			float  maskDetailOffset = _CwLocalDetailDataD[i].w;
 
-			float4 topology = UNITY_SAMPLE_TEX2DARRAY(_CwHeightTopologyAtlas, float3(featurePoint.xy * tiling, heightIndex));
+			float4 topology = UNITY_SAMPLE_TEX2DARRAY(_CwHeightTopologyAtlas, float3(featurePoint.xy * tiling, heightIndex)); topology.xy -= 0.5;
 
 			float mask = CW_SampleMaskTopology(featurePoint.xyxy, globalOffset, maskIndex, maskInvert, maskSharpness, maskShift, maskDetailIndex, maskDetailTiling, maskDetailOffset).w;
 			//float mask = UNITY_SAMPLE_TEX2DARRAY(_CwMaskTopologyAtlas, float3(featurePoint.xy, maskIndex)).w;
+			
+			CW_ContributeStrata(finalStrata, strata * topology.w, replace, mask);
+			
+			topology.xy *= scale * _CwHeightTopologyAtlasSize.xy * 0.5;
+			topology.w   = heightRange.x + heightRange.y * topology.w;
 
-			CW_ContributeStrata(finalStrata, strata * topology.w * mask);
-
-			topology.xyz = normalize(float3((topology.xy * mask) / scale, 1.0f));
-			topology.w += (heightRange.x + heightRange.y * topology.w) * mask;
-
-			CW_ContributeTopo(finalTopology, topology);
+			CW_ContributeTopo(finalTopology, topology, replace, mask);
 		}
 	}
 
@@ -264,6 +266,14 @@ void CW_ContributeFeatures(inout float4 finalAlbedo, inout float finalOcclusion,
 			finalStrata   = lerp(finalStrata, targetStrata, flattenStrata * maskTopology.w);
 		}
 	}
+}
+
+void CW_ContributeColorFeatures(inout float4 finalAlbedo, inout float finalOcclusion, inout float finalEmission, inout float finalSmoothness, inout float4 finalTopology, inout float finalStrata, float4x4 coordM, float4 localPos, float4 globalCoord, float2 globalOffset, float2 pole2, float angle1)
+{
+	int i;
+	
+	float3 slope = float3(finalTopology.xy, sqrt(1.0f - saturate(dot(finalTopology.xy, finalTopology.xy))));
+	float n = length(slope.xy);
 
 	for (i = 0; i < _CwGlobalColorCount; i++)
 	{
@@ -287,8 +297,7 @@ void CW_ContributeFeatures(inout float4 finalAlbedo, inout float finalOcclusion,
 		float  maskDetailIndex  = _CwGlobalColorDataD[i].x;
 		float2 maskDetailTiling = _CwGlobalColorDataD[i].yz;
 		float  maskDetailOffset = _CwGlobalColorDataD[i].w;
-
-		float  n   = length(finalTopology.xy);
+		
 		float  v   = finalStrata * strata * 0.125f;
 		float  ao  = pow(1.0f - n, occlusion);
 
@@ -338,7 +347,6 @@ void CW_ContributeFeatures(inout float4 finalAlbedo, inout float finalOcclusion,
 			float2 maskDetailTiling = _CwLocalColorDataD[i].yz;
 			float  maskDetailOffset = _CwLocalColorDataD[i].w;
 
-			float  n   = length(finalTopology.xy);
 			float  v   = finalStrata * strata * 0.125f;
 			float  ao  = pow(1.0f - n, occlusion);
 

@@ -60,7 +60,7 @@ Shader "Hidden/SgtOcean"
 			
 			sampler2D _SGT_OffsetTex;
 			sampler2D _SGT_Texture;
-			float4    _SGT_WaveData;
+			float4    _SGT_RipplesData;
 
 			struct a2v
 			{
@@ -87,7 +87,7 @@ Shader "Hidden/SgtOcean"
 
 			void Frag(v2f i, out f2g o)
 			{
-				float offset = tex2D(_SGT_OffsetTex, i.uv).x * 3 + _SGT_WaveData.x;
+				float offset = tex2D(_SGT_OffsetTex, i.uv).x * 3 + _SGT_RipplesData.x;
 				float indexA = floor(offset);
 				float indexB = indexA + 1.0f;
 				float time   = smoothstep(0, 1, frac(offset));
@@ -110,18 +110,25 @@ Shader "Hidden/SgtOcean"
 			#pragma vertex vert
 			#pragma fragment frag
 			#pragma multi_compile_instancing
-			#pragma instancing_options procedural:SetupInstancing forwardadd
+			#pragma instancing_options procedural:SetupInstancing
 			#pragma multi_compile_local _SGT_SHAPE_BOX _SGT_SHAPE_SPHERE
 			#pragma multi_compile_local _SGT_DISPLACEMENT_OFF _SGT_DISPLACEMENT_ON
+			#pragma multi_compile_local _SGT_RIPPLES_OFF _SGT_RIPPLES_ON
+			#pragma multi_compile_local _SGT_SNAP_OFF _SGT_SNAP_ON
+			#pragma multi_compile_local _SGT_WAVES_1 _SGT_WAVES_2 _SGT_WAVES_3
+
+			#if _SGT_WAVES_3
+				#define GERSTNER_WAVES_PER_LAYER 3
+			#elif _SGT_WAVES_2
+				#define GERSTNER_WAVES_PER_LAYER 2
+			#else
+				#define GERSTNER_WAVES_PER_LAYER 1
+			#endif
 
 			#include "UnityCG.cginc"
 			#include "../OceanShared.cginc"
 
 			float    _SGT_SurfaceDensity;
-			float    _SGT_SurfaceMinimumOpacity;
-			float4x4 _SGT_Object2World;
-			float4x4 _SGT_World2Object;
-			float4x4 _SGT_World2View;
 			float3   _SGT_WCam;
 
 			float  _SGT_UnderwaterDensity;
@@ -139,15 +146,15 @@ Shader "Hidden/SgtOcean"
 			struct v2f
 			{
 				float4 position           : SV_POSITION;
-				float3 worldSpacePosition : TEXCOORD1;
-				float3 worldSpaceNormal   : TEXCOORD2;
-				float4 screenPosition     : TEXCOORD3;
+				float3 worldSpacePosition : TEXCOORD0;
+				float3 worldSpaceNormal   : TEXCOORD1;
+				float3 worldSpaceTangent  : TEXCOORD2;
+				float4 worldSpaceBent     : TEXCOORD3;
 			};
 
 			struct f2g
 			{
 				float4 distance : SV_Target0;
-				float4 alpha    : SV_Target1;
 			};
 
 			void SetupInstancing()
@@ -161,45 +168,108 @@ Shader "Hidden/SgtOcean"
 						#undef unity_WorldToObject
 					#endif
 			
-					unity_ObjectToWorld = _SGT_ObjectToOcean;
-					unity_WorldToObject = _SGT_OceanToObject;
+					unity_ObjectToWorld = _SGT_ObjectToWorld;
+					unity_WorldToObject = _SGT_WorldToObject;
 				#endif
+			}
+
+			float2 SGT_GetRipplesNormal(float3 wp)
+			{
+				float2 positionA   = mul(_SGT_RipplesMatrixA, float4(wp, 1.0f)).xy;
+				float2 positionB   = mul(_SGT_RipplesMatrixB, float4(wp, 1.0f)).xy;
+				float4 dualNormalA = tex2D(_SGT_RipplesTexture, positionA) * 2.0 - 1.0; // xy = normal A, zw = normal B
+				float4 dualNormalB = tex2D(_SGT_RipplesTexture, positionB) * 2.0 - 1.0; // xy = normal A, zw = normal B
+				float  worldNoise  = tex3Dlod(_SGT_NoiseTex, float4(wp.xy * 1, 0, 0)).x * 2.0;
+				float  pingPong    = sin((worldNoise + _SGT_RipplesData.y) * 3.1415) * 0.5 + 0.5; // Smoothly ping pong between normals with world space offset to create the illusion of standing waves
+				float2 normalA     = lerp(dualNormalA.xy, dualNormalA.zw, pingPong);
+				float2 normalB     = lerp(dualNormalB.xy, dualNormalB.zw, pingPong);
+	
+				return lerp(normalA, normalB, _SGT_RipplesBlend) * _SGT_RipplesData.x * _SGT_RipplesData.x;
 			}
 
 			void vert(a2v v, out v2f o)
 			{
 				UNITY_SETUP_INSTANCE_ID(v);
 
-				float4 texcoord0 = 0;
-				float4 texcoord1 = 0;
-				float4 texcoord2 = 0;
-				float4 texcoord3 = 0;
+				float  weight     = 1.0f;
+				float3 weights    = v.vertex.xyz;
+				float  batchIndex = 0;
 
-				CW_CalculateVertexData(v.vertex, texcoord0, texcoord1, texcoord2, texcoord3);
+				#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
+					batchIndex = unity_InstanceID;
+				#endif
+
+				float3 origin = _SGT_Origins[batchIndex].xyz;
+				float  depth  = _SGT_Origins[batchIndex].w;
+
+				float4 position = _SGT_PositionsA[batchIndex] * weights.x + _SGT_PositionsB[batchIndex] * weights.y + _SGT_PositionsC[batchIndex] * weights.z;
+				float3 normalPos = position.xyz + origin;
+
+				position.xyz += _SGT_Offset + origin;
+
+				float3 direction = normalize(normalPos.xyz);
+	
+				#if _SGT_SHAPE_SPHERE && _SGT_SNAP_ON
+					position.xyz = direction * _SGT_Radius + _SGT_Offset;
+				#endif
+
+				v.vertex.xyz = position.xyz;
+	
+				float3 normal   = float3(0.0, 1.0,  0.0);
+				float3 tangent  = float3(1.0, 0.0,  0.0);
+				float3 binormal = float3(0.0, 0.0, -1.0);
+
+				#if _SGT_SHAPE_SPHERE
+					normal = direction;
+
+					SGT_ComputeTangentFrame(normal, tangent, binormal);
+				#endif
+
+				float3 normalD = normal;
+
+				#if _SGT_DISPLACEMENT_ON
+					SGT_ApplyGerstnerNoise(v.vertex.xyz, normalD, tangent, binormal, _SGT_WaveData.x, _SGT_WaveData.y, _SGT_WaveData.z);
+				#endif
 
 				o.position           = UnityObjectToClipPos(v.vertex);
-				o.worldSpacePosition = mul(_SGT_ObjectToOcean, v.vertex).xyz;
-				o.worldSpaceNormal   = mul((float3x3)_SGT_ObjectToOcean, v.normal);
-				o.screenPosition     = ComputeScreenPos(o.position);
+				o.worldSpacePosition = mul(_SGT_ObjectToWorld, v.vertex).xyz;
+				o.worldSpaceNormal   = mul((float3x3)_SGT_ObjectToWorld, normal);
+				o.worldSpaceTangent  = mul((float3x3)_SGT_ObjectToWorld, tangent);
+				o.worldSpaceBent.xyz = mul((float3x3)_SGT_ObjectToWorld, normalD);
+				o.worldSpaceBent.w   = lerp(0.0, 1.0, exp(-distance(v.vertex.xyz, _WorldSpaceCameraPos) * 0.1));
 			}
 
 			void frag(v2f i, out f2g o, in bool isFrontFace : SV_IsFrontFace)
 			{
 				float dist = distance(_SGT_WCam, i.worldSpacePosition);
 
+				i.worldSpaceNormal   = normalize(i.worldSpaceNormal);
+				i.worldSpaceTangent  = normalize(i.worldSpaceTangent);
+				i.worldSpaceBent.xyz = normalize(i.worldSpaceBent.xyz);
+
+				float3 worldSpaceBinormal = cross(i.worldSpaceBent.xyz, i.worldSpaceTangent);
+
+				#if _SGT_RIPPLES_ON
+					float2 det = SGT_GetRipplesNormal(i.worldSpacePosition);
+
+					i.worldSpaceBent.xyz = i.worldSpaceBent.xyz + i.worldSpaceTangent * det.x + worldSpaceBinormal * det.y;
+				#endif
+
+				i.worldSpaceBent.xyz = lerp(i.worldSpaceNormal, i.worldSpaceBent.xyz, i.worldSpaceBent.w);
+
+				i.worldSpaceBent.xyz = normalize(i.worldSpaceBent.xyz);
+
 				// Top surface
 				if (isFrontFace == true)
 				{
-					o.distance = float4(dist, 0.0f, 0.0f, 1.0f);
-					o.alpha    = 1.0f;//saturate(1.0f - exp(-dist * _SGT_SurfaceDensity) + _SGT_SurfaceMinimumOpacity);
+					o.distance = float4(i.worldSpaceBent.xyz, dist);
 				}
 				// Under surface
 				else
 				{
 					float alpha = saturate(1.0f - exp(-dist * _SGT_UnderwaterDensity) + _SGT_UnderwaterMinimumOpacity);
 
-					o.distance = float4(-dist, 0.0f, 0.0f, 1.0f);
-					o.alpha    = float4(alpha, 0.0f, 0.0f, 1.0f);
+					o.distance = float4(i.worldSpaceBent.xyz, -dist);
 				}
 			}
 			ENDCG

@@ -72,6 +72,9 @@ namespace SpaceGraphicsToolkit.Landscape
 		/// <summary>If you enable this, then this heightmap will modify the actual mesh geometry height values. If not, it will just be a visual effect like a normal map.</summary>
 		public bool Displace { set { displace = value; } get { return displace; } } [SerializeField] protected bool displace = true;
 
+		/// <summary>If you enable this, then this heightmap will replace/override any previously written height data.</summary>
+		public bool Replace { set { replace = value; } get { return replace; } } [SerializeField] protected bool replace;
+
 		[System.NonSerialized]
 		private double4x4 matrix;
 
@@ -131,6 +134,7 @@ namespace SpaceGraphicsToolkit.Landscape
 			[ReadOnly] public bool                MaskInvert;
 
 			[ReadOnly] public double2 Tiling;
+			[ReadOnly] public float   Replace;
 
 			private void Contribute16(int i, double2 coord, double weight)
 			{
@@ -180,6 +184,8 @@ namespace SpaceGraphicsToolkit.Landscape
 						{
 							var o = GetMask(DataA[i].xy, DataB[i].xy);
 
+							Heights[i] = math.lerp(Heights[i], 0.0f, Replace);
+
 							Contribute16(i, Coords[i].xy, DataA[i].z * o);
 							Contribute16(i, Coords[i].zw, DataA[i].w * o);
 						}
@@ -189,6 +195,8 @@ namespace SpaceGraphicsToolkit.Landscape
 						for (var i = 0; i < Heights.Length; i++)
 						{
 							var o = GetMask(DataA[i].xy, DataB[i].xy);
+
+							Heights[i] = math.lerp(Heights[i], 0.0f, Replace);
 
 							Contribute16(i, Coords[i].xy, o);
 						}
@@ -202,6 +210,8 @@ namespace SpaceGraphicsToolkit.Landscape
 						{
 							var o = GetMask(DataA[i].xy, DataB[i].xy);
 
+							Heights[i] = math.lerp(Heights[i], 0.0f, Replace);
+
 							Contribute08(i, Coords[i].xy, DataA[i].z * o);
 							Contribute08(i, Coords[i].zw, DataA[i].w * o);
 						}
@@ -211,6 +221,8 @@ namespace SpaceGraphicsToolkit.Landscape
 						for (var i = 0; i < Heights.Length; i++)
 						{
 							var o = GetMask(DataA[i].xy, DataB[i].xy);
+
+							Heights[i] = math.lerp(Heights[i], 0.0f, Replace);
 
 							Contribute08(i, Coords[i].xy, o);
 						}
@@ -237,6 +249,7 @@ namespace SpaceGraphicsToolkit.Landscape
 
 			[ReadOnly] public double4x4 Matrix;
 			[ReadOnly] public double2   Tiling;
+			[ReadOnly] public float     Replace;
 
 			private float GetMask(double2 coord)
 			{
@@ -270,10 +283,10 @@ namespace SpaceGraphicsToolkit.Landscape
 							{
 								if (point.z >= 0 && point.z <= 1)
 								{
-									var h = HeightRange.x + HeightRange.y * SgtLandscape.Sample_Cubic(HeightData16, HeightSize, point.xy * Tiling * HeightSize);
+									var h = HeightRange.x + HeightRange.y * SgtLandscape.Sample_Cubic(HeightData16, HeightSize, point.xy * Tiling);
 									var o = GetMask(point.xy);
 
-									Heights[i] += h * o;
+									Heights[i] = math.lerp(Heights[i], 0.0, Replace * o) + h * o;
 								}
 							}
 						}
@@ -291,10 +304,10 @@ namespace SpaceGraphicsToolkit.Landscape
 							{
 								if (point.z >= 0 && point.z <= 1)
 								{
-									var h = HeightRange.x + HeightRange.y * SgtLandscape.Sample_Cubic(HeightData08, HeightSize, point.xy * Tiling * HeightSize);
+									var h = HeightRange.x + HeightRange.y * SgtLandscape.Sample_Cubic(HeightData08, HeightSize, point.xy * Tiling);
 									var o = GetMask(point.xy);
 
-									Heights[i] += h * o;
+									Heights[i] = math.lerp(Heights[i], 0.0, Replace * o) + h * o;
 								}
 							}
 						}
@@ -369,7 +382,8 @@ namespace SpaceGraphicsToolkit.Landscape
 						job.MaskShift  = maskGlobalShift;
 						job.MaskInvert = maskInvert;
 
-						job.Tiling = globalTiling;
+						job.Tiling  = globalTiling;
+						job.Replace = replace == true ? 1.0f : 0.0f;
 
 						pending.Handle = job.Schedule(pending.Handle);
 					}
@@ -391,8 +405,9 @@ namespace SpaceGraphicsToolkit.Landscape
 					job.MaskSize   = maskData.Size;
 					job.MaskInvert = maskInvert;
 
-					job.Matrix = matrix;
-					job.Tiling = (float2)localTiling;
+					job.Matrix  = matrix;
+					job.Tiling  = (float2)localTiling;
+					job.Replace = replace == true ? 1.0f : 0.0f;
 
 					pending.Handle = job.Schedule(pending.Handle);
 				}
@@ -484,6 +499,7 @@ namespace SpaceGraphicsToolkit.Landscape
 				Draw("localTiling", ref markForRebuild, "The detail will be tiled this many times around the landscape.");
 			}
 			Draw("displace", ref markForRebuild, "If you enable this, then this heightmap will modify the actual mesh geometry height values. If not, it will just be a visual effect like a normal map.");
+			Draw("replace", ref markForRebuild, "If you enable this, then this heightmap will replace/override any previously written height data.");
 
 			if (Any(tgts, t => t.Mask == true) && Button("Randomize MaskIndex") == true)
 			{

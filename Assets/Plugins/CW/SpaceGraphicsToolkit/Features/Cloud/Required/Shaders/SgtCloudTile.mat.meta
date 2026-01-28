@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e6ca6d78698ab5d4abc21c2067c2f01c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.11
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Cloud/Required/Shaders/SgtCloudTile.mat
+  uploadId: 852530

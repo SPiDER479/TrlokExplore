@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 761017b9df650a046a4f0bb4d00f7d5b
+ShaderIncludeImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 323821
+  packageName: Gas Giant Forge
+  packageVersion: 1.4.4
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/RingSystem/Required/Shaders/SGT_RingSystem.cginc
+  uploadId: 850670

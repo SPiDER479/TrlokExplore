@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 51525af094724c94f8d1888ab408efd8
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11700000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.11
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Skybox/Textures/SkyboxNoise.asset
+  uploadId: 852530

@@ -156,6 +156,9 @@ namespace SpaceGraphicsToolkit.Landscape
 		/// <summary>The overall detail of the landscape relative to the camera distance. The higher you set this, the more triangles it will have.</summary>
 		public float Detail { set { detail = value; } get { return detail; } } [SerializeField] [Range(1.0f, 20.0f)] private float detail = 5.0f;
 
+		/// <summary>This allows you to boost the detail of lower LOD stages, so the landscape detail doesn't go too low.</summary>
+		public float BoostMultiplier { set { boostMultiplier = value; } get { return boostMultiplier; } } [SerializeField] [Range(1.0f, 3.0f)] private float boostMultiplier = 1.75f;
+
 		/// <summary>The maximum LOD depth this landscape can have.</summary>
 		public float MinimumTriangleSize { set { minimumTriangleSize = value; } get { return minimumTriangleSize; } } [SerializeField] private float minimumTriangleSize = 0.1f;
 
@@ -203,7 +206,7 @@ namespace SpaceGraphicsToolkit.Landscape
 
 		private static readonly int ATLAS_ROWS = 7; // 15
 
-		private static readonly int GLOBAL_DETAIL_CAPACITY = 8;
+		private static readonly int GLOBAL_DETAIL_CAPACITY = 32;
 
 		private static readonly int LOCAL_DETAIL_CAPACITY = 32;
 
@@ -269,6 +272,7 @@ namespace SpaceGraphicsToolkit.Landscape
 		[System.NonSerialized] private Vector4[] globalDetailDataB = new Vector4[GLOBAL_DETAIL_CAPACITY];
 		[System.NonSerialized] private Vector4[] globalDetailDataC = new Vector4[GLOBAL_DETAIL_CAPACITY];
 		[System.NonSerialized] private Vector4[] globalDetailDataD = new Vector4[GLOBAL_DETAIL_CAPACITY];
+		[System.NonSerialized] private Vector4[] globalDetailDataE = new Vector4[GLOBAL_DETAIL_CAPACITY];
 		[System.NonSerialized] private Vector4[] globalDetailLayer = new Vector4[GLOBAL_DETAIL_CAPACITY];
 
 		[System.NonSerialized] private int         localDetailCount;
@@ -276,6 +280,7 @@ namespace SpaceGraphicsToolkit.Landscape
 		[System.NonSerialized] private Vector4[]   localDetailDataB  = new Vector4[LOCAL_DETAIL_CAPACITY];
 		[System.NonSerialized] private Vector4[]   localDetailDataC  = new Vector4[LOCAL_DETAIL_CAPACITY];
 		[System.NonSerialized] private Vector4[]   localDetailDataD  = new Vector4[LOCAL_DETAIL_CAPACITY];
+		[System.NonSerialized] private Vector4[]   localDetailDataE  = new Vector4[LOCAL_DETAIL_CAPACITY];
 		[System.NonSerialized] private Matrix4x4[] localDetailMatrix = new Matrix4x4[LOCAL_DETAIL_CAPACITY];
 
 		[System.NonSerialized] private int       globalFlattenCount;
@@ -320,17 +325,16 @@ namespace SpaceGraphicsToolkit.Landscape
 		protected static readonly int _CwTopology      = Shader.PropertyToID("_CwTopology");
 		protected static readonly int _CwTopologySize  = Shader.PropertyToID("_CwTopologySize");
 		protected static readonly int _CwTopologyData  = Shader.PropertyToID("_CwTopologyData");
-		protected static readonly int _SGT_CloudTex     = Shader.PropertyToID("_SGT_CloudTex");
-		protected static readonly int _SGT_CloudMatrix  = Shader.PropertyToID("_SGT_CloudMatrix");
-		protected static readonly int _SGT_CloudOpacity = Shader.PropertyToID("_SGT_CloudOpacity");
-		protected static readonly int _SGT_CloudWarp    = Shader.PropertyToID("_SGT_CloudWarp");
+		protected static readonly int _CwTopologyRange = Shader.PropertyToID("_CwTopologyRange");
 
-		protected static readonly int _SGT_OceanDistance   = Shader.PropertyToID("_SGT_OceanDistance");
-		protected static readonly int _SGT_OceanDensity    = Shader.PropertyToID("_SGT_OceanDensity");
-		protected static readonly int _SGT_OceanHeight     = Shader.PropertyToID("_SGT_OceanHeight");
-		protected static readonly int _SGT_OceanColor      = Shader.PropertyToID("_SGT_OceanColor");
-		protected static readonly int _SGT_OceanMinimum    = Shader.PropertyToID("_SGT_OceanMinimum");
-		protected static readonly int _SGT_OceanSmoothness = Shader.PropertyToID("_SGT_OceanSmoothness");
+		protected static readonly int _SGT_OceanDistance       = Shader.PropertyToID("_SGT_OceanDistance");
+		protected static readonly int _SGT_OceanDensity        = Shader.PropertyToID("_SGT_OceanDensity");
+		protected static readonly int _SGT_OceanHeight         = Shader.PropertyToID("_SGT_OceanHeight");
+		protected static readonly int _SGT_OceanLightDirection = Shader.PropertyToID("_SGT_OceanLightDirection");
+		protected static readonly int _SGT_OceanLightColor     = Shader.PropertyToID("_SGT_OceanLightColor");
+		protected static readonly int _SGT_OceanColor          = Shader.PropertyToID("_SGT_OceanColor");
+		protected static readonly int _SGT_OceanSmoothness     = Shader.PropertyToID("_SGT_OceanSmoothness");
+		protected static readonly int _SGT_OceanRadius         = Shader.PropertyToID("_SGT_OceanRadius");
 
 		protected static readonly int _CwBufferP          = Shader.PropertyToID("_CwBufferP");
 		protected static readonly int _CwWeights          = Shader.PropertyToID("_CwWeights");
@@ -344,6 +348,7 @@ namespace SpaceGraphicsToolkit.Landscape
 		protected static readonly int _CwLocalDetailDataB  = Shader.PropertyToID("_CwLocalDetailDataB");
 		protected static readonly int _CwLocalDetailDataC  = Shader.PropertyToID("_CwLocalDetailDataC");
 		protected static readonly int _CwLocalDetailDataD  = Shader.PropertyToID("_CwLocalDetailDataD");
+		protected static readonly int _CwLocalDetailDataE  = Shader.PropertyToID("_CwLocalDetailDataE");
 		protected static readonly int _CwLocalDetailMatrix = Shader.PropertyToID("_CwLocalDetailMatrix");
 
 		protected static readonly int _CwGlobalDetailCount = Shader.PropertyToID("_CwGlobalDetailCount");
@@ -351,6 +356,7 @@ namespace SpaceGraphicsToolkit.Landscape
 		protected static readonly int _CwGlobalDetailDataB = Shader.PropertyToID("_CwGlobalDetailDataB");
 		protected static readonly int _CwGlobalDetailDataC = Shader.PropertyToID("_CwGlobalDetailDataC");
 		protected static readonly int _CwGlobalDetailDataD = Shader.PropertyToID("_CwGlobalDetailDataD");
+		protected static readonly int _CwGlobalDetailDataE = Shader.PropertyToID("_CwGlobalDetailDataE");
 		protected static readonly int _CwGlobalDetailLayer = Shader.PropertyToID("_CwGlobalDetailLayer");
 
 		protected static readonly int _CwLocalFlattenCount  = Shader.PropertyToID("_CwLocalFlattenCount");
@@ -462,14 +468,14 @@ namespace SpaceGraphicsToolkit.Landscape
 #if UNITY_EDITOR
 			if (Application.isPlaying == true)
 			{
-				UpdateLod(initDetail, int.MaxValue);
+				UpdateLod(initDetail, 1.0f, int.MaxValue);
 			}
 			else
 			{
-				UpdateLod(editorDetail, int.MaxValue);
+				UpdateLod(editorDetail, 1.0f, int.MaxValue);
 			}
 #else
-			UpdateLod(initDetail, int.MaxValue);
+			UpdateLod(initDetail, 1.0f, int.MaxValue);
 #endif
 		}
 
@@ -681,7 +687,7 @@ namespace SpaceGraphicsToolkit.Landscape
 
 			GetComponentsInChildren(features);
 
-			features.RemoveAll(f => f.transform.parent != transform);
+			features.RemoveAll(f =>f.isActiveAndEnabled == false ||  f.transform.parent != transform);
 
 			foreach (var feature in features)
 			{
@@ -689,7 +695,9 @@ namespace SpaceGraphicsToolkit.Landscape
 
 				if (feature is SgtLandscapeBiome)
 				{
-					var f = (SgtLandscapeBiome)feature;
+					var f       = (SgtLandscapeBiome)feature;
+					var replace = f.Replace == true ? 1.0f : 0.0f;
+					var count = 0;
 
 					if (f.Space == SgtLandscapeBiome.SpaceType.Local)
 					{
@@ -697,8 +705,16 @@ namespace SpaceGraphicsToolkit.Landscape
 						{
 							if (l.Enabled == true)
 							{
-								AddLocalDetailData(l.LocalTiling, l.LocalScale, l.HeightIndex, l.HeightRange, l.HeightMidpoint, f.Strata, f.Mask, f.MaskIndex, f.MaskInvert, f.MaskSharpness, f.MaskGlobalShift, f.MaskDetail, f.MaskDetailIndex, f.MaskDetailTiling, f.MaskDetailOffset, f.CalculateMatrix());
+								AddLocalDetailData(l.LocalTiling, l.LocalScale, l.HeightIndex, l.HeightRange, l.HeightMidpoint, f.Strata, replace, f.Mask, f.MaskIndex, f.MaskInvert, f.MaskSharpness, f.MaskGlobalShift, f.MaskDetail, f.MaskDetailIndex, f.MaskDetailTiling, f.MaskDetailOffset, f.CalculateMatrix());
+
+								replace  = 0.0f;
+								count   += 1;
 							}
+						}
+
+						if (f.Replace == true && count == 0)
+						{
+							AddLocalDetailData(Vector2.one, Vector2.zero, 0, 0.0f, 0.0f, f.Strata, 1.0f, f.Mask, f.MaskIndex, f.MaskInvert, f.MaskSharpness, f.MaskGlobalShift, f.MaskDetail, f.MaskDetailIndex, f.MaskDetailTiling, f.MaskDetailOffset, f.CalculateMatrix());
 						}
 
 						if (f.Color == true)
@@ -712,8 +728,16 @@ namespace SpaceGraphicsToolkit.Landscape
 						{
 							if (l.Enabled == true)
 							{
-								AddGlobalDetailData(l.GlobalIndex, l.GlobalTile, l.HeightIndex, l.HeightRange, l.HeightMidpoint, l.Strata, f.Mask, f.MaskIndex, f.MaskInvert, f.MaskSharpness, f.MaskGlobalShift, f.MaskDetail, f.MaskDetailIndex, f.MaskDetailTiling, f.MaskDetailOffset);
+								AddGlobalDetailData(l.GlobalIndex, l.GlobalTile, l.HeightIndex, l.HeightRange, l.HeightMidpoint, l.Strata, replace, f.Mask, f.MaskIndex, f.MaskInvert, f.MaskSharpness, f.MaskGlobalShift, f.MaskDetail, f.MaskDetailIndex, f.MaskDetailTiling, f.MaskDetailOffset);
+
+								replace  = 0.0f;
+								count   += 1;
 							}
+						}
+
+						if (f.Replace == true && count == 0)
+						{
+							AddGlobalDetailData(0, 1, 0, 0.0f, 0.0f, 0.0f, 1.0f, f.Mask, f.MaskIndex, f.MaskInvert, f.MaskSharpness, f.MaskGlobalShift, f.MaskDetail, f.MaskDetailIndex, f.MaskDetailTiling, f.MaskDetailOffset);
 						}
 
 						if (f.Color == true)
@@ -724,15 +748,16 @@ namespace SpaceGraphicsToolkit.Landscape
 				}
 				else if (feature is SgtLandscapeDetail)
 				{
-					var f = (SgtLandscapeDetail)feature;
+					var f    = (SgtLandscapeDetail)feature;
+					var keep = f.Replace == true ? 0.0f : 1.0f;
 
 					if (f.Space == SgtLandscapeDetail.SpaceType.Local)
 					{
-						AddLocalDetailData(f.LocalTiling, f.LocalScale, f.HeightIndex, f.HeightRange, f.HeightMidpoint, f.Strata, f.Mask, f.MaskIndex, f.MaskInvert, f.MaskSharpness, f.MaskGlobalShift, f.MaskDetail, f.MaskDetailIndex, f.MaskDetailTiling, f.MaskDetailOffset, f.CalculateMatrix());
+						AddLocalDetailData(f.LocalTiling, f.LocalScale, f.HeightIndex, f.HeightRange, f.HeightMidpoint, f.Strata, keep, f.Mask, f.MaskIndex, f.MaskInvert, f.MaskSharpness, f.MaskGlobalShift, f.MaskDetail, f.MaskDetailIndex, f.MaskDetailTiling, f.MaskDetailOffset, f.CalculateMatrix());
 					}
 					else if (f.Space == SgtLandscapeDetail.SpaceType.Global)
 					{
-						AddGlobalDetailData(f.GlobalIndex, f.GlobalTile, f.HeightIndex, f.HeightRange, f.HeightMidpoint, f.Strata, f.Mask, f.MaskIndex, f.MaskInvert, f.MaskSharpness, f.MaskGlobalShift, f.MaskDetail, f.MaskDetailIndex, f.MaskDetailTiling, f.MaskDetailOffset);
+						AddGlobalDetailData(f.GlobalIndex, f.GlobalTile, f.HeightIndex, f.HeightRange, f.HeightMidpoint, f.Strata, keep, f.Mask, f.MaskIndex, f.MaskInvert, f.MaskSharpness, f.MaskGlobalShift, f.MaskDetail, f.MaskDetailIndex, f.MaskDetailTiling, f.MaskDetailOffset);
 					}
 				}
 				else if (feature is SgtLandscapeFlatten)
@@ -764,19 +789,20 @@ namespace SpaceGraphicsToolkit.Landscape
 			}
 		}
 
-		private void AddLocalDetailData(Vector2 localTiling, Vector2 localScale, int heightIndex, float heightRange, float heightMidpoint, float strata, bool mask, int maskIndex, bool maskInvert, float maskSharpness, float maskGlobalShift, bool maskDetail, int maskDetailIndex, Vector2 maskDetailTiling, float maskDetailOffset, Matrix4x4 matrix)
+		private void AddLocalDetailData(Vector2 localTiling, Vector2 localScale, int heightIndex, float heightRange, float heightMidpoint, float strata, float replace, bool mask, int maskIndex, bool maskInvert, float maskSharpness, float maskGlobalShift, bool maskDetail, int maskDetailIndex, Vector2 maskDetailTiling, float maskDetailOffset, Matrix4x4 matrix)
 		{
 			localDetailDataA[localDetailCount] = new float4(localTiling, localScale);
 			localDetailDataB[localDetailCount] = new float4(strata, GetHeightIndex(heightIndex), -heightRange * heightMidpoint, heightRange);
 
 			localDetailDataC[localDetailCount] = new float4(mask == true ? GetMaskIndex(maskIndex) : -1, maskSharpness, 0, maskInvert == true ? 1 : 0);
 			localDetailDataD[localDetailCount] = new float4(maskDetail == true ? GetDetailIndex(maskDetailIndex) : -1, maskDetailTiling, maskDetailOffset);
+			localDetailDataE[localDetailCount] = new float4(replace, 0.0f, 0.0f, 0.0f);
 			localDetailMatrix[localDetailCount] = matrix;
 
 			localDetailCount += 1;
 		}
 
-		private void AddGlobalDetailData(int globalIndex, int globalTile, int heightIndex, float heightRange, float heightMidpoint, float strata, bool mask, int maskIndex, bool maskInvert, float maskSharpness, float maskGlobalShift, bool maskDetail, int maskDetailIndex, Vector2 maskDetailTiling, float maskDetailOffset)
+		private void AddGlobalDetailData(int globalIndex, int globalTile, int heightIndex, float heightRange, float heightMidpoint, float strata, float replace, bool mask, int maskIndex, bool maskInvert, float maskSharpness, float maskGlobalShift, bool maskDetail, int maskDetailIndex, Vector2 maskDetailTiling, float maskDetailOffset)
 		{
 			if (globalTile > 0)
 			{
@@ -784,11 +810,13 @@ namespace SpaceGraphicsToolkit.Landscape
 
 				vector[globalIndex] = 1.0f;
 
-				globalDetailDataA[globalDetailCount] = new float4(1.0f / globalTilingNormalized[globalIndex] / heightRange / globalTile, globalTile, 0.0f, 0.0f);
+				//globalDetailDataA[globalDetailCount] = new float4(1.0f / globalTilingNormalized[globalIndex] / heightRange / globalTile, globalTile, 0.0f, 0.0f);
+				globalDetailDataA[globalDetailCount] = new float4(heightRange * globalTilingNormalized[globalIndex] * globalTile, globalTile, 0.0f, 0.0f);
 				globalDetailDataB[globalDetailCount] = new float4(strata, GetHeightIndex(heightIndex), -heightRange * heightMidpoint, heightRange);
 
 				globalDetailDataC[globalDetailCount] = new float4(mask == true ? GetMaskIndex(maskIndex) : -1, maskSharpness, maskGlobalShift, maskInvert == true ? 1 : 0);
 				globalDetailDataD[globalDetailCount] = new float4(maskDetail == true ? GetDetailIndex(maskDetailIndex) : -1, maskDetailTiling, maskDetailOffset);
+				globalDetailDataE[localDetailCount] = new float4(replace, 0.0f, 0.0f, 0.0f);
 				globalDetailLayer[globalDetailCount] = vector;
 
 				globalDetailCount += 1;
@@ -1001,18 +1029,18 @@ namespace SpaceGraphicsToolkit.Landscape
 #if UNITY_EDITOR
 			if (Application.isPlaying == true)
 			{
-				UpdateLod(detail, lodSteps);
+				UpdateLod(detail, boostMultiplier, lodSteps);
 			}
 			else
 			{
-				UpdateLod(editorDetail, int.MaxValue);
+				UpdateLod(editorDetail, boostMultiplier, int.MaxValue);
 			}
 #else
-			UpdateLod(detail, int.MaxValue);
+			UpdateLod(detail, boostMultiplier, int.MaxValue);
 #endif
 		}
 
-		private void UpdateLod(float detail, int maxSteps, float budget = -1.0f)
+		private void UpdateLod(float detail, float detailBoost, int maxSteps, float budget = -1.0f)
 		{
 			if (IsActivated == true)
 			{
@@ -1022,7 +1050,7 @@ namespace SpaceGraphicsToolkit.Landscape
 					{
 						UpdateCameraPositions();
 
-						pendingUpdate.Schedule(ScheduleUpdateTriangles(detail, maxSteps));
+						pendingUpdate.Schedule(ScheduleUpdateTriangles(detail, boostMultiplier, maxSteps));
 					}
 				}
 
@@ -1118,17 +1146,21 @@ namespace SpaceGraphicsToolkit.Landscape
 			}
 			*/
 
+			var finalLodSteps = lodSteps;//Mathf.CeilToInt(lodSteps * Time.deltaTime);
+
 #if UNITY_EDITOR
 			if (Application.isPlaying == true)
 			{
-				UpdateLod(detail, lodSteps, lodBudget * lodWeight);
+				UpdateLod(detail, boostMultiplier, finalLodSteps, lodBudget * lodWeight);
 			}
 #else
-			UpdateLod(detail, lodSteps, lodBudget * lodWeight);
+			UpdateLod(detail, boostMultiplier, finalLodSteps, lodBudget * lodWeight);
 #endif
 			
 			DrawTriangles();
 		}
+
+		protected abstract Bounds GetWorldBounds();
 
 		private void DrawTriangles()
 		{
@@ -1138,7 +1170,7 @@ namespace SpaceGraphicsToolkit.Landscape
 
 			var settings = new RenderParams(material);
 
-			settings.worldBounds       = new Bounds(transform.position, Vector3.one * 10000000.0f);
+			settings.worldBounds       = GetWorldBounds();
 			settings.layer             = gameObject.layer;
 			settings.camera            = null;
 			settings.shadowCastingMode = castShadows == true ? UnityEngine.Rendering.ShadowCastingMode.On : UnityEngine.Rendering.ShadowCastingMode.Off;
@@ -1356,6 +1388,7 @@ namespace SpaceGraphicsToolkit.Landscape
 			BeginError(Any(tgts, t => t.Detail <= 0.0f));
 				Draw("detail", "The overall detail of the landscape relative to the camera distance. The higher you set this, the more triangles it will have.");
 			EndError();
+			Draw("boostMultiplier", "This allows you to boost the detail of lower LOD stages, so the landscape detail doesn't go too low.");
 			BeginError(Any(tgts, t => t.MinimumTriangleSize <= 0.0f));
 				Draw("minimumTriangleSize", "The maximum LOD depth this landscape can have.");
 			EndError();

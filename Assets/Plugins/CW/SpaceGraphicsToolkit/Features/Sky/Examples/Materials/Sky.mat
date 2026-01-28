@@ -9,132 +9,93 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Sky
   m_Shader: {fileID: 4800000, guid: 6c35a34d0891ea949bb50c18d18af0de, type: 3}
-  m_ValidKeywords: []
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords:
+  - _SGT_CLIP_INNER
+  - _SGT_DITHER
+  - _SGT_LIGHTING
+  - _SURFACE_TYPE_TRANSPARENT
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: 3000
-  stringTagMap: {}
-  disabledShaderPasses: []
+  stringTagMap:
+    MotionVector: User
+    RenderType: Transparent
+  disabledShaderPasses:
+  - TransparentDepthPrepass
+  - TransparentDepthPostpass
+  - TransparentBackface
+  - MOTIONVECTORS
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
-    - _SGT_CloudTex:
+    - unity_Lightmaps:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _SGT_DepthTex:
+    - unity_LightmapsInd:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _SGT_LightingTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _SGT_OceanCausticsTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _SGT_OceanDetail0:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _SGT_OceanDetail1:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _SGT_OceanDetail2:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _SGT_OceanTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _SGT_OceanWavesTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _SGT_RingShadowTexture:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _SGT_ScatteringTex:
+    - unity_ShadowMasks:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _BumpScale: 1
-    - _CW_DisableFog: 0
-    - _CW_DisableTransparentMV: 1
-    - _CloudDistortionStrength: 0
-    - _CloudTexPower: 1
-    - _CloudTexTiling: 1
-    - _Cutoff: 0.5
-    - _CwStrength: 50
-    - _DetailNormalMapScale: 1
-    - _DstBlend: 0
-    - _GlossMapScale: 1
-    - _Glossiness: 0.5
-    - _GlossyReflections: 1
-    - _Metallic: 0
-    - _Mode: 0
-    - _OcclusionStrength: 1
-    - _Parallax: 0.02
-    - _SGT_Brightness: 0
-    - _SGT_CloudRenderer: 0
-    - _SGT_Clouds: 0
-    - _SGT_Cull: 2
-    - _SGT_Hdr: 0
-    - _SGT_HorizonLengthRecip: 0
-    - _SGT_InnerRatio: 0
-    - _SGT_InnerScale: 1
-    - _SGT_LightCount: 0
-    - _SGT_Lighting: 0
-    - _SGT_OceanClip: 0
-    - _SGT_OceanDensity: 0
-    - _SGT_OceanFresnelPower: 0
-    - _SGT_OceanMinimumOpacity: 0
-    - _SGT_OceanRadius: 0
-    - _SGT_OceanWavesHeight: 0
-    - _SGT_OceanWavesScale: 0
-    - _SGT_OceanWavesTiling: 0
-    - _SGT_RingShadowCount: 0
-    - _SGT_Scattering: 0
-    - _SGT_ScatteringMie: 0.5
-    - _SGT_ScatteringRayleigh: 0.5
-    - _SGT_ScatteringStrength: 1
-    - _SGT_SilhouetteRange: 0
-    - _SGT_Sky: 0
-    - _SGT_SphereShadowCount: 0
-    - _SGT_StepCount: 0
-    - _SGT_ZTest: 4
-    - _SmoothnessTextureChannel: 0
-    - _SpecularHighlights: 1
+    - _AddPrecomputedVelocity: 0
+    - _AlphaCutoffEnable: 0
+    - _AlphaDstBlend: 10
+    - _AlphaSrcBlend: 1
+    - _BUILTIN_QueueControl: 0
+    - _BUILTIN_QueueOffset: 0
+    - _BlendMode: 0
+    - _ConservativeDepthOffsetEnable: 0
+    - _CullMode: 2
+    - _CullModeForward: 2
+    - _DepthOffsetEnable: 0
+    - _DoubleSidedEnable: 0
+    - _DoubleSidedGIMode: 0
+    - _DoubleSidedNormalMode: 2
+    - _DstBlend: 10
+    - _DstBlend2: 10
+    - _EnableBlendModePreserveSpecularLighting: 0
+    - _EnableFogOnTransparent: 0
+    - _ExcludeFromTUAndAA: 0
+    - _OpaqueCullMode: 2
+    - _PerPixelSorting: 0
+    - _RenderQueueType: 4
+    - _SGT_Albedo: 0
+    - _SGT_ClipInner: 1
+    - _SGT_Dither: 1
+    - _SGT_Lighting: 1
     - _SrcBlend: 1
-    - _UVSec: 0
-    - _ZWrite: 1
+    - _StencilRef: 0
+    - _StencilRefDepth: 1
+    - _StencilRefDistortionVec: 4
+    - _StencilRefMV: 33
+    - _StencilWriteMask: 6
+    - _StencilWriteMaskDepth: 9
+    - _StencilWriteMaskDistortionVec: 4
+    - _StencilWriteMaskMV: 43
+    - _SurfaceType: 1
+    - _TransparentBackfaceEnable: 0
+    - _TransparentCullMode: 2
+    - _TransparentDepthPostpassEnable: 0
+    - _TransparentDepthPrepassEnable: 0
+    - _TransparentSortPriority: 0
+    - _TransparentWritingMotionVec: 0
+    - _TransparentZWrite: 0
+    - _UseShadowThreshold: 0
+    - _ZTestDepthEqualForOpaque: 8
+    - _ZTestTransparent: 8
+    - _ZWrite: 0
     m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _SGT_AmbientColor: {r: 0, g: 0, b: 0, a: 1}
-    - _SGT_CloudOpacity: {r: 0, g: 0, b: 0, a: 0}
-    - _SGT_Color: {r: 1, g: 1, b: 1, a: 1}
-    - _SGT_Density: {r: 0, g: 0, b: 0, a: 1}
-    - _SGT_OceanBaseColor: {r: 0, g: 0, b: 0, a: 0}
-    - _SGT_OceanCausticsData: {r: 0, g: 0, b: 0, a: 0}
-    - _SGT_OceanData0: {r: 0, g: 0, b: 0, a: 0}
-    - _SGT_OceanData1: {r: 0, g: 0, b: 0, a: 0}
-    - _SGT_OceanData2: {r: 0, g: 0, b: 0, a: 0}
-    - _SGT_OceanFresnelColor: {r: 0, g: 0, b: 0, a: 0}
-    - _SGT_OceanSpecularPower: {r: 0, g: 0, b: 0, a: 0}
-    - _SGT_OceanSpecularStrength: {r: 0, g: 0, b: 0, a: 0}
-    - _SGT_Scale: {r: 0, g: 0, b: 0, a: 1}
-    - _SGT_ScatteringInner: {r: 0.5, g: 0.25, b: 0.25, a: 0.1}
-    - _SGT_ScatteringOuter: {r: 0.5, g: 0.25, b: 0.25, a: 0.1}
-    - _SGT_ScatteringPower: {r: 0, g: 0, b: 0, a: 0}
-    - _SGT_ScatteringTerms: {r: 500, g: 100, b: 2, a: -2}
-    - _SGT_SilhouetteRange: {r: 0, g: 0, b: 0, a: 0}
+    - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
+    - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1

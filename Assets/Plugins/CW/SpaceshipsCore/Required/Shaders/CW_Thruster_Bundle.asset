@@ -15,7 +15,7 @@ MonoBehaviour:
   title: CW/Spaceships/Thruster
   target: {fileID: 4800000, guid: 439b8b3b78e7a9c42bf47cd291f41e22, type: 3}
   variantHash: -1077649824
-  projectHash: 487208082
+  projectHash: -1322225485
   variants:
   - Pipe: 0
     Code: "//<HASH>1343661729</HASH>\n////////////////////////////////////////\n//

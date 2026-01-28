@@ -17,7 +17,11 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
+    "defineConstraints": [
+        "__MATHEMATICS__",
+        "__BURST__",
+        "__COLLECTIONS__"
+    ],
     "versionDefines": [
         {
             "name": "com.unity.render-pipelines.universal",
@@ -28,6 +32,11 @@
             "name": "com.unity.render-pipelines.high-definition",
             "expression": "",
             "define": "__HDRP__"
+        },
+        {
+            "name": "com.unity.mathematics",
+            "expression": "",
+            "define": "__MATHEMATICS__"
         },
         {
             "name": "com.unity.burst",

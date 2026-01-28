@@ -90,27 +90,26 @@ namespace SpaceGraphicsToolkit
 
 			biome.Color     = true;
 			biome.Variation = 0.336f;
-			biome.Layers.Add(new SgtLandscapeBiome.SgtLandscapeBiomeLayer() { Enabled = true, Displace = true , HeightIndex = 1, HeightMidpoint = 1, HeightRange = 10.0f, GlobalSize = 1000, LocalTiling = new Vector2(1, 1), Strata = 1.0f });
-			biome.Layers.Add(new SgtLandscapeBiome.SgtLandscapeBiomeLayer() { Enabled = true, Displace = true , HeightIndex = 0, HeightMidpoint = 0, HeightRange =  1.0f, GlobalSize = 100 , LocalTiling = new Vector2(1, 1), Strata = 0.2f });
-			biome.Layers.Add(new SgtLandscapeBiome.SgtLandscapeBiomeLayer() { Enabled = true, Displace = false, HeightIndex = 0, HeightMidpoint = 0, HeightRange =  0.1f, GlobalSize = 50  , LocalTiling = new Vector2(1, 1), Strata = 0.2f });
+			biome.Layers.Add(new SgtLandscapeBiome.SgtLandscapeBiomeLayer() { Enabled = true, Displace = true , HeightIndex = 1, HeightMidpoint = 0.5f, HeightRange = 10.0f, GlobalSize = 1000, LocalTiling = new Vector2(1, 1), Strata = 1.0f });
+			biome.Layers.Add(new SgtLandscapeBiome.SgtLandscapeBiomeLayer() { Enabled = true, Displace = true , HeightIndex = 0, HeightMidpoint = 0.0f, HeightRange =  1.0f, GlobalSize = 100 , LocalTiling = new Vector2(1, 1), Strata = 0.2f });
+			biome.Layers.Add(new SgtLandscapeBiome.SgtLandscapeBiomeLayer() { Enabled = true, Displace = false, HeightIndex = 0, HeightMidpoint = 0.0f, HeightRange =  0.1f, GlobalSize = 50  , LocalTiling = new Vector2(1, 1), Strata = 0.2f });
 
-			sky.Clouds          = cloud;
 			sky.InnerMeshRadius = radius;
-			sky.Height          = radius / 10.0f;
-			sky.Lighting        = SgtLight.InstanceCount > 0;
+			sky.Height          = radius / 20.0f;
 
-			ocean.CloudShadow          = cloud;
-			ocean.Radius               = radius - 4;
-			ocean.SurfaceDensity       = 0.2f;
-			ocean.UnderwaterDensity    = 0.2f;
-			ocean.UnderwaterExtinction = new Vector4(1.0f, 1.0f, 2.0f, 0.1f);
+			ocean.CloudShadow    = cloud;
+			ocean.Radius         = radius;
+			ocean.SurfaceDensity = 0.2f;
 
 			debris.MainTex = MarineSnowTexture;
 			debris.Cells   = MarineSnowCells;
 
-			cloud.CloudLayers.Add(new SgtCloud.CloudLayerType() { Height = 0.2f, Thickness = 0.3f, Density = 1.0f, Shadow = 2.0f, Shape = 1.0f });
+			cloud.Coverage    = true;
+			cloud.OuterRadius = sky.InnerMeshRadius + sky.Height * 0.55f;
+			cloud.InnerRadius = sky.InnerMeshRadius + sky.Height * 0.45f;
 
 			detail.CoverageTex = ExampleCloudDetail;
+			detail.CarveEdge   = 0.5f;
 			detail.CarveCore   = 1.0f;
 			detail.Channels    = new Vector4(1.3f, 1.0f, 1.0f, 1.0f);
 

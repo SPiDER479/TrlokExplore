@@ -46,7 +46,7 @@ Shader "Hidden/SgtTopology"
 				float  deltaH  = heightL - heightR;
 				float  deltaV  = heightB - heightT;
 
-				return float4(deltaH, deltaV, 1.0f, height);
+				return float4(deltaH + 0.5, deltaV + 0.5, 1.0f, height);
 			}
 			ENDCG
 		}

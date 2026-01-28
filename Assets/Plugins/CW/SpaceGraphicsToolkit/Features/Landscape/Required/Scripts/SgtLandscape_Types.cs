@@ -195,7 +195,7 @@ namespace SpaceGraphicsToolkit.Landscape
 
 				var mips = (int)Mathf.Floor(Mathf.Log(Mathf.Max(heightTex.width, heightTex.height), 2)) + 1;
 
-				Texture = new RenderTexture(heightTex.width, heightTex.height, 0, RenderTextureFormat.ARGBFloat, mips);
+				Texture = new RenderTexture(heightTex.width, heightTex.height, 0, RenderTextureFormat.ARGBHalf, mips);
 				Size    = new int2(heightTex.width, heightTex.height);
 
 				//Texture.enableRandomWrite = true;
@@ -239,6 +239,8 @@ namespace SpaceGraphicsToolkit.Landscape
 
 			public float3 Data;
 
+			public float2 Range;
+
 			private CachedTopologyData cachedData;
 
 			public void Create(Texture heightTex, float heightMid, float heightRange, float2 size, float strata)
@@ -246,6 +248,8 @@ namespace SpaceGraphicsToolkit.Landscape
 				CreateShared(heightTex);
 
 				Data = new float3(size / Size / heightRange * new float2(2.0f, 2.0f), strata);
+
+				Range = new float2(-heightRange * heightMid, heightRange);
 			}
 
 			public void CreateSphere(Texture heightTex, float heightMid, float heightRange, float radius, float strata)
@@ -255,6 +259,8 @@ namespace SpaceGraphicsToolkit.Landscape
 				var circ = new float2(math.PI * radius);
 
 				Data = new float3(circ / Size / heightRange * new float2(4.0f, 2.0f), strata);
+
+				Range = new float2(-heightRange * heightMid, heightRange);
 			}
 
 			public void Dispose()

@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd468269495eb464ab757495e9cad8f9, type: 3}
+  m_Name: SGT_RingParticles_March
+  m_EditorClassIdentifier: Assembly-CSharp::SimpleShaderSystem
+  shaderTemplate: {fileID: -6465566751694194690, guid: c1b0a46089f84e4449672b66536700c9,
+    type: 3}
+  shaderFiles:
+  - {fileID: 10900000, guid: b3e8fc45341f0f444ba3ffa518ba9c4c, type: 3}
+  - {fileID: 10900000, guid: c62982a508752d74a9734408666d21d0, type: 3}
+  - {fileID: 10900000, guid: 11ce0f195edf2cc41841fd79c6ae574c, type: 3}
+  outputShader: {fileID: 4800000, guid: 687553480e1ca724c9b58ed97926fe5c, type: 3}
+  outputTitle: Space Graphics Toolkit/RingParticles_March

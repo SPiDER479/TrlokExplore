@@ -1,0 +1,73 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 32
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: SkyboxStars
+  m_Shader: {fileID: 4800000, guid: ad3e1cf3b9e417d4fa5aa1de024ac56f, type: 3}
+  m_ValidKeywords:
+  - _SGT_SUN
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _SGT_NoiseTexture:
+        m_Texture: {fileID: 11700000, guid: 51525af094724c94f8d1888ab408efd8, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SGT_Texture:
+        m_Texture: {fileID: 2800000, guid: a10f321c75718994d937c11770d70e6f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BUILTIN_QueueControl: 0
+    - _BUILTIN_QueueOffset: 0
+    - _CW_DisableFog: 0
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _SGT_Brightness: 5
+    - _SGT_ClipDistance: 0.84
+    - _SGT_NoiseStrength: 9
+    - _SGT_NoiseTiling: 0.01
+    - _SGT_Sun: 1
+    - _SGT_SunBrightness: 0.1
+    - _SGT_SunBrightnessA: 0.02
+    - _SGT_SunBrightnessB: 0.003
+    - _SGT_SunGlow: 0.9999
+    - _SGT_SunShapeA: 0.8
+    - _SGT_SunShapeB: 0.99
+    - _SGT_SunSize: 0.8
+    - _SGT_Tiling: 5
+    m_Colors:
+    - _CW_SeamlessTexture: {r: 0.19999996, g: 0.5, b: 1, a: 1}
+    - _CW_SunColor: {r: 1, g: 0.9954827, b: 0.9198113, a: 1}
+    - _SGT_SunColor: {r: 1, g: 1, b: 1, a: 1}
+    - _SGT_SunPosition: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_SunTint: {r: 1, g: 0.9775659, b: 0.8726415, a: 1}
+    - _SGT_SunTintA: {r: 1, g: 0.7797667, b: 0.5707547, a: 1}
+    - _SGT_SunTintB: {r: 1, g: 1, b: 1, a: 1}
+    - _SkyColor: {r: 0.19999996, g: 0.5, b: 1, a: 1}
+  m_BuildTextureStacks: []

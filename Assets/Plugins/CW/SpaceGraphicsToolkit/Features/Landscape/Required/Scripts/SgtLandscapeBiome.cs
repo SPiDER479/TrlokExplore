@@ -61,6 +61,9 @@ namespace SpaceGraphicsToolkit.Landscape
 		/// <summary>The <b>HeightRange</b> and <b>GlobalSize</b> settings will be multiplied by this amount. This is useful if you're changing your planet size and want your detail to match.</summary>
 		public float SurfaceScale { set { surfaceScale = value; } get { return surfaceScale; } } [SerializeField] private float surfaceScale = 1.0f;
 
+		/// <summary>If you enable this, then this biome will replace/override any previously written height data.</summary>
+		public bool Replace { set { replace = value; } get { return replace; } } [SerializeField] protected bool replace = true;
+
 		/// <summary>Should this biome be masked?</summary>
 		public bool Mask { set { mask = value; } get { return mask; } } [SerializeField] protected bool mask;
 
@@ -181,69 +184,87 @@ namespace SpaceGraphicsToolkit.Landscape
 		{
 		}
 
+		private void ScheduleCpu(SgtLandscape.PendingPoints pending, SgtLandscape.HeightData maskData, int heightIndex, int globalTile, float heightRange, float heightMidpoint, double2 globalTiling, Vector2 localTiling, float replace)
+		{
+			var heightData = cachedLandscape.Bundle.GetHeightData(heightIndex);
+
+			if (space == SpaceType.Global)
+			{
+				if (globalTile > 0)
+				{
+					var job = new SgtLandscapeDetail.GlobalJob();
+
+					job.Coords  = pending.Coords;
+					job.DataA   = pending.DataA;
+					job.DataB   = pending.DataB;
+					job.Heights = pending.Heights;
+
+					job.HeightData08 = heightData.Data08;
+					job.HeightData16 = heightData.Data16;
+					job.HeightSize   = heightData.Size;
+					job.HeightRange  = new float2(-heightRange * heightMidpoint, heightRange) * surfaceScale;
+
+					job.MaskData08 = maskData.Data08;
+					job.MaskData16 = maskData.Data16;
+					job.MaskSize   = maskData.Size;
+					job.MaskShift  = maskGlobalShift;
+					job.MaskInvert = maskInvert;
+
+					job.Tiling  = globalTiling;
+					job.Replace = replace;
+
+					pending.Handle = job.Schedule(pending.Handle);
+				}
+			}
+			else
+			{
+				var job = new SgtLandscapeDetail.LocalJob();
+
+				job.Points  = pending.Points;
+				job.Heights = pending.Heights;
+
+				job.HeightData08 = heightData.Data08;
+				job.HeightData16 = heightData.Data16;
+				job.HeightSize   = heightData.Size;
+				job.HeightRange  = new float2(-heightRange * heightMidpoint, heightRange) * surfaceScale;
+
+				job.MaskData08 = maskData.Data08;
+				job.MaskData16 = maskData.Data16;
+				job.MaskSize   = maskData.Size;
+				job.MaskInvert = maskInvert;
+
+				job.Matrix  = matrix;
+				job.Tiling  = (float2)localTiling;
+				job.Replace = replace;
+
+				pending.Handle = job.Schedule(pending.Handle);
+			}
+		}
+
 		public override void ScheduleCpu(SgtLandscape.PendingPoints pending)
 		{
 			var maskData = cachedLandscape.Bundle.GetMaskData(mask == true ? maskDetailIndex : -1);
+			var count    = 0;
 
 			if (layers != null)
 			{
+				var rep = replace == true ? 1.0f : 0.0f;
+
 				foreach (var layer in layers)
 				{
 					if (layer != null && layer.Enabled == true && layer.Displace == true)
 					{
-						var heightData = cachedLandscape.Bundle.GetHeightData(layer.HeightIndex);
+						ScheduleCpu(pending, maskData, layer.HeightIndex, layer.GlobalTile, layer.HeightRange, layer.HeightMidpoint, layer.GlobalTiling, layer.LocalTiling, rep);
 
-						if (space == SpaceType.Global)
-						{
-							if (layer.GlobalTile > 0)
-							{
-								var job = new SgtLandscapeDetail.GlobalJob();
-
-								job.Coords  = pending.Coords;
-								job.DataA   = pending.DataA;
-								job.DataB   = pending.DataB;
-								job.Heights = pending.Heights;
-
-								job.HeightData08 = heightData.Data08;
-								job.HeightData16 = heightData.Data16;
-								job.HeightSize   = heightData.Size;
-								job.HeightRange  = new float2(-layer.HeightRange * layer.HeightMidpoint, layer.HeightRange) * surfaceScale;
-
-								job.MaskData08 = maskData.Data08;
-								job.MaskData16 = maskData.Data16;
-								job.MaskSize   = maskData.Size;
-								job.MaskShift  = maskGlobalShift;
-								job.MaskInvert = maskInvert;
-
-								job.Tiling = layer.GlobalTiling;
-
-								pending.Handle = job.Schedule(pending.Handle);
-							}
-						}
-						else
-						{
-							var job = new SgtLandscapeDetail.LocalJob();
-
-							job.Points  = pending.Points;
-							job.Heights = pending.Heights;
-
-							job.HeightData08 = heightData.Data08;
-							job.HeightData16 = heightData.Data16;
-							job.HeightSize   = heightData.Size;
-							job.HeightRange  = new float2(-layer.HeightRange * layer.HeightMidpoint, layer.HeightRange) * surfaceScale;
-
-							job.MaskData08 = maskData.Data08;
-							job.MaskData16 = maskData.Data16;
-							job.MaskSize   = maskData.Size;
-							job.MaskInvert = maskInvert;
-
-							job.Matrix = matrix;
-							job.Tiling = (float2)layer.LocalTiling;
-
-							pending.Handle = job.Schedule(pending.Handle);
-						}
+						rep    = 0.0f;
+						count += 1;
 					}
 				}
+			}
+
+			if (replace == true && count == 0)
+			{
+				ScheduleCpu(pending, maskData, 0, 1, 0.0f, 0.0f, 1.0, Vector2.one, 1.0f);
 			}
 		}      
 
@@ -296,6 +317,7 @@ namespace SpaceGraphicsToolkit.Landscape
 			BeginError(Any(tgts, t => t.SurfaceScale <= 0.0f));
 				Draw("surfaceScale", ref markForRebuild, "The <b>HeightRange</b> and <b>GlobalSize</b> settings will be multiplied by this amount. This is useful if you're changing your planet size and want your detail to match.");
 			EndError();
+			Draw("replace", ref markForRebuild, "If you enable this, then this biome will replace/override any previously written height data.");
 			Draw("mask", ref markForRebuild, "Should this biome be masked?");
 
 			if (Any(tgts, t => t.Mask == true))

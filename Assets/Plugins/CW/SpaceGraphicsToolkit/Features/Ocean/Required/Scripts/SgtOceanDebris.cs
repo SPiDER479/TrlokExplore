@@ -69,6 +69,9 @@ namespace SpaceGraphicsToolkit.Ocean
 		/// <summary>The amount the <b>Brightness</b> value can flicker by.</summary>
 		public float BrightnessMin { set { brightnessMin = value; } get { return brightnessMin; } } [SerializeField] [Range(0.0f, 1.0f)] private float brightnessMin = 0.0f;
 
+		/// <summary>Should the debris cast shadows?</summary>
+		public bool CastShadows { set { castShadows = value; } get { return castShadows; } } [SerializeField] private bool castShadows;
+
 		[System.NonSerialized]
 		private Mesh generatedMesh;
 
@@ -78,6 +81,12 @@ namespace SpaceGraphicsToolkit.Ocean
 		[System.NonSerialized]
 		private SgtOcean cachedOcean;
 
+		[System.NonSerialized]
+		private Vector3 offset;
+
+		[System.NonSerialized]
+		private Vector3 expectedPosition;
+
 		private static int _SGT_WrapSize             = Shader.PropertyToID("_SGT_WrapSize");
 		private static int _SGT_WorldToLocal         = Shader.PropertyToID("_SGT_WorldToLocal");
 		private static int _SGT_DataA                = Shader.PropertyToID("_SGT_DataA");
@@ -85,6 +94,7 @@ namespace SpaceGraphicsToolkit.Ocean
 		private static int _SGT_UnderwaterBrightness = Shader.PropertyToID("_SGT_UnderwaterBrightness");
 		private static int _SGT_MainTex              = Shader.PropertyToID("_SGT_MainTex");
 		private static int _SGT_Cells                = Shader.PropertyToID("_SGT_Cells");
+		private static int _SGT_Offset               = Shader.PropertyToID("_SGT_Offset");
 		private static int _SGT_Roll                 = Shader.PropertyToID("_SGT_Roll");
 
 		public void MarkMeshDirty()
@@ -117,21 +127,41 @@ namespace SpaceGraphicsToolkit.Ocean
 			CameraData.Instances.Clear();
 		}
 
-		protected virtual void Update()
+		protected virtual void LateUpdate()
 		{
+			CheckPosition();
+
 			properties.SetTexture(_SGT_MainTex, mainTex != null ? mainTex : Texture2D.whiteTexture);
 			properties.SetVector(_SGT_Cells, new Vector4(cells.x, cells.y, 0.0f, 0.0f));
 			properties.SetVector(_SGT_WrapSize, new Vector4(range * 2.0f, CwHelper.Reciprocal(range * 2.0f), 0.0f, 0.0f));
 			properties.SetMatrix(_SGT_WorldToLocal, cachedOcean.transform.worldToLocalMatrix);
+			properties.SetFloat(_SGT_UnderwaterBrightness, cachedOcean.UnderwaterBrightness);
+
 			properties.SetVector(_SGT_DataA, new Vector4(surfaceSharpness, radius, brightness, brightness * brightnessMin));
 			properties.SetVector(_SGT_DataB, new Vector4(cachedOcean.Radius, drift, maxDepth, deepSharpness));
-			properties.SetFloat(_SGT_UnderwaterBrightness, cachedOcean.UnderwaterBrightness);
+			properties.SetVector(_SGT_Offset, offset);
 
 			cachedOcean.ApplyCloudShadowSettings(properties);
 
 			if (generatedMesh == null)
 			{
 				GenerateMesh();
+			}
+		}
+
+		private void CheckPosition()
+		{
+			var currentPosition = transform.position;
+
+			if (expectedPosition != currentPosition)
+			{
+				offset += currentPosition - expectedPosition; // Add to offset
+
+				offset.x = Mathf.Repeat(offset.x, range * 2.0f);
+				offset.y = Mathf.Repeat(offset.y, range * 2.0f);
+				offset.z = Mathf.Repeat(offset.z, range * 2.0f);
+
+				expectedPosition = currentPosition;
 			}
 		}
 
@@ -142,12 +172,12 @@ namespace SpaceGraphicsToolkit.Ocean
 
 		private void HandleCameraPreRender(Camera camera)
 		{
-			if (generatedMesh != null && material != null && cachedOcean.CalculateWorldAltitude(camera.transform.position) < range + maxDepth)
+			if (generatedMesh != null && material != null && Mathf.Abs(cachedOcean.CalculateWorldAltitude(camera.transform.position)) < range + maxDepth)
 			{
 				var cameraData   = CameraData.Update(camera);
 				properties.SetFloat(_SGT_Roll, cameraData.TotalRoll * Mathf.Deg2Rad);
 
-				Graphics.DrawMesh(generatedMesh, Matrix4x4.Translate(camera.transform.position), material, gameObject.layer, camera, 0, properties);
+				Graphics.DrawMesh(generatedMesh, Matrix4x4.Translate(camera.transform.position), material, gameObject.layer, camera, 0, properties, castShadows, false);
 			}
 		}
 
@@ -232,6 +262,7 @@ namespace SpaceGraphicsToolkit.Ocean
 			Draw("surfaceSharpness", "This allows you to set how quickly debris particles fade out as they approach the ocean surface.");
 			Draw("deepSharpness", "This allows you to set how quickly debris particles fade out as they approach the deep ocean.");
 			Draw("brightnessMin", "The amount the <b>Brightness</b> value can flicker by.");
+			Draw("castShadows", "Should the debris cast shadows?");
 
 			if (markMeshDirty == true)
 			{

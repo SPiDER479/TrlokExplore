@@ -1,9276 +1,32 @@
-//<HASH>598943764</HASH>
-////////////////////////////////////////
-// Generated with Better Shaders
-//
-// Auto-generated shader code, don't hand edit!
-//
-//   Unity Version: 2021.3.0f1
-//   Render Pipeline: URP2023
-//   Platform: WindowsEditor
-////////////////////////////////////////
-
-
+//<sss_checksum>3EEADC98</sss_checksum>
 Shader "Hidden/SgtVolumeDepth"
 {
-   Properties
-   {
-      [HideInInspector]_QueueOffset("_QueueOffset", Float) = 0
-      [HideInInspector]_QueueControl("_QueueControl", Float) = -1
-      [HideInInspector][NoScaleOffset]unity_Lightmaps("unity_Lightmaps", 2DArray) = "" {}
-      [HideInInspector][NoScaleOffset]unity_LightmapsInd("unity_LightmapsInd", 2DArray) = "" {}
-      [HideInInspector][NoScaleOffset]unity_ShadowMasks("unity_ShadowMasks", 2DArray) = "" {}
-      
+Properties
+{
+
+
+
+[HideInInspector]_QueueOffset("_QueueOffset", Float) = 0
+[HideInInspector]_QueueControl("_QueueControl", Float) = -1
+[HideInInspector][NoScaleOffset]unity_Lightmaps("unity_Lightmaps", 2DArray) = "" {}
+[HideInInspector][NoScaleOffset]unity_LightmapsInd("unity_LightmapsInd", 2DArray) = "" {}
+[HideInInspector][NoScaleOffset]unity_ShadowMasks("unity_ShadowMasks", 2DArray) = "" {}
+[HideInInspector]_BUILTIN_QueueOffset("Float", Float) = 0
+[HideInInspector]_BUILTIN_QueueControl("Float", Float) = -1
+}
+SubShader
+{
+Tags
+{
+"RenderPipeline"="UniversalPipeline"
+"RenderType"="Opaque"
+"UniversalMaterialType" = "Unlit"
+"Queue"="Geometry"
+"DisableBatching"="False"
+"ShaderGraphShader"="true"
+"ShaderGraphTargetId"="UniversalUnlitSubTarget"
+}
 
-
-   }
-   SubShader
-   {
-      Tags { "RenderPipeline"="UniversalPipeline" "RenderType" = "Opaque" "UniversalMaterialType" = "Unlit" "Queue" = "Geometry" }
-
-      
-
-      
-        Pass
-        {
-            Name "Universal Forward"
-            Tags 
-            { 
-                "LightMode" = "UniversalForward"
-            }
-            Cull Back
-            Blend One Zero
-            ZTest LEqual
-            ZWrite On
-
-            Blend One Zero, One Zero
-Cull Back
-ZTest LEqual
-ZWrite On
-
-            
-
-            HLSLPROGRAM
-
-               #pragma vertex Vert
-   #pragma fragment Frag
-
-            #if (defined(SHADER_API_GLES) || defined(SHADER_API_GLES3) || defined(SHADER_API_GLES30)) 
-            #pragma target 3.0
-#else
-            #pragma target 4.5
-#endif
-
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
-            #pragma multi_compile_fog
-            #pragma multi_compile_instancing
-            #pragma instancing_options renderinglayer
-            #pragma multi_compile _ DOTS_INSTANCING_ON
-    
-            // Keywords
-            #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
-            #pragma multi_compile _ LIGHTMAP_ON
-            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
-            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
-            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
-            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
-            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT_LOW
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT_MEDIUM
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT_HIGH
-            #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
-            #pragma multi_compile _ SHADOWS_SHADOWMASK
-            #pragma multi_compile_fragment _ _DBUFFER_MRT1 _DBUFFER_MRT2 _DBUFFER_MRT3
-            #pragma multi_compile_fragment _ _LIGHT_LAYERS
-            #pragma multi_compile_fragment _ DEBUG_DISPLAY
-            #pragma multi_compile_fragment _ _LIGHT_COOKIES
-            #pragma multi_compile _ _FORWARD_PLUS
-            #pragma multi_compile _ EVALUATE_SH_VERTEX
-            #pragma multi_compile _ EVALUATE_SH_MIXED
-            #pragma multi_compile_fragment _ LOD_FADE_CROSSFADE
-
-        
-            // GraphKeywords: <None>
-
-            #define SHADER_PASS SHADERPASS_FORWARD
-            #define VARYINGS_NEED_FOG_AND_VERTEX_LIGHT
-            #define _PASSFORWARD 1
-            #define _FOG_FRAGMENT 1
-            
-
-            
-
-
-   #define _URP 1
-
-#define _UNLIT 1
-
-
-            // this has to be here or specular color will be ignored. Not in SG code
-            #if _SIMPLELIT
-               #define _SPECULAR_COLOR
-            #endif
-
-
-            // Includes
-          
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ProbeVolumeVariants.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Input.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
-            #include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderGraphFunctions.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DBuffer.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
-        
-
-               #undef WorldNormalVector
-      #define WorldNormalVector(data, normal) mul(normal, data.TBNMatrix)
-      
-      #define UnityObjectToWorldNormal(normal) mul(GetObjectToWorldMatrix(), normal)
-
-      #define _WorldSpaceLightPos0 _MainLightPosition
-      
-      #define UNITY_DECLARE_TEX2D(name) TEXTURE2D(name); SAMPLER(sampler##name);
-      #define UNITY_DECLARE_TEX2D_NOSAMPLER(name) TEXTURE2D(name);
-      #define UNITY_DECLARE_TEX2DARRAY(name) TEXTURE2D_ARRAY(name); SAMPLER(sampler##name);
-      #define UNITY_DECLARE_TEX2DARRAY_NOSAMPLER(name) TEXTURE2D_ARRAY(name);
-
-      #define UNITY_SAMPLE_TEX2DARRAY(tex,coord)            SAMPLE_TEXTURE2D_ARRAY(tex, sampler##tex, coord.xy, coord.z)
-      #define UNITY_SAMPLE_TEX2DARRAY_LOD(tex,coord,lod)    SAMPLE_TEXTURE2D_ARRAY_LOD(tex, sampler##tex, coord.xy, coord.z, lod)
-      #define UNITY_SAMPLE_TEX2D(tex, coord)                SAMPLE_TEXTURE2D(tex, sampler##tex, coord)
-      #define UNITY_SAMPLE_TEX2D_SAMPLER(tex, samp, coord)  SAMPLE_TEXTURE2D(tex, sampler##samp, coord)
-
-      #define UNITY_SAMPLE_TEX2D_LOD(tex,coord, lod)   SAMPLE_TEXTURE2D_LOD(tex, sampler_##tex, coord, lod)
-      #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord, lod) SAMPLE_TEXTURE2D_LOD (tex, sampler##samplertex,coord, lod)
-     
-      #if defined(UNITY_COMPILER_HLSL)
-         #define UNITY_INITIALIZE_OUTPUT(type,name) name = (type)0;
-      #else
-         #define UNITY_INITIALIZE_OUTPUT(type,name)
-      #endif
-
-      #define sampler2D_float sampler2D
-      #define sampler2D_half sampler2D
-
-      
-
-      // data across stages, stripped like the above.
-      struct VertexToPixel
-      {
-         float4 pos : SV_POSITION;
-         float3 worldPos : TEXCOORD0;
-         float3 worldNormal : TEXCOORD1;
-         float4 worldTangent : TEXCOORD2;
-         // float4 texcoord0 : TEXCOORD3;
-         // float4 texcoord1 : TEXCOORD4;
-         // float4 texcoord2 : TEXCOORD5;
-
-         // #if %TEXCOORD3REQUIREKEY%
-         // float4 texcoord3 : TEXCOORD6;
-         // #endif
-
-         // #if %SCREENPOSREQUIREKEY%
-         // float4 screenPos : TEXCOORD7;
-         // #endif
-
-         // #if %VERTEXCOLORREQUIREKEY%
-         // half4 vertexColor : COLOR;
-         // #endif
-
-         #if defined(LIGHTMAP_ON)
-            float2 lightmapUV : TEXCOORD8;
-         #endif
-         #if defined(DYNAMICLIGHTMAP_ON)
-            float2 dynamicLightmapUV : TEXCOORD9;
-         #endif
-         #if !defined(LIGHTMAP_ON)
-            float4 probeOcclusion : TEXCOORD8;
-            float3 sh : TEXCOORD10;
-         #endif
-
-         #if defined(VARYINGS_NEED_FOG_AND_VERTEX_LIGHT)
-            float4 fogFactorAndVertexLight : TEXCOORD11;
-         #endif
-
-         #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
-           float4 shadowCoord : TEXCOORD12;
-         #endif
-
-         // #if %EXTRAV2F0REQUIREKEY%
-         // float4 extraV2F0 : TEXCOORD13;
-         // #endif
-
-         // #if %EXTRAV2F1REQUIREKEY%
-         // float4 extraV2F1 : TEXCOORD14;
-         // #endif
-
-         // #if %EXTRAV2F2REQUIREKEY%
-         // float4 extraV2F2 : TEXCOORD15;
-         // #endif
-
-         // #if %EXTRAV2F3REQUIREKEY%
-         // float4 extraV2F3 : TEXCOORD16;
-         // #endif
-
-         // #if %EXTRAV2F4REQUIREKEY%
-         // float4 extraV2F4 : TEXCOORD17;
-         // #endif
-
-         // #if %EXTRAV2F5REQUIREKEY%
-         // float4 extraV2F5 : TEXCOORD18;
-         // #endif
-
-         // #if %EXTRAV2F6REQUIREKEY%
-         // float4 extraV2F6 : TEXCOORD19;
-         // #endif
-
-         // #if %EXTRAV2F7REQUIREKEY%
-         // float4 extraV2F7 : TEXCOORD20;
-         // #endif
-
-         #if UNITY_ANY_INSTANCING_ENABLED
-         uint instanceID : CUSTOM_INSTANCE_ID;
-         #endif
-         #if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
-         uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
-         #endif
-         #if (defined(UNITY_STEREO_INSTANCING_ENABLED))
-         uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
-         #endif
-         #if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
-         FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
-         #endif
-
-         #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-            float4 previousPositionCS : TEXCOORD21; // Contain previous transform position (in case of skinning for example)
-            float4 positionCS : TEXCOORD22;
-         #endif
-      };
-
-
-         
-            
-            // data describing the user output of a pixel
-            struct Surface
-            {
-               half3 Albedo;
-               half Height;
-               half3 Normal;
-               half Smoothness;
-               half3 Emission;
-               half Metallic;
-               half3 Specular;
-               half Occlusion;
-               half SpecularPower; // for simple lighting
-               half Alpha;
-               float outputDepth; // if written, SV_Depth semantic is used. ShaderData.clipPos.z is unused value
-               // HDRP Only
-               half SpecularOcclusion;
-               half SubsurfaceMask;
-               half Thickness;
-               half CoatMask;
-               half CoatSmoothness;
-               half Anisotropy;
-               half IridescenceMask;
-               half IridescenceThickness;
-               int DiffusionProfileHash;
-               float SpecularAAThreshold;
-               float SpecularAAScreenSpaceVariance;
-               // requires _OVERRIDE_BAKEDGI to be defined, but is mapped in all pipelines
-               float3 DiffuseGI;
-               float3 BackDiffuseGI;
-               float3 SpecularGI;
-               float ior;
-               float3 transmittanceColor;
-               float atDistance;
-               float transmittanceMask;
-               // requires _OVERRIDE_SHADOWMASK to be defines
-               float4 ShadowMask;
-
-               // for decals
-               float NormalAlpha;
-               float MAOSAlpha;
-
-
-            };
-
-            // Data the user declares in blackboard blocks
-            struct Blackboard
-            {
-                
-                float blackboardDummyData;
-            };
-
-            // data the user might need, this will grow to be big. But easy to strip
-            struct ShaderData
-            {
-               float4 clipPos; // SV_POSITION
-               float3 localSpacePosition;
-               float3 localSpaceNormal;
-               float3 localSpaceTangent;
-        
-               float3 worldSpacePosition;
-               float3 worldSpaceNormal;
-               float3 worldSpaceTangent;
-               float tangentSign;
-
-               float3 worldSpaceViewDir;
-               float3 tangentSpaceViewDir;
-
-               float4 texcoord0;
-               float4 texcoord1;
-               float4 texcoord2;
-               float4 texcoord3;
-
-               float2 screenUV;
-               float4 screenPos;
-
-               float4 vertexColor;
-               bool isFrontFace;
-
-               float4 extraV2F0;
-               float4 extraV2F1;
-               float4 extraV2F2;
-               float4 extraV2F3;
-               float4 extraV2F4;
-               float4 extraV2F5;
-               float4 extraV2F6;
-               float4 extraV2F7;
-
-               float3x3 TBNMatrix;
-               Blackboard blackboard;
-            };
-
-            struct VertexData
-            {
-               #if SHADER_TARGET > 30
-               // uint vertexID : SV_VertexID;
-               #endif
-               float4 vertex : POSITION;
-               float3 normal : NORMAL;
-               float4 tangent : TANGENT;
-               float4 texcoord0 : TEXCOORD0;
-
-               // optimize out mesh coords when not in use by user or lighting system
-               #if _URP && (_USINGTEXCOORD1 || _PASSMETA || _PASSFORWARD || _PASSGBUFFER)
-                  float4 texcoord1 : TEXCOORD1;
-               #endif
-
-               #if _URP && (_USINGTEXCOORD2 || _PASSMETA || ((_PASSFORWARD || _PASSGBUFFER) && defined(DYNAMICLIGHTMAP_ON)))
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-               #if _STANDARD && (_USINGTEXCOORD1 || (_PASSMETA || ((_PASSFORWARD || _PASSGBUFFER || _PASSFORWARDADD) && LIGHTMAP_ON)))
-                  float4 texcoord1 : TEXCOORD1;
-               #endif
-               #if _STANDARD && (_USINGTEXCOORD2 || (_PASSMETA || ((_PASSFORWARD || _PASSGBUFFER) && DYNAMICLIGHTMAP_ON)))
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-
-               #if _HDRP
-                  float4 texcoord1 : TEXCOORD1;
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-               // #if %TEXCOORD3REQUIREKEY%
-               // float4 texcoord3 : TEXCOORD3;
-               // #endif
-
-               // #if %VERTEXCOLORREQUIREKEY%
-               // float4 vertexColor : COLOR;
-               // #endif
-
-               #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-                  float3 previousPositionOS : TEXCOORD4; // Contain previous transform position (in case of skinning for example)
-                  #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                     float3 precomputedVelocity    : TEXCOORD5; // Add Precomputed Velocity (Alembic computes velocities on runtime side).
-                  #endif
-               #endif
-
-               UNITY_VERTEX_INPUT_INSTANCE_ID
-            };
-
-            struct TessVertex 
-            {
-               float4 vertex : INTERNALTESSPOS;
-               float3 normal : NORMAL;
-               float4 tangent : TANGENT;
-               float4 texcoord0 : TEXCOORD0;
-               float4 texcoord1 : TEXCOORD1;
-               float4 texcoord2 : TEXCOORD2;
-
-               // #if %TEXCOORD3REQUIREKEY%
-               // float4 texcoord3 : TEXCOORD3;
-               // #endif
-
-               // #if %VERTEXCOLORREQUIREKEY%
-               // float4 vertexColor : COLOR;
-               // #endif
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // float4 extraV2F0 : TEXCOORD5;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // float4 extraV2F1 : TEXCOORD6;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // float4 extraV2F2 : TEXCOORD7;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // float4 extraV2F3 : TEXCOORD8;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // float4 extraV2F4 : TEXCOORD9;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // float4 extraV2F5 : TEXCOORD10;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // float4 extraV2F6 : TEXCOORD11;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // float4 extraV2F7 : TEXCOORD12;
-               // #endif
-
-               #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-                  float3 previousPositionOS : TEXCOORD13; // Contain previous transform position (in case of skinning for example)
-                  #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                     float3 precomputedVelocity : TEXCOORD14;
-                  #endif
-               #endif
-
-               UNITY_VERTEX_INPUT_INSTANCE_ID
-               UNITY_VERTEX_OUTPUT_STEREO
-            };
-
-            struct ExtraV2F
-            {
-               float4 extraV2F0;
-               float4 extraV2F1;
-               float4 extraV2F2;
-               float4 extraV2F3;
-               float4 extraV2F4;
-               float4 extraV2F5;
-               float4 extraV2F6;
-               float4 extraV2F7;
-               Blackboard blackboard;
-               float4 time;
-            };
-
-
-            float3 WorldToTangentSpace(ShaderData d, float3 normal)
-            {
-               return mul(d.TBNMatrix, normal);
-            }
-
-            float3 TangentToWorldSpace(ShaderData d, float3 normal)
-            {
-               return mul(normal, d.TBNMatrix);
-            }
-
-            // in this case, make standard more like SRPs, because we can't fix
-            // unity_WorldToObject in HDRP, since it already does macro-fu there
-
-            #if _STANDARD
-               float3 TransformWorldToObject(float3 p) { return mul(unity_WorldToObject, float4(p, 1)); };
-               float3 TransformObjectToWorld(float3 p) { return mul(unity_ObjectToWorld, float4(p, 1)); };
-               float4 TransformWorldToObject(float4 p) { return mul(unity_WorldToObject, p); };
-               float4 TransformObjectToWorld(float4 p) { return mul(unity_ObjectToWorld, p); };
-               float4x4 GetWorldToObjectMatrix() { return unity_WorldToObject; }
-               float4x4 GetObjectToWorldMatrix() { return unity_ObjectToWorld; }
-               #if (defined(SHADER_API_D3D11) || defined(SHADER_API_XBOXONE) || defined(UNITY_COMPILER_HLSLCC) || defined(SHADER_API_PSSL) || (SHADER_TARGET_SURFACE_ANALYSIS && !SHADER_TARGET_SURFACE_ANALYSIS_MOJOSHADER))
-                 #define UNITY_SAMPLE_TEX2D_LOD(tex,coord, lod) tex.SampleLevel (sampler##tex,coord, lod)
-                 #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord, lod) tex.SampleLevel (sampler##samplertex,coord, lod)
-              #else
-                 #define UNITY_SAMPLE_TEX2D_LOD(tex,coord,lod) tex2D (tex,coord,0,lod)
-                 #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord,lod) tex2D (tex,coord,0,lod)
-              #endif
-
-               #undef GetWorldToObjectMatrix()
-
-               #define GetWorldToObjectMatrix()   unity_WorldToObject
-
-
-            #endif
-
-            float3 GetCameraWorldPosition()
-            {
-               #if _HDRP
-                  return GetCameraRelativePositionWS(_WorldSpaceCameraPos);
-               #else
-                  return _WorldSpaceCameraPos;
-               #endif
-            }
-
-            #if _GRABPASSUSED
-               #if _STANDARD
-                  TEXTURE2D(%GRABTEXTURE%);
-                  SAMPLER(sampler_%GRABTEXTURE%);
-               #endif
-
-               half3 GetSceneColor(float2 uv)
-               {
-                  #if _STANDARD
-                     return SAMPLE_TEXTURE2D(%GRABTEXTURE%, sampler_%GRABTEXTURE%, uv).rgb;
-                  #else
-                     return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv);
-                  #endif
-               }
-            #endif
-
-
-      
-            #if _STANDARD
-               UNITY_DECLARE_DEPTH_TEXTURE(_CameraDepthTexture);
-               float GetSceneDepth(float2 uv) { return SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv); }
-               float GetLinear01Depth(float2 uv) { return Linear01Depth(GetSceneDepth(uv)); }
-               float GetLinearEyeDepth(float2 uv) { return LinearEyeDepth(GetSceneDepth(uv)); } 
-            #else
-               float GetSceneDepth(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv); }
-               float GetLinear01Depth(float2 uv) { return Linear01Depth(GetSceneDepth(uv), _ZBufferParams); }
-               float GetLinearEyeDepth(float2 uv) { return LinearEyeDepth(GetSceneDepth(uv), _ZBufferParams); } 
-            #endif
-
-            float3 GetWorldPositionFromDepthBuffer(float2 uv, float3 worldSpaceViewDir)
-            {
-               float eye = GetLinearEyeDepth(uv);
-               float3 camView = mul((float3x3)GetObjectToWorldMatrix(), transpose(mul(GetWorldToObjectMatrix(), UNITY_MATRIX_I_V)) [2].xyz);
-
-               float dt = dot(worldSpaceViewDir, camView);
-               float3 div = worldSpaceViewDir/dt;
-               float3 wpos = (eye * div) + GetCameraWorldPosition();
-               return wpos;
-            }
-
-            #if _HDRP
-            float3 ObjectToWorldSpacePosition(float3 pos)
-            {
-               return GetAbsolutePositionWS(TransformObjectToWorld(pos));
-            }
-            #else
-            float3 ObjectToWorldSpacePosition(float3 pos)
-            {
-               return TransformObjectToWorld(pos);
-            }
-            #endif
-
-            #if _STANDARD
-               UNITY_DECLARE_SCREENSPACE_TEXTURE(_CameraDepthNormalsTexture);
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  float4 depthNorms = UNITY_SAMPLE_SCREENSPACE_TEXTURE(_CameraDepthNormalsTexture, uv);
-                  float3 norms = DecodeViewNormalStereo(depthNorms);
-                  norms = mul((float3x3)GetWorldToViewMatrix(), norms) * 0.5 + 0.5;
-                  return norms;
-               }
-            #elif _HDRP && !_DECALSHADER
-               
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  NormalData nd;
-                  DecodeFromNormalBuffer(_ScreenSize.xy * uv, nd);
-                  return nd.normalWS;
-               }
-            #elif _URP
-               #if (SHADER_LIBRARY_VERSION_MAJOR >= 10)
-                  #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareNormalsTexture.hlsl"
-               #endif
-
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  #if (SHADER_LIBRARY_VERSION_MAJOR >= 10)
-                     return SampleSceneNormals(uv);
-                  #else
-                     float3 wpos = GetWorldPositionFromDepthBuffer(uv, worldSpaceViewDir);
-                     return normalize(-cross(ddx(wpos), ddy(wpos))) * 0.5 + 0.5;
-                  #endif
-
-                }
-             #endif
-
-             #if _HDRP
-
-               half3 UnpackNormalmapRGorAG(half4 packednormal)
-               {
-                     // This do the trick
-                  packednormal.x *= packednormal.w;
-
-                  half3 normal;
-                  normal.xy = packednormal.xy * 2 - 1;
-                  normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
-                  return normal;
-               }
-               half3 UnpackNormal(half4 packednormal)
-               {
-                  #if defined(UNITY_NO_DXT5nm)
-                     return packednormal.xyz * 2 - 1;
-                  #else
-                     return UnpackNormalmapRGorAG(packednormal);
-                  #endif
-               }
-            #endif
-            #if _HDRP || _URP
-
-               half3 UnpackScaleNormal(half4 packednormal, half scale)
-               {
-                 #ifndef UNITY_NO_DXT5nm
-                   // Unpack normal as DXT5nm (1, y, 1, x) or BC5 (x, y, 0, 1)
-                   // Note neutral texture like "bump" is (0, 0, 1, 1) to work with both plain RGB normal and DXT5nm/BC5
-                   packednormal.x *= packednormal.w;
-                 #endif
-                   half3 normal;
-                   normal.xy = (packednormal.xy * 2 - 1) * scale;
-                   normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
-                   return normal;
-               }	
-
-             #endif
-
-
-            void GetSun(out float3 lightDir, out float3 color)
-            {
-               lightDir = float3(0.5, 0.5, 0);
-               color = 1;
-               #if _HDRP
-                  if (_DirectionalLightCount > 0)
-                  {
-                     DirectionalLightData light = _DirectionalLightDatas[0];
-                     lightDir = -light.forward.xyz;
-                     color = light.color;
-                  }
-               #elif _STANDARD
-			         lightDir = normalize(_WorldSpaceLightPos0.xyz);
-                  color = _LightColor0.rgb;
-               #elif _URP
-	               Light light = GetMainLight();
-	               lightDir = light.direction;
-	               color = light.color;
-               #endif
-            }
-
-
-            
-         CBUFFER_START(UnityPerMaterial)
-
-            
-
-
-
-         CBUFFER_END
-
-         
-
-         
-
-         
-
-
-
-        
-            void ChainSurfaceFunction(inout Surface l, inout ShaderData d)
-            {
-                 // Ext_SurfaceFunction0(l, d);
-                 // Ext_SurfaceFunction1(l, d);
-                 // Ext_SurfaceFunction2(l, d);
-                 // Ext_SurfaceFunction3(l, d);
-                 // Ext_SurfaceFunction4(l, d);
-                 // Ext_SurfaceFunction5(l, d);
-                 // Ext_SurfaceFunction6(l, d);
-                 // Ext_SurfaceFunction7(l, d);
-                 // Ext_SurfaceFunction8(l, d);
-                 // Ext_SurfaceFunction9(l, d);
-		           // Ext_SurfaceFunction10(l, d);
-                 // Ext_SurfaceFunction11(l, d);
-                 // Ext_SurfaceFunction12(l, d);
-                 // Ext_SurfaceFunction13(l, d);
-                 // Ext_SurfaceFunction14(l, d);
-                 // Ext_SurfaceFunction15(l, d);
-                 // Ext_SurfaceFunction16(l, d);
-                 // Ext_SurfaceFunction17(l, d);
-                 // Ext_SurfaceFunction18(l, d);
-		           // Ext_SurfaceFunction19(l, d);
-                 // Ext_SurfaceFunction20(l, d);
-                 // Ext_SurfaceFunction21(l, d);
-                 // Ext_SurfaceFunction22(l, d);
-                 // Ext_SurfaceFunction23(l, d);
-                 // Ext_SurfaceFunction24(l, d);
-                 // Ext_SurfaceFunction25(l, d);
-                 // Ext_SurfaceFunction26(l, d);
-                 // Ext_SurfaceFunction27(l, d);
-                 // Ext_SurfaceFunction28(l, d);
-		           // Ext_SurfaceFunction29(l, d);
-            }
-
-#if !_DECALSHADER
-
-            void ChainModifyVertex(inout VertexData v, inout VertexToPixel v2p, float4 time)
-            {
-                 ExtraV2F d;
-                 
-                 ZERO_INITIALIZE(ExtraV2F, d);
-                 ZERO_INITIALIZE(Blackboard, d.blackboard);
-                 // due to motion vectors in HDRP, we need to use the last
-                 // time in certain spots. So if you are going to use _Time to adjust vertices,
-                 // you need to use this time or motion vectors will break. 
-                 d.time = time;
-
-                 //  Ext_ModifyVertex0(v, d);
-                 // Ext_ModifyVertex1(v, d);
-                 // Ext_ModifyVertex2(v, d);
-                 // Ext_ModifyVertex3(v, d);
-                 // Ext_ModifyVertex4(v, d);
-                 // Ext_ModifyVertex5(v, d);
-                 // Ext_ModifyVertex6(v, d);
-                 // Ext_ModifyVertex7(v, d);
-                 // Ext_ModifyVertex8(v, d);
-                 // Ext_ModifyVertex9(v, d);
-                 // Ext_ModifyVertex10(v, d);
-                 // Ext_ModifyVertex11(v, d);
-                 // Ext_ModifyVertex12(v, d);
-                 // Ext_ModifyVertex13(v, d);
-                 // Ext_ModifyVertex14(v, d);
-                 // Ext_ModifyVertex15(v, d);
-                 // Ext_ModifyVertex16(v, d);
-                 // Ext_ModifyVertex17(v, d);
-                 // Ext_ModifyVertex18(v, d);
-                 // Ext_ModifyVertex19(v, d);
-                 // Ext_ModifyVertex20(v, d);
-                 // Ext_ModifyVertex21(v, d);
-                 // Ext_ModifyVertex22(v, d);
-                 // Ext_ModifyVertex23(v, d);
-                 // Ext_ModifyVertex24(v, d);
-                 // Ext_ModifyVertex25(v, d);
-                 // Ext_ModifyVertex26(v, d);
-                 // Ext_ModifyVertex27(v, d);
-                 // Ext_ModifyVertex28(v, d);
-                 // Ext_ModifyVertex29(v, d);
-
-
-                 // #if %EXTRAV2F0REQUIREKEY%
-                 // v2p.extraV2F0 = d.extraV2F0;
-                 // #endif
-
-                 // #if %EXTRAV2F1REQUIREKEY%
-                 // v2p.extraV2F1 = d.extraV2F1;
-                 // #endif
-
-                 // #if %EXTRAV2F2REQUIREKEY%
-                 // v2p.extraV2F2 = d.extraV2F2;
-                 // #endif
-
-                 // #if %EXTRAV2F3REQUIREKEY%
-                 // v2p.extraV2F3 = d.extraV2F3;
-                 // #endif
-
-                 // #if %EXTRAV2F4REQUIREKEY%
-                 // v2p.extraV2F4 = d.extraV2F4;
-                 // #endif
-
-                 // #if %EXTRAV2F5REQUIREKEY%
-                 // v2p.extraV2F5 = d.extraV2F5;
-                 // #endif
-
-                 // #if %EXTRAV2F6REQUIREKEY%
-                 // v2p.extraV2F6 = d.extraV2F6;
-                 // #endif
-
-                 // #if %EXTRAV2F7REQUIREKEY%
-                 // v2p.extraV2F7 = d.extraV2F7;
-                 // #endif
-            }
-
-            void ChainModifyTessellatedVertex(inout VertexData v, inout VertexToPixel v2p)
-            {
-               ExtraV2F d;
-               ZERO_INITIALIZE(ExtraV2F, d);
-               ZERO_INITIALIZE(Blackboard, d.blackboard);
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // d.extraV2F0 = v2p.extraV2F0;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // d.extraV2F1 = v2p.extraV2F1;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // d.extraV2F2 = v2p.extraV2F2;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // d.extraV2F3 = v2p.extraV2F3;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // d.extraV2F4 = v2p.extraV2F4;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // d.extraV2F5 = v2p.extraV2F5;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // d.extraV2F6 = v2p.extraV2F6;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // d.extraV2F7 = v2p.extraV2F7;
-               // #endif
-
-
-               // Ext_ModifyTessellatedVertex0(v, d);
-               // Ext_ModifyTessellatedVertex1(v, d);
-               // Ext_ModifyTessellatedVertex2(v, d);
-               // Ext_ModifyTessellatedVertex3(v, d);
-               // Ext_ModifyTessellatedVertex4(v, d);
-               // Ext_ModifyTessellatedVertex5(v, d);
-               // Ext_ModifyTessellatedVertex6(v, d);
-               // Ext_ModifyTessellatedVertex7(v, d);
-               // Ext_ModifyTessellatedVertex8(v, d);
-               // Ext_ModifyTessellatedVertex9(v, d);
-               // Ext_ModifyTessellatedVertex10(v, d);
-               // Ext_ModifyTessellatedVertex11(v, d);
-               // Ext_ModifyTessellatedVertex12(v, d);
-               // Ext_ModifyTessellatedVertex13(v, d);
-               // Ext_ModifyTessellatedVertex14(v, d);
-               // Ext_ModifyTessellatedVertex15(v, d);
-               // Ext_ModifyTessellatedVertex16(v, d);
-               // Ext_ModifyTessellatedVertex17(v, d);
-               // Ext_ModifyTessellatedVertex18(v, d);
-               // Ext_ModifyTessellatedVertex19(v, d);
-               // Ext_ModifyTessellatedVertex20(v, d);
-               // Ext_ModifyTessellatedVertex21(v, d);
-               // Ext_ModifyTessellatedVertex22(v, d);
-               // Ext_ModifyTessellatedVertex23(v, d);
-               // Ext_ModifyTessellatedVertex24(v, d);
-               // Ext_ModifyTessellatedVertex25(v, d);
-               // Ext_ModifyTessellatedVertex26(v, d);
-               // Ext_ModifyTessellatedVertex27(v, d);
-               // Ext_ModifyTessellatedVertex28(v, d);
-               // Ext_ModifyTessellatedVertex29(v, d);
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // v2p.extraV2F0 = d.extraV2F0;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // v2p.extraV2F1 = d.extraV2F1;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // v2p.extraV2F2 = d.extraV2F2;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // v2p.extraV2F3 = d.extraV2F3;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // v2p.extraV2F4 = d.extraV2F4;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // v2p.extraV2F5 = d.extraV2F5;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // v2p.extraV2F6 = d.extraV2F6;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // v2p.extraV2F7 = d.extraV2F7;
-               // #endif
-            }
-
-            void ChainFinalColorForward(inout Surface l, inout ShaderData d, inout half4 color)
-            {
-               //   Ext_FinalColorForward0(l, d, color);
-               //   Ext_FinalColorForward1(l, d, color);
-               //   Ext_FinalColorForward2(l, d, color);
-               //   Ext_FinalColorForward3(l, d, color);
-               //   Ext_FinalColorForward4(l, d, color);
-               //   Ext_FinalColorForward5(l, d, color);
-               //   Ext_FinalColorForward6(l, d, color);
-               //   Ext_FinalColorForward7(l, d, color);
-               //   Ext_FinalColorForward8(l, d, color);
-               //   Ext_FinalColorForward9(l, d, color);
-               //  Ext_FinalColorForward10(l, d, color);
-               //  Ext_FinalColorForward11(l, d, color);
-               //  Ext_FinalColorForward12(l, d, color);
-               //  Ext_FinalColorForward13(l, d, color);
-               //  Ext_FinalColorForward14(l, d, color);
-               //  Ext_FinalColorForward15(l, d, color);
-               //  Ext_FinalColorForward16(l, d, color);
-               //  Ext_FinalColorForward17(l, d, color);
-               //  Ext_FinalColorForward18(l, d, color);
-               //  Ext_FinalColorForward19(l, d, color);
-               //  Ext_FinalColorForward20(l, d, color);
-               //  Ext_FinalColorForward21(l, d, color);
-               //  Ext_FinalColorForward22(l, d, color);
-               //  Ext_FinalColorForward23(l, d, color);
-               //  Ext_FinalColorForward24(l, d, color);
-               //  Ext_FinalColorForward25(l, d, color);
-               //  Ext_FinalColorForward26(l, d, color);
-               //  Ext_FinalColorForward27(l, d, color);
-               //  Ext_FinalColorForward28(l, d, color);
-               //  Ext_FinalColorForward29(l, d, color);
-            }
-
-            void ChainFinalGBufferStandard(inout Surface s, inout ShaderData d, inout half4 GBuffer0, inout half4 GBuffer1, inout half4 GBuffer2, inout half4 outEmission, inout half4 outShadowMask)
-            {
-               //   Ext_FinalGBufferStandard0(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard1(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard2(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard3(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard4(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard5(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard6(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard7(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard8(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard9(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard10(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard11(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard12(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard13(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard14(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard15(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard16(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard17(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard18(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard19(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard20(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard21(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard22(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard23(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard24(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard25(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard26(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard27(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard28(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard29(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-            }
-#endif
-
-
-         
-
-
-#if _DECALSHADER
-
-        ShaderData CreateShaderData(SurfaceDescriptionInputs IN)
-        {
-            ShaderData d = (ShaderData)0;
-            d.TBNMatrix = float3x3(IN.WorldSpaceTangent, IN.WorldSpaceBiTangent, IN.WorldSpaceNormal);
-            d.worldSpaceNormal = IN.WorldSpaceNormal;
-            d.worldSpaceTangent = IN.WorldSpaceTangent;
-
-            d.worldSpacePosition = IN.WorldSpacePosition;
-            d.texcoord0 = IN.uv0.xyxy;
-            d.screenPos = IN.ScreenPosition;
-
-            d.worldSpaceViewDir = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
-
-            d.tangentSpaceViewDir = mul(d.TBNMatrix, d.worldSpaceViewDir);
-
-            // these rarely get used, so we back transform them. Usually will be stripped.
-            #if _HDRP
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(GetCameraRelativePositionWS(d.worldSpacePosition), 1)).xyz;
-            #else
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(d.worldSpacePosition, 1)).xyz;
-            #endif
-            // d.localSpaceNormal = normalize(mul((float3x3)GetWorldToObjectMatrix(), d.worldSpaceNormal));
-            // d.localSpaceTangent = normalize(mul((float3x3)GetWorldToObjectMatrix(), d.worldSpaceTangent.xyz));
-
-            // #if %SCREENPOSREQUIREKEY%
-            // d.screenUV = (IN.ScreenPosition.xy / max(0.01, IN.ScreenPosition.w));
-            // #endif
-
-            return d;
-        }
-#else
-
-         ShaderData CreateShaderData(VertexToPixel i
-                  #if NEED_FACING
-                     , bool facing
-                  #endif
-         )
-         {
-            ShaderData d = (ShaderData)0;
-            d.clipPos = i.pos;
-            d.worldSpacePosition = i.worldPos;
-
-            d.worldSpaceNormal = normalize(i.worldNormal);
-            d.worldSpaceTangent.xyz = normalize(i.worldTangent.xyz);
-
-            d.tangentSign = i.worldTangent.w * unity_WorldTransformParams.w;
-            float3 bitangent = cross(d.worldSpaceTangent.xyz, d.worldSpaceNormal) * d.tangentSign;
-           
-            d.TBNMatrix = float3x3(d.worldSpaceTangent, -bitangent, d.worldSpaceNormal);
-            d.worldSpaceViewDir = normalize(_WorldSpaceCameraPos - i.worldPos);
-
-            d.tangentSpaceViewDir = mul(d.TBNMatrix, d.worldSpaceViewDir);
-            // d.texcoord0 = i.texcoord0;
-            // d.texcoord1 = i.texcoord1;
-            // d.texcoord2 = i.texcoord2;
-
-            // #if %TEXCOORD3REQUIREKEY%
-            // d.texcoord3 = i.texcoord3;
-            // #endif
-
-            // d.isFrontFace = facing;
-            // #if %VERTEXCOLORREQUIREKEY%
-            // d.vertexColor = i.vertexColor;
-            // #endif
-
-            // these rarely get used, so we back transform them. Usually will be stripped.
-            #if _HDRP
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(GetCameraRelativePositionWS(i.worldPos), 1)).xyz;
-            #else
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(i.worldPos, 1)).xyz;
-            #endif
-            // d.localSpaceNormal = normalize(mul((float3x3)GetWorldToObjectMatrix(), i.worldNormal));
-            // d.localSpaceTangent = normalize(mul((float3x3)GetWorldToObjectMatrix(), i.worldTangent.xyz));
-
-            // #if %SCREENPOSREQUIREKEY%
-            // d.screenPos = i.screenPos;
-            // d.screenUV = (i.screenPos.xy / i.screenPos.w);
-            // #endif
-
-
-            // #if %EXTRAV2F0REQUIREKEY%
-            // d.extraV2F0 = i.extraV2F0;
-            // #endif
-
-            // #if %EXTRAV2F1REQUIREKEY%
-            // d.extraV2F1 = i.extraV2F1;
-            // #endif
-
-            // #if %EXTRAV2F2REQUIREKEY%
-            // d.extraV2F2 = i.extraV2F2;
-            // #endif
-
-            // #if %EXTRAV2F3REQUIREKEY%
-            // d.extraV2F3 = i.extraV2F3;
-            // #endif
-
-            // #if %EXTRAV2F4REQUIREKEY%
-            // d.extraV2F4 = i.extraV2F4;
-            // #endif
-
-            // #if %EXTRAV2F5REQUIREKEY%
-            // d.extraV2F5 = i.extraV2F5;
-            // #endif
-
-            // #if %EXTRAV2F6REQUIREKEY%
-            // d.extraV2F6 = i.extraV2F6;
-            // #endif
-
-            // #if %EXTRAV2F7REQUIREKEY%
-            // d.extraV2F7 = i.extraV2F7;
-            // #endif
-
-            return d;
-         }
-
-#endif
-
-         
-         #if defined(_PASSSHADOW)
-            float3 _LightDirection;
-            float3 _LightPosition;
-         #endif
-
-         #if (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-
-            #define GetWorldToViewMatrix()     _ViewMatrix
-            #define UNITY_MATRIX_I_V   _InvViewMatrix
-            #define GetViewToHClipMatrix()     OptimizeProjectionMatrix(_ProjMatrix)
-            #define UNITY_MATRIX_I_P   _InvProjMatrix
-            #define GetWorldToHClipMatrix()    _ViewProjMatrix
-            #define UNITY_MATRIX_I_VP  _InvViewProjMatrix
-            #define UNITY_MATRIX_UNJITTERED_VP _NonJitteredViewProjMatrix
-            #define UNITY_MATRIX_PREV_VP _PrevViewProjMatrix
-            #define UNITY_MATRIX_PREV_I_VP _PrevInvViewProjMatrix
-
-            void MotionVectorPositionZBias(VertexToPixel input)
-            {
-                #if UNITY_REVERSED_Z
-                input.pos.z -= unity_MotionVectorsParams.z * input.pos.w;
-                #else
-                input.pos.z += unity_MotionVectorsParams.z * input.pos.w;
-                #endif
-            }
-
-        #endif
-
-         // vertex shader
-         VertexToPixel Vert (VertexData v)
-         {
-           VertexToPixel o = (VertexToPixel)0;
-
-           UNITY_SETUP_INSTANCE_ID(v);
-           UNITY_TRANSFER_INSTANCE_ID(v, o);
-           UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-
-            
-           #if _URP && (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-             VertexData previousMesh = v;
-           #endif
-           #if !_TESSELLATION_ON
-             ChainModifyVertex(v, o, _Time);
-           #endif
-
-           // o.texcoord0 = v.texcoord0;
-           // o.texcoord1 = v.texcoord1;
-           // o.texcoord2 = v.texcoord2;
-
-           // #if %TEXCOORD3REQUIREKEY%
-           // o.texcoord3 = v.texcoord3;
-           // #endif
-
-           // #if %VERTEXCOLORREQUIREKEY%
-           // o.vertexColor = v.vertexColor;
-           // #endif
-
-           // This return the camera relative position (if enable)
-           float3 positionWS = TransformObjectToWorld(v.vertex.xyz);
-           float3 normalWS = TransformObjectToWorldNormal(v.normal);
-           float4 tangentWS = float4(TransformObjectToWorldDir(v.tangent.xyz), v.tangent.w);
-           
-           VertexPositionInputs vertexInput = GetVertexPositionInputs(v.vertex.xyz);
-           o.worldPos = positionWS;
-           o.worldNormal = normalWS;
-           o.worldTangent = tangentWS;
-
-
-          // For some very odd reason, in 2021.2, we can't use Unity's defines, but have to use our own..
-          #if _PASSSHADOW
-              #if _CASTING_PUNCTUAL_LIGHT_SHADOW
-                 float3 lightDirectionWS = normalize(_LightPosition - o.worldPos);
-              #else
-                 float3 lightDirectionWS = _LightDirection;
-              #endif
-              // Define shadow pass specific clip position for Universal
-              o.pos = TransformWorldToHClip(ApplyShadowBias(o.worldPos, o.worldNormal, lightDirectionWS));
-              #if UNITY_REVERSED_Z
-                  o.pos.z = min(o.pos.z, UNITY_NEAR_CLIP_VALUE);
-              #else
-                  o.pos.z = max(o.pos.z, UNITY_NEAR_CLIP_VALUE);
-              #endif
-          #elif _PASSMETA
-              o.pos = MetaVertexPosition(float4(v.vertex.xyz, 0), v.texcoord1.xy, v.texcoord2.xy, unity_LightmapST, unity_DynamicLightmapST);
-          #else
-              o.pos = TransformWorldToHClip(o.worldPos);
-          #endif
-
-          // #if %SCREENPOSREQUIREKEY%
-          // o.screenPos = ComputeScreenPos(o.pos, _ProjectionParams.x);
-          // #endif
-
-          
-          #if _PASSFORWARD || _PASSGBUFFER
-              float2 uv1 = v.texcoord1.xy;
-              OUTPUT_LIGHTMAP_UV(uv1, unity_LightmapST, o.lightmapUV);
-              // o.texcoord1.xy = uv1;
-              OUTPUT_SH(o.worldNormal, o.sh);
-              
-              #if defined(DYNAMICLIGHTMAP_ON)
-                   o.dynamicLightmapUV.xy = v.texcoord2.xy * unity_DynamicLightmapST.xy + unity_DynamicLightmapST.zw;
-                   #if UNITY_VERSION >= 60000009
-                     OUTPUT_SH(o.worldNormal, o.sh);
-                   #endif
-              #elif (defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)) && UNITY_VERSION >= 60000009
-                   OUTPUT_SH4(vertexInput.positionWS, o.worldNormal.xyz, GetWorldSpaceNormalizeViewDir(vertexInput.positionWS), o.sh, o.probeOcclusion);
-              #endif
-          #endif
-
-          #ifdef VARYINGS_NEED_FOG_AND_VERTEX_LIGHT
-              half fogFactor = 0;
-              #if defined(_FOG_FRAGMENT)
-                fogFactor = ComputeFogFactor(o.pos.z);
-              #endif
-              #if _BAKEDLIT
-                 o.fogFactorAndVertexLight = half4(fogFactor, 0, 0, 0);
-              #else
-                 half3 vertexLight = VertexLighting(o.worldPos, o.worldNormal);
-                 o.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
-              #endif
-          #endif
-
-          #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
-             o.shadowCoord = GetShadowCoord(vertexInput);
-          #endif
-
-          #if _URP && (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-            #if !defined(TESSELLATION_ON)
-              MotionVectorPositionZBias(o);
-            #endif
-
-            o.previousPositionCS = float4(0.0, 0.0, 0.0, 1.0);
-            // Note: unity_MotionVectorsParams.y is 0 is forceNoMotion is enabled
-            bool forceNoMotion = unity_MotionVectorsParams.y == 0.0;
-
-            if (!forceNoMotion)
-            {
-              #if defined(HAVE_VFX_MODIFICATION)
-                float3 previousPositionOS = currentFrameMvData.vfxParticlePositionOS;
-                #if defined(VFX_FEATURE_MOTION_VECTORS_VERTS)
-                  const bool applyDeformation = false;
-                #else
-                  const bool applyDeformation = true;
-                #endif
-              #else
-                const bool hasDeformation = unity_MotionVectorsParams.x == 1; // Mesh has skinned deformation
-                float3 previousPositionOS = hasDeformation ? previousMesh.previousPositionOS : previousMesh.vertex.xyz;
-
-                #if defined(AUTOMATIC_TIME_BASED_MOTION_VECTORS) && defined(GRAPH_VERTEX_USES_TIME_PARAMETERS_INPUT)
-                  const bool applyDeformation = true;
-                #else
-                  const bool applyDeformation = hasDeformation;
-                #endif
-              #endif
-              // TODO
-              #if defined(FEATURES_GRAPH_VERTEX)
-                if (applyDeformation)
-                  previousPositionOS = GetLastFrameDeformedPosition(previousMesh, currentFrameMvData, previousPositionOS);
-                else
-                  previousPositionOS = previousMesh.positionOS;
-
-                #if defined(FEATURES_GRAPH_VERTEX_MOTION_VECTOR_OUTPUT)
-                  previousPositionOS -= previousMesh.precomputedVelocity;
-                #endif
-              #endif
-
-              #if defined(UNITY_DOTS_INSTANCING_ENABLED) && defined(DOTS_DEFORMED)
-                // Deformed vertices in DOTS are not cumulative with built-in Unity skinning/blend shapes
-                // Needs to be called after vertex modification has been applied otherwise it will be
-                // overwritten by Compute Deform node
-                ApplyPreviousFrameDeformedVertexPosition(previousMesh.vertexID, previousPositionOS);
-              #endif
-              #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                previousPositionOS -= previousMesh.precomputedVelocity;
-              #endif
-              o.positionCS = mul(UNITY_MATRIX_UNJITTERED_VP, float4(positionWS, 1.0f));
-
-              #if defined(HAVE_VFX_MODIFICATION)
-                #if defined(VFX_FEATURE_MOTION_VECTORS_VERTS)
-                  #if defined(FEATURES_GRAPH_VERTEX_MOTION_VECTOR_OUTPUT) || defined(_ADD_PRECOMPUTED_VELOCITY)
-                    #error Unexpected fast path rendering VFX motion vector while there are vertex modification afterwards.
-                  #endif
-                  o.previousPositionCS = VFXGetPreviousClipPosition(previousMesh, currentFrameMvData.vfxElementAttributes, o.positionCS);
-                #else
-                  #if VFX_WORLD_SPACE
-                    //previousPositionOS is already in world space
-                    const float3 previousPositionWS = previousPositionOS;
-                  #else
-                    const float3 previousPositionWS = mul(UNITY_PREV_MATRIX_M, float4(previousPositionOS, 1.0f)).xyz;
-                  #endif
-                  o.previousPositionCS = mul(UNITY_MATRIX_PREV_VP, float4(previousPositionWS, 1.0f));
-                #endif
-              #else
-                o.previousPositionCS = mul(UNITY_MATRIX_PREV_VP, mul(UNITY_PREV_MATRIX_M, float4(previousPositionOS, 1)));
-              #endif
-            }
-          #endif
-
-          return o;
-         }
-
-
-         
-
-#if _UNLIT
-   #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Unlit.hlsl"  
-#endif
-
-         // fragment shader
-         void Frag (VertexToPixel IN
-              , out half4 outColor : SV_Target0
-            #ifdef _WRITE_RENDERING_LAYERS
-              , out float4 outRenderingLayers : SV_Target1
-            #endif
-            #ifdef _DEPTHOFFSET_ON
-              , out float outputDepth : SV_Depth
-            #endif
-            #if NEED_FACING
-               , bool facing : SV_IsFrontFace
-            #endif
-         )
-         {
-           UNITY_SETUP_INSTANCE_ID(IN);
-           UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(IN);
-
-           #if defined(LOD_FADE_CROSSFADE)
-              LODFadeCrossFade(IN.pos);
-           #endif
-
-
-           ShaderData d = CreateShaderData(IN
-                  #if NEED_FACING
-                     , facing
-                  #endif
-               );
-           Surface l = (Surface)0;
-
-           #ifdef _DEPTHOFFSET_ON
-              l.outputDepth = outputDepth;
-           #endif
-
-           l.Albedo = half3(0.5, 0.5, 0.5);
-           l.Normal = float3(0,0,1);
-           l.Occlusion = 1;
-           l.Alpha = 1;
-
-           ChainSurfaceFunction(l, d);
-
-           #ifdef _DEPTHOFFSET_ON
-              outputDepth = l.outputDepth;
-           #endif
-
-           #if _USESPECULAR || _SIMPLELIT
-              float3 specular = l.Specular;
-              float metallic = 1;
-           #else   
-              float3 specular = 0;
-              float metallic = l.Metallic;
-           #endif
-
-
-            
-           
-            InputData inputData = (InputData)0;
-
-            inputData.positionWS = IN.worldPos;
-            #if _WORLDSPACENORMAL
-              inputData.normalWS = l.Normal;
-            #else
-              inputData.normalWS = normalize(TangentToWorldSpace(d, l.Normal));
-            #endif
-
-            inputData.viewDirectionWS = SafeNormalize(d.worldSpaceViewDir);
-
-
-            #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
-                  inputData.shadowCoord = IN.shadowCoord;
-            #elif defined(MAIN_LIGHT_CALCULATE_SHADOWS)
-                  inputData.shadowCoord = TransformWorldToShadowCoord(IN.worldPos);
-            #else
-                  inputData.shadowCoord = float4(0, 0, 0, 0);
-            #endif
-            
-#if _BAKEDLIT
-            inputData.fogCoord = IN.fogFactorAndVertexLight.x;
-            inputData.vertexLighting = 0;
-#else
-            inputData.fogCoord = InitializeInputDataFog(float4(IN.worldPos, 1.0), IN.fogFactorAndVertexLight.x);
-            inputData.vertexLighting = IN.fogFactorAndVertexLight.yzw;
-#endif    
-
-
-
-            #if defined(_OVERRIDE_BAKEDGI)
-               inputData.bakedGI = l.DiffuseGI;
-               l.Emission += l.SpecularGI;
-            #elif _BAKEDLIT
-               inputData.bakedGI = SAMPLE_GI(IN.lightmapUV, IN.sh, inputData.normalWS);
-            #else
-               #if defined(DYNAMICLIGHTMAP_ON)
-                  inputData.bakedGI = SAMPLE_GI(IN.lightmapUV, IN.dynamicLightmapUV.xy, IN.sh, inputData.normalWS);
-                  inputData.shadowMask = SAMPLE_SHADOWMASK(IN.lightmapUV);
-               #elif !defined(LIGHTMAP_ON) && (defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2))
-                  #if UNITY_VERSION >= 60000009
-                     inputData.bakedGI = SAMPLE_GI(IN.sh, IN.worldPos, inputData.normalWS, inputData.viewDirectionWS, IN.pos, IN.probeOcclusion, inputData.shadowMask);
-                  #else
-                     inputData.bakedGI = SAMPLE_GI(IN.sh, IN.worldPos, inputData.normalWS, inputData.viewDirectionWS, IN.pos);
-                  #endif
-               #else
-                  inputData.bakedGI = SAMPLE_GI(IN.lightmapUV, IN.sh, inputData.normalWS);
-                  inputData.shadowMask = SAMPLE_SHADOWMASK(IN.lightmapUV);
-               #endif
-            #endif
-            inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(IN.pos);
-            #if !_BAKEDLIT
-               inputData.shadowMask = SAMPLE_SHADOWMASK(IN.lightmapUV);
-           
-               #if defined(_OVERRIDE_SHADOWMASK)
-                  float4 mulColor = saturate(dot(l.ShadowMask, _MainLightOcclusionProbes)); //unity_OcclusionMaskSelector));
-                  inputData.shadowMask = mulColor;
-               #endif
-            #else
-               inputData.shadowMask = float4(1,1,1,1);
-            #endif
-
-            #if defined(DEBUG_DISPLAY)
-                #if defined(DYNAMICLIGHTMAP_ON)
-                  inputData.dynamicLightmapUV = IN.dynamicLightmapUV.xy;
-                #endif
-                #if defined(LIGHTMAP_ON)
-                  inputData.staticLightmapUV = IN.lightmapUV;
-                #else
-                  inputData.vertexSH = IN.sh;
-                #endif
-            #endif
-
-            #if _WORLDSPACENORMAL
-              float3 normalTS = WorldToTangentSpace(d, l.Normal);
-            #else
-              float3 normalTS = l.Normal;
-            #endif
-
-            SurfaceData surface         = (SurfaceData)0;
-            surface.albedo              = l.Albedo;
-            surface.metallic            = saturate(metallic);
-            surface.specular            = specular;
-            surface.smoothness          = saturate(l.Smoothness),
-            surface.occlusion           = l.Occlusion,
-            surface.emission            = l.Emission,
-            surface.alpha               = saturate(l.Alpha);
-            surface.clearCoatMask       = 0;
-            surface.clearCoatSmoothness = 1;
-
-            #ifdef _CLEARCOAT
-                  surface.clearCoatMask       = saturate(l.CoatMask);
-                  surface.clearCoatSmoothness = saturate(l.CoatSmoothness);
-            #endif
-
-            #if !_UNLIT
-               half4 color = half4(l.Albedo, l.Alpha);
-               #ifdef _DBUFFER
-                  #if _BAKEDLIT
-                     half3 bakeColor = color.rgb;
-                     float3 bakeNormal = inputData.normalWS.xyz;
-                     ApplyDecalToBaseColorAndNormal(IN.pos, bakeColor, bakeNormal);
-                     color.rgb = bakeColor;
-                     inputData.normalWS.xyz = bakeNormal;
-                  #else
-                     ApplyDecalToSurfaceData(IN.pos, surface, inputData);
-                  #endif
-               #endif
-               #if _SIMPLELIT
-                  color = UniversalFragmentBlinnPhong(
-                     inputData,
-                     surface);
-               #elif _BAKEDLIT
-                  color = UniversalFragmentBakedLit(inputData, color.rgb, color.a, normalTS);
-               #else
-                  color = UniversalFragmentPBR(inputData, surface);
-               #endif
-
-               #if !DISABLEFOG
-                  color.rgb = MixFog(color.rgb, inputData.fogCoord);
-               #endif
-
-            #else // unlit
-               #ifdef _DBUFFER
-                  ApplyDecalToSurfaceData(IN.pos, surface, inputData);
-               #endif
-               half4 color = UniversalFragmentUnlit(inputData, l.Albedo, l.Alpha);
-               #if !DISABLEFOG
-                  color.rgb = MixFog(color.rgb, inputData.fogCoord);
-               #endif
-            #endif
-            ChainFinalColorForward(l, d, color);
-
-            outColor = color;
-
-            #ifdef _WRITE_RENDERING_LAYERS
-                uint renderingLayers = GetMeshRenderingLayer();
-                outRenderingLayers = float4(EncodeMeshRenderingLayer(renderingLayers), 0, 0, 0);
-            #endif
-
-         }
-
-         ENDHLSL
-
-      }
-
-
-      
-        Pass
-        {
-            Name "GBuffer"
-            Tags
-            {
-               "LightMode" = "UniversalGBuffer"
-            }
-           
-             Blend One Zero
-             ZTest LEqual
-             ZWrite On
-
-            
-
-            HLSLPROGRAM
-
-               #pragma vertex Vert
-   #pragma fragment Frag
-
-            #if (defined(SHADER_API_GLES) || defined(SHADER_API_GLES3) || defined(SHADER_API_GLES30)) 
-            #pragma target 3.0
-#else
-            #pragma target 4.5
-#endif
-
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
-            #pragma multi_compile_instancing
-            #pragma multi_compile _ DOTS_INSTANCING_ON
-            #pragma multi_compile_fog
-            #pragma instancing_options renderinglayer
-            
-            #pragma multi_compile _ LIGHTMAP_ON
-            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
-            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
-            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT_LOW
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT_MEDIUM
-            #pragma multi_compile_fragment _ _SHADOWS_SOFT_HIGH
-            #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
-            #pragma multi_compile _ SHADOWS_SHADOWMASK
-            #pragma multi_compile _ _MIXED_LIGHTING_SUBTRACTIVE
-            #pragma multi_compile_fragment _ _DBUFFER_MRT1 _DBUFFER_MRT2 _DBUFFER_MRT3
-            #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
-            #pragma multi_compile_fragment _ _RENDER_PASS_ENABLED
-            #pragma multi_compile_fragment _ DEBUG_DISPLAY
-            #pragma multi_compile_fragment _ LOD_FADE_CROSSFADE
-  
-
-            #define _FOG_FRAGMENT 1
-
-            #define VARYINGS_NEED_FOG_AND_VERTEX_LIGHT
-            #define SHADERPASS SHADERPASS_GBUFFER
-            #define _PASSGBUFFER 1
-
-            
-
-
-   #define _URP 1
-
-#define _UNLIT 1
-
-
-            
-
-            // Includes
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ProbeVolumeVariants.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Input.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
-            #include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderGraphFunctions.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DBuffer.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
-
-            
-
-                  #undef WorldNormalVector
-      #define WorldNormalVector(data, normal) mul(normal, data.TBNMatrix)
-      
-      #define UnityObjectToWorldNormal(normal) mul(GetObjectToWorldMatrix(), normal)
-
-      #define _WorldSpaceLightPos0 _MainLightPosition
-      
-      #define UNITY_DECLARE_TEX2D(name) TEXTURE2D(name); SAMPLER(sampler##name);
-      #define UNITY_DECLARE_TEX2D_NOSAMPLER(name) TEXTURE2D(name);
-      #define UNITY_DECLARE_TEX2DARRAY(name) TEXTURE2D_ARRAY(name); SAMPLER(sampler##name);
-      #define UNITY_DECLARE_TEX2DARRAY_NOSAMPLER(name) TEXTURE2D_ARRAY(name);
-
-      #define UNITY_SAMPLE_TEX2DARRAY(tex,coord)            SAMPLE_TEXTURE2D_ARRAY(tex, sampler##tex, coord.xy, coord.z)
-      #define UNITY_SAMPLE_TEX2DARRAY_LOD(tex,coord,lod)    SAMPLE_TEXTURE2D_ARRAY_LOD(tex, sampler##tex, coord.xy, coord.z, lod)
-      #define UNITY_SAMPLE_TEX2D(tex, coord)                SAMPLE_TEXTURE2D(tex, sampler##tex, coord)
-      #define UNITY_SAMPLE_TEX2D_SAMPLER(tex, samp, coord)  SAMPLE_TEXTURE2D(tex, sampler##samp, coord)
-
-      #define UNITY_SAMPLE_TEX2D_LOD(tex,coord, lod)   SAMPLE_TEXTURE2D_LOD(tex, sampler_##tex, coord, lod)
-      #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord, lod) SAMPLE_TEXTURE2D_LOD (tex, sampler##samplertex,coord, lod)
-     
-      #if defined(UNITY_COMPILER_HLSL)
-         #define UNITY_INITIALIZE_OUTPUT(type,name) name = (type)0;
-      #else
-         #define UNITY_INITIALIZE_OUTPUT(type,name)
-      #endif
-
-      #define sampler2D_float sampler2D
-      #define sampler2D_half sampler2D
-
-      
-
-      // data across stages, stripped like the above.
-      struct VertexToPixel
-      {
-         float4 pos : SV_POSITION;
-         float3 worldPos : TEXCOORD0;
-         float3 worldNormal : TEXCOORD1;
-         float4 worldTangent : TEXCOORD2;
-         // float4 texcoord0 : TEXCOORD3;
-         // float4 texcoord1 : TEXCOORD4;
-         // float4 texcoord2 : TEXCOORD5;
-
-         // #if %TEXCOORD3REQUIREKEY%
-         // float4 texcoord3 : TEXCOORD6;
-         // #endif
-
-         // #if %SCREENPOSREQUIREKEY%
-         // float4 screenPos : TEXCOORD7;
-         // #endif
-
-         // #if %VERTEXCOLORREQUIREKEY%
-         // half4 vertexColor : COLOR;
-         // #endif
-
-         #if defined(LIGHTMAP_ON)
-            float2 lightmapUV : TEXCOORD8;
-         #endif
-         #if defined(DYNAMICLIGHTMAP_ON)
-            float2 dynamicLightmapUV : TEXCOORD9;
-         #endif
-         #if !defined(LIGHTMAP_ON)
-            float4 probeOcclusion : TEXCOORD8;
-            float3 sh : TEXCOORD10;
-         #endif
-
-         #if defined(VARYINGS_NEED_FOG_AND_VERTEX_LIGHT)
-            float4 fogFactorAndVertexLight : TEXCOORD11;
-         #endif
-
-         #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
-           float4 shadowCoord : TEXCOORD12;
-         #endif
-
-         // #if %EXTRAV2F0REQUIREKEY%
-         // float4 extraV2F0 : TEXCOORD13;
-         // #endif
-
-         // #if %EXTRAV2F1REQUIREKEY%
-         // float4 extraV2F1 : TEXCOORD14;
-         // #endif
-
-         // #if %EXTRAV2F2REQUIREKEY%
-         // float4 extraV2F2 : TEXCOORD15;
-         // #endif
-
-         // #if %EXTRAV2F3REQUIREKEY%
-         // float4 extraV2F3 : TEXCOORD16;
-         // #endif
-
-         // #if %EXTRAV2F4REQUIREKEY%
-         // float4 extraV2F4 : TEXCOORD17;
-         // #endif
-
-         // #if %EXTRAV2F5REQUIREKEY%
-         // float4 extraV2F5 : TEXCOORD18;
-         // #endif
-
-         // #if %EXTRAV2F6REQUIREKEY%
-         // float4 extraV2F6 : TEXCOORD19;
-         // #endif
-
-         // #if %EXTRAV2F7REQUIREKEY%
-         // float4 extraV2F7 : TEXCOORD20;
-         // #endif
-
-         #if UNITY_ANY_INSTANCING_ENABLED
-         uint instanceID : CUSTOM_INSTANCE_ID;
-         #endif
-         #if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
-         uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
-         #endif
-         #if (defined(UNITY_STEREO_INSTANCING_ENABLED))
-         uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
-         #endif
-         #if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
-         FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
-         #endif
-
-         #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-            float4 previousPositionCS : TEXCOORD21; // Contain previous transform position (in case of skinning for example)
-            float4 positionCS : TEXCOORD22;
-         #endif
-      };
-
-
-
-            
-            
-            // data describing the user output of a pixel
-            struct Surface
-            {
-               half3 Albedo;
-               half Height;
-               half3 Normal;
-               half Smoothness;
-               half3 Emission;
-               half Metallic;
-               half3 Specular;
-               half Occlusion;
-               half SpecularPower; // for simple lighting
-               half Alpha;
-               float outputDepth; // if written, SV_Depth semantic is used. ShaderData.clipPos.z is unused value
-               // HDRP Only
-               half SpecularOcclusion;
-               half SubsurfaceMask;
-               half Thickness;
-               half CoatMask;
-               half CoatSmoothness;
-               half Anisotropy;
-               half IridescenceMask;
-               half IridescenceThickness;
-               int DiffusionProfileHash;
-               float SpecularAAThreshold;
-               float SpecularAAScreenSpaceVariance;
-               // requires _OVERRIDE_BAKEDGI to be defined, but is mapped in all pipelines
-               float3 DiffuseGI;
-               float3 BackDiffuseGI;
-               float3 SpecularGI;
-               float ior;
-               float3 transmittanceColor;
-               float atDistance;
-               float transmittanceMask;
-               // requires _OVERRIDE_SHADOWMASK to be defines
-               float4 ShadowMask;
-
-               // for decals
-               float NormalAlpha;
-               float MAOSAlpha;
-
-
-            };
-
-            // Data the user declares in blackboard blocks
-            struct Blackboard
-            {
-                
-                float blackboardDummyData;
-            };
-
-            // data the user might need, this will grow to be big. But easy to strip
-            struct ShaderData
-            {
-               float4 clipPos; // SV_POSITION
-               float3 localSpacePosition;
-               float3 localSpaceNormal;
-               float3 localSpaceTangent;
-        
-               float3 worldSpacePosition;
-               float3 worldSpaceNormal;
-               float3 worldSpaceTangent;
-               float tangentSign;
-
-               float3 worldSpaceViewDir;
-               float3 tangentSpaceViewDir;
-
-               float4 texcoord0;
-               float4 texcoord1;
-               float4 texcoord2;
-               float4 texcoord3;
-
-               float2 screenUV;
-               float4 screenPos;
-
-               float4 vertexColor;
-               bool isFrontFace;
-
-               float4 extraV2F0;
-               float4 extraV2F1;
-               float4 extraV2F2;
-               float4 extraV2F3;
-               float4 extraV2F4;
-               float4 extraV2F5;
-               float4 extraV2F6;
-               float4 extraV2F7;
-
-               float3x3 TBNMatrix;
-               Blackboard blackboard;
-            };
-
-            struct VertexData
-            {
-               #if SHADER_TARGET > 30
-               // uint vertexID : SV_VertexID;
-               #endif
-               float4 vertex : POSITION;
-               float3 normal : NORMAL;
-               float4 tangent : TANGENT;
-               float4 texcoord0 : TEXCOORD0;
-
-               // optimize out mesh coords when not in use by user or lighting system
-               #if _URP && (_USINGTEXCOORD1 || _PASSMETA || _PASSFORWARD || _PASSGBUFFER)
-                  float4 texcoord1 : TEXCOORD1;
-               #endif
-
-               #if _URP && (_USINGTEXCOORD2 || _PASSMETA || ((_PASSFORWARD || _PASSGBUFFER) && defined(DYNAMICLIGHTMAP_ON)))
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-               #if _STANDARD && (_USINGTEXCOORD1 || (_PASSMETA || ((_PASSFORWARD || _PASSGBUFFER || _PASSFORWARDADD) && LIGHTMAP_ON)))
-                  float4 texcoord1 : TEXCOORD1;
-               #endif
-               #if _STANDARD && (_USINGTEXCOORD2 || (_PASSMETA || ((_PASSFORWARD || _PASSGBUFFER) && DYNAMICLIGHTMAP_ON)))
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-
-               #if _HDRP
-                  float4 texcoord1 : TEXCOORD1;
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-               // #if %TEXCOORD3REQUIREKEY%
-               // float4 texcoord3 : TEXCOORD3;
-               // #endif
-
-               // #if %VERTEXCOLORREQUIREKEY%
-               // float4 vertexColor : COLOR;
-               // #endif
-
-               #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-                  float3 previousPositionOS : TEXCOORD4; // Contain previous transform position (in case of skinning for example)
-                  #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                     float3 precomputedVelocity    : TEXCOORD5; // Add Precomputed Velocity (Alembic computes velocities on runtime side).
-                  #endif
-               #endif
-
-               UNITY_VERTEX_INPUT_INSTANCE_ID
-            };
-
-            struct TessVertex 
-            {
-               float4 vertex : INTERNALTESSPOS;
-               float3 normal : NORMAL;
-               float4 tangent : TANGENT;
-               float4 texcoord0 : TEXCOORD0;
-               float4 texcoord1 : TEXCOORD1;
-               float4 texcoord2 : TEXCOORD2;
-
-               // #if %TEXCOORD3REQUIREKEY%
-               // float4 texcoord3 : TEXCOORD3;
-               // #endif
-
-               // #if %VERTEXCOLORREQUIREKEY%
-               // float4 vertexColor : COLOR;
-               // #endif
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // float4 extraV2F0 : TEXCOORD5;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // float4 extraV2F1 : TEXCOORD6;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // float4 extraV2F2 : TEXCOORD7;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // float4 extraV2F3 : TEXCOORD8;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // float4 extraV2F4 : TEXCOORD9;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // float4 extraV2F5 : TEXCOORD10;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // float4 extraV2F6 : TEXCOORD11;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // float4 extraV2F7 : TEXCOORD12;
-               // #endif
-
-               #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-                  float3 previousPositionOS : TEXCOORD13; // Contain previous transform position (in case of skinning for example)
-                  #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                     float3 precomputedVelocity : TEXCOORD14;
-                  #endif
-               #endif
-
-               UNITY_VERTEX_INPUT_INSTANCE_ID
-               UNITY_VERTEX_OUTPUT_STEREO
-            };
-
-            struct ExtraV2F
-            {
-               float4 extraV2F0;
-               float4 extraV2F1;
-               float4 extraV2F2;
-               float4 extraV2F3;
-               float4 extraV2F4;
-               float4 extraV2F5;
-               float4 extraV2F6;
-               float4 extraV2F7;
-               Blackboard blackboard;
-               float4 time;
-            };
-
-
-            float3 WorldToTangentSpace(ShaderData d, float3 normal)
-            {
-               return mul(d.TBNMatrix, normal);
-            }
-
-            float3 TangentToWorldSpace(ShaderData d, float3 normal)
-            {
-               return mul(normal, d.TBNMatrix);
-            }
-
-            // in this case, make standard more like SRPs, because we can't fix
-            // unity_WorldToObject in HDRP, since it already does macro-fu there
-
-            #if _STANDARD
-               float3 TransformWorldToObject(float3 p) { return mul(unity_WorldToObject, float4(p, 1)); };
-               float3 TransformObjectToWorld(float3 p) { return mul(unity_ObjectToWorld, float4(p, 1)); };
-               float4 TransformWorldToObject(float4 p) { return mul(unity_WorldToObject, p); };
-               float4 TransformObjectToWorld(float4 p) { return mul(unity_ObjectToWorld, p); };
-               float4x4 GetWorldToObjectMatrix() { return unity_WorldToObject; }
-               float4x4 GetObjectToWorldMatrix() { return unity_ObjectToWorld; }
-               #if (defined(SHADER_API_D3D11) || defined(SHADER_API_XBOXONE) || defined(UNITY_COMPILER_HLSLCC) || defined(SHADER_API_PSSL) || (SHADER_TARGET_SURFACE_ANALYSIS && !SHADER_TARGET_SURFACE_ANALYSIS_MOJOSHADER))
-                 #define UNITY_SAMPLE_TEX2D_LOD(tex,coord, lod) tex.SampleLevel (sampler##tex,coord, lod)
-                 #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord, lod) tex.SampleLevel (sampler##samplertex,coord, lod)
-              #else
-                 #define UNITY_SAMPLE_TEX2D_LOD(tex,coord,lod) tex2D (tex,coord,0,lod)
-                 #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord,lod) tex2D (tex,coord,0,lod)
-              #endif
-
-               #undef GetWorldToObjectMatrix()
-
-               #define GetWorldToObjectMatrix()   unity_WorldToObject
-
-
-            #endif
-
-            float3 GetCameraWorldPosition()
-            {
-               #if _HDRP
-                  return GetCameraRelativePositionWS(_WorldSpaceCameraPos);
-               #else
-                  return _WorldSpaceCameraPos;
-               #endif
-            }
-
-            #if _GRABPASSUSED
-               #if _STANDARD
-                  TEXTURE2D(%GRABTEXTURE%);
-                  SAMPLER(sampler_%GRABTEXTURE%);
-               #endif
-
-               half3 GetSceneColor(float2 uv)
-               {
-                  #if _STANDARD
-                     return SAMPLE_TEXTURE2D(%GRABTEXTURE%, sampler_%GRABTEXTURE%, uv).rgb;
-                  #else
-                     return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv);
-                  #endif
-               }
-            #endif
-
-
-      
-            #if _STANDARD
-               UNITY_DECLARE_DEPTH_TEXTURE(_CameraDepthTexture);
-               float GetSceneDepth(float2 uv) { return SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv); }
-               float GetLinear01Depth(float2 uv) { return Linear01Depth(GetSceneDepth(uv)); }
-               float GetLinearEyeDepth(float2 uv) { return LinearEyeDepth(GetSceneDepth(uv)); } 
-            #else
-               float GetSceneDepth(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv); }
-               float GetLinear01Depth(float2 uv) { return Linear01Depth(GetSceneDepth(uv), _ZBufferParams); }
-               float GetLinearEyeDepth(float2 uv) { return LinearEyeDepth(GetSceneDepth(uv), _ZBufferParams); } 
-            #endif
-
-            float3 GetWorldPositionFromDepthBuffer(float2 uv, float3 worldSpaceViewDir)
-            {
-               float eye = GetLinearEyeDepth(uv);
-               float3 camView = mul((float3x3)GetObjectToWorldMatrix(), transpose(mul(GetWorldToObjectMatrix(), UNITY_MATRIX_I_V)) [2].xyz);
-
-               float dt = dot(worldSpaceViewDir, camView);
-               float3 div = worldSpaceViewDir/dt;
-               float3 wpos = (eye * div) + GetCameraWorldPosition();
-               return wpos;
-            }
-
-            #if _HDRP
-            float3 ObjectToWorldSpacePosition(float3 pos)
-            {
-               return GetAbsolutePositionWS(TransformObjectToWorld(pos));
-            }
-            #else
-            float3 ObjectToWorldSpacePosition(float3 pos)
-            {
-               return TransformObjectToWorld(pos);
-            }
-            #endif
-
-            #if _STANDARD
-               UNITY_DECLARE_SCREENSPACE_TEXTURE(_CameraDepthNormalsTexture);
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  float4 depthNorms = UNITY_SAMPLE_SCREENSPACE_TEXTURE(_CameraDepthNormalsTexture, uv);
-                  float3 norms = DecodeViewNormalStereo(depthNorms);
-                  norms = mul((float3x3)GetWorldToViewMatrix(), norms) * 0.5 + 0.5;
-                  return norms;
-               }
-            #elif _HDRP && !_DECALSHADER
-               
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  NormalData nd;
-                  DecodeFromNormalBuffer(_ScreenSize.xy * uv, nd);
-                  return nd.normalWS;
-               }
-            #elif _URP
-               #if (SHADER_LIBRARY_VERSION_MAJOR >= 10)
-                  #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareNormalsTexture.hlsl"
-               #endif
-
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  #if (SHADER_LIBRARY_VERSION_MAJOR >= 10)
-                     return SampleSceneNormals(uv);
-                  #else
-                     float3 wpos = GetWorldPositionFromDepthBuffer(uv, worldSpaceViewDir);
-                     return normalize(-cross(ddx(wpos), ddy(wpos))) * 0.5 + 0.5;
-                  #endif
-
-                }
-             #endif
-
-             #if _HDRP
-
-               half3 UnpackNormalmapRGorAG(half4 packednormal)
-               {
-                     // This do the trick
-                  packednormal.x *= packednormal.w;
-
-                  half3 normal;
-                  normal.xy = packednormal.xy * 2 - 1;
-                  normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
-                  return normal;
-               }
-               half3 UnpackNormal(half4 packednormal)
-               {
-                  #if defined(UNITY_NO_DXT5nm)
-                     return packednormal.xyz * 2 - 1;
-                  #else
-                     return UnpackNormalmapRGorAG(packednormal);
-                  #endif
-               }
-            #endif
-            #if _HDRP || _URP
-
-               half3 UnpackScaleNormal(half4 packednormal, half scale)
-               {
-                 #ifndef UNITY_NO_DXT5nm
-                   // Unpack normal as DXT5nm (1, y, 1, x) or BC5 (x, y, 0, 1)
-                   // Note neutral texture like "bump" is (0, 0, 1, 1) to work with both plain RGB normal and DXT5nm/BC5
-                   packednormal.x *= packednormal.w;
-                 #endif
-                   half3 normal;
-                   normal.xy = (packednormal.xy * 2 - 1) * scale;
-                   normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
-                   return normal;
-               }	
-
-             #endif
-
-
-            void GetSun(out float3 lightDir, out float3 color)
-            {
-               lightDir = float3(0.5, 0.5, 0);
-               color = 1;
-               #if _HDRP
-                  if (_DirectionalLightCount > 0)
-                  {
-                     DirectionalLightData light = _DirectionalLightDatas[0];
-                     lightDir = -light.forward.xyz;
-                     color = light.color;
-                  }
-               #elif _STANDARD
-			         lightDir = normalize(_WorldSpaceLightPos0.xyz);
-                  color = _LightColor0.rgb;
-               #elif _URP
-	               Light light = GetMainLight();
-	               lightDir = light.direction;
-	               color = light.color;
-               #endif
-            }
-
-
-            
-            CBUFFER_START(UnityPerMaterial)
-
-               
-
-
-
-            CBUFFER_END
-
-            
-
-            
-
-            
-
-
-
-        
-            void ChainSurfaceFunction(inout Surface l, inout ShaderData d)
-            {
-                 // Ext_SurfaceFunction0(l, d);
-                 // Ext_SurfaceFunction1(l, d);
-                 // Ext_SurfaceFunction2(l, d);
-                 // Ext_SurfaceFunction3(l, d);
-                 // Ext_SurfaceFunction4(l, d);
-                 // Ext_SurfaceFunction5(l, d);
-                 // Ext_SurfaceFunction6(l, d);
-                 // Ext_SurfaceFunction7(l, d);
-                 // Ext_SurfaceFunction8(l, d);
-                 // Ext_SurfaceFunction9(l, d);
-		           // Ext_SurfaceFunction10(l, d);
-                 // Ext_SurfaceFunction11(l, d);
-                 // Ext_SurfaceFunction12(l, d);
-                 // Ext_SurfaceFunction13(l, d);
-                 // Ext_SurfaceFunction14(l, d);
-                 // Ext_SurfaceFunction15(l, d);
-                 // Ext_SurfaceFunction16(l, d);
-                 // Ext_SurfaceFunction17(l, d);
-                 // Ext_SurfaceFunction18(l, d);
-		           // Ext_SurfaceFunction19(l, d);
-                 // Ext_SurfaceFunction20(l, d);
-                 // Ext_SurfaceFunction21(l, d);
-                 // Ext_SurfaceFunction22(l, d);
-                 // Ext_SurfaceFunction23(l, d);
-                 // Ext_SurfaceFunction24(l, d);
-                 // Ext_SurfaceFunction25(l, d);
-                 // Ext_SurfaceFunction26(l, d);
-                 // Ext_SurfaceFunction27(l, d);
-                 // Ext_SurfaceFunction28(l, d);
-		           // Ext_SurfaceFunction29(l, d);
-            }
-
-#if !_DECALSHADER
-
-            void ChainModifyVertex(inout VertexData v, inout VertexToPixel v2p, float4 time)
-            {
-                 ExtraV2F d;
-                 
-                 ZERO_INITIALIZE(ExtraV2F, d);
-                 ZERO_INITIALIZE(Blackboard, d.blackboard);
-                 // due to motion vectors in HDRP, we need to use the last
-                 // time in certain spots. So if you are going to use _Time to adjust vertices,
-                 // you need to use this time or motion vectors will break. 
-                 d.time = time;
-
-                 //  Ext_ModifyVertex0(v, d);
-                 // Ext_ModifyVertex1(v, d);
-                 // Ext_ModifyVertex2(v, d);
-                 // Ext_ModifyVertex3(v, d);
-                 // Ext_ModifyVertex4(v, d);
-                 // Ext_ModifyVertex5(v, d);
-                 // Ext_ModifyVertex6(v, d);
-                 // Ext_ModifyVertex7(v, d);
-                 // Ext_ModifyVertex8(v, d);
-                 // Ext_ModifyVertex9(v, d);
-                 // Ext_ModifyVertex10(v, d);
-                 // Ext_ModifyVertex11(v, d);
-                 // Ext_ModifyVertex12(v, d);
-                 // Ext_ModifyVertex13(v, d);
-                 // Ext_ModifyVertex14(v, d);
-                 // Ext_ModifyVertex15(v, d);
-                 // Ext_ModifyVertex16(v, d);
-                 // Ext_ModifyVertex17(v, d);
-                 // Ext_ModifyVertex18(v, d);
-                 // Ext_ModifyVertex19(v, d);
-                 // Ext_ModifyVertex20(v, d);
-                 // Ext_ModifyVertex21(v, d);
-                 // Ext_ModifyVertex22(v, d);
-                 // Ext_ModifyVertex23(v, d);
-                 // Ext_ModifyVertex24(v, d);
-                 // Ext_ModifyVertex25(v, d);
-                 // Ext_ModifyVertex26(v, d);
-                 // Ext_ModifyVertex27(v, d);
-                 // Ext_ModifyVertex28(v, d);
-                 // Ext_ModifyVertex29(v, d);
-
-
-                 // #if %EXTRAV2F0REQUIREKEY%
-                 // v2p.extraV2F0 = d.extraV2F0;
-                 // #endif
-
-                 // #if %EXTRAV2F1REQUIREKEY%
-                 // v2p.extraV2F1 = d.extraV2F1;
-                 // #endif
-
-                 // #if %EXTRAV2F2REQUIREKEY%
-                 // v2p.extraV2F2 = d.extraV2F2;
-                 // #endif
-
-                 // #if %EXTRAV2F3REQUIREKEY%
-                 // v2p.extraV2F3 = d.extraV2F3;
-                 // #endif
-
-                 // #if %EXTRAV2F4REQUIREKEY%
-                 // v2p.extraV2F4 = d.extraV2F4;
-                 // #endif
-
-                 // #if %EXTRAV2F5REQUIREKEY%
-                 // v2p.extraV2F5 = d.extraV2F5;
-                 // #endif
-
-                 // #if %EXTRAV2F6REQUIREKEY%
-                 // v2p.extraV2F6 = d.extraV2F6;
-                 // #endif
-
-                 // #if %EXTRAV2F7REQUIREKEY%
-                 // v2p.extraV2F7 = d.extraV2F7;
-                 // #endif
-            }
-
-            void ChainModifyTessellatedVertex(inout VertexData v, inout VertexToPixel v2p)
-            {
-               ExtraV2F d;
-               ZERO_INITIALIZE(ExtraV2F, d);
-               ZERO_INITIALIZE(Blackboard, d.blackboard);
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // d.extraV2F0 = v2p.extraV2F0;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // d.extraV2F1 = v2p.extraV2F1;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // d.extraV2F2 = v2p.extraV2F2;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // d.extraV2F3 = v2p.extraV2F3;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // d.extraV2F4 = v2p.extraV2F4;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // d.extraV2F5 = v2p.extraV2F5;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // d.extraV2F6 = v2p.extraV2F6;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // d.extraV2F7 = v2p.extraV2F7;
-               // #endif
-
-
-               // Ext_ModifyTessellatedVertex0(v, d);
-               // Ext_ModifyTessellatedVertex1(v, d);
-               // Ext_ModifyTessellatedVertex2(v, d);
-               // Ext_ModifyTessellatedVertex3(v, d);
-               // Ext_ModifyTessellatedVertex4(v, d);
-               // Ext_ModifyTessellatedVertex5(v, d);
-               // Ext_ModifyTessellatedVertex6(v, d);
-               // Ext_ModifyTessellatedVertex7(v, d);
-               // Ext_ModifyTessellatedVertex8(v, d);
-               // Ext_ModifyTessellatedVertex9(v, d);
-               // Ext_ModifyTessellatedVertex10(v, d);
-               // Ext_ModifyTessellatedVertex11(v, d);
-               // Ext_ModifyTessellatedVertex12(v, d);
-               // Ext_ModifyTessellatedVertex13(v, d);
-               // Ext_ModifyTessellatedVertex14(v, d);
-               // Ext_ModifyTessellatedVertex15(v, d);
-               // Ext_ModifyTessellatedVertex16(v, d);
-               // Ext_ModifyTessellatedVertex17(v, d);
-               // Ext_ModifyTessellatedVertex18(v, d);
-               // Ext_ModifyTessellatedVertex19(v, d);
-               // Ext_ModifyTessellatedVertex20(v, d);
-               // Ext_ModifyTessellatedVertex21(v, d);
-               // Ext_ModifyTessellatedVertex22(v, d);
-               // Ext_ModifyTessellatedVertex23(v, d);
-               // Ext_ModifyTessellatedVertex24(v, d);
-               // Ext_ModifyTessellatedVertex25(v, d);
-               // Ext_ModifyTessellatedVertex26(v, d);
-               // Ext_ModifyTessellatedVertex27(v, d);
-               // Ext_ModifyTessellatedVertex28(v, d);
-               // Ext_ModifyTessellatedVertex29(v, d);
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // v2p.extraV2F0 = d.extraV2F0;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // v2p.extraV2F1 = d.extraV2F1;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // v2p.extraV2F2 = d.extraV2F2;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // v2p.extraV2F3 = d.extraV2F3;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // v2p.extraV2F4 = d.extraV2F4;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // v2p.extraV2F5 = d.extraV2F5;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // v2p.extraV2F6 = d.extraV2F6;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // v2p.extraV2F7 = d.extraV2F7;
-               // #endif
-            }
-
-            void ChainFinalColorForward(inout Surface l, inout ShaderData d, inout half4 color)
-            {
-               //   Ext_FinalColorForward0(l, d, color);
-               //   Ext_FinalColorForward1(l, d, color);
-               //   Ext_FinalColorForward2(l, d, color);
-               //   Ext_FinalColorForward3(l, d, color);
-               //   Ext_FinalColorForward4(l, d, color);
-               //   Ext_FinalColorForward5(l, d, color);
-               //   Ext_FinalColorForward6(l, d, color);
-               //   Ext_FinalColorForward7(l, d, color);
-               //   Ext_FinalColorForward8(l, d, color);
-               //   Ext_FinalColorForward9(l, d, color);
-               //  Ext_FinalColorForward10(l, d, color);
-               //  Ext_FinalColorForward11(l, d, color);
-               //  Ext_FinalColorForward12(l, d, color);
-               //  Ext_FinalColorForward13(l, d, color);
-               //  Ext_FinalColorForward14(l, d, color);
-               //  Ext_FinalColorForward15(l, d, color);
-               //  Ext_FinalColorForward16(l, d, color);
-               //  Ext_FinalColorForward17(l, d, color);
-               //  Ext_FinalColorForward18(l, d, color);
-               //  Ext_FinalColorForward19(l, d, color);
-               //  Ext_FinalColorForward20(l, d, color);
-               //  Ext_FinalColorForward21(l, d, color);
-               //  Ext_FinalColorForward22(l, d, color);
-               //  Ext_FinalColorForward23(l, d, color);
-               //  Ext_FinalColorForward24(l, d, color);
-               //  Ext_FinalColorForward25(l, d, color);
-               //  Ext_FinalColorForward26(l, d, color);
-               //  Ext_FinalColorForward27(l, d, color);
-               //  Ext_FinalColorForward28(l, d, color);
-               //  Ext_FinalColorForward29(l, d, color);
-            }
-
-            void ChainFinalGBufferStandard(inout Surface s, inout ShaderData d, inout half4 GBuffer0, inout half4 GBuffer1, inout half4 GBuffer2, inout half4 outEmission, inout half4 outShadowMask)
-            {
-               //   Ext_FinalGBufferStandard0(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard1(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard2(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard3(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard4(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard5(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard6(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard7(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard8(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard9(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard10(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard11(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard12(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard13(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard14(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard15(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard16(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard17(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard18(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard19(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard20(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard21(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard22(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard23(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard24(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard25(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard26(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard27(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard28(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard29(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-            }
-#endif
-
-
-            
-
-
-#if _DECALSHADER
-
-        ShaderData CreateShaderData(SurfaceDescriptionInputs IN)
-        {
-            ShaderData d = (ShaderData)0;
-            d.TBNMatrix = float3x3(IN.WorldSpaceTangent, IN.WorldSpaceBiTangent, IN.WorldSpaceNormal);
-            d.worldSpaceNormal = IN.WorldSpaceNormal;
-            d.worldSpaceTangent = IN.WorldSpaceTangent;
-
-            d.worldSpacePosition = IN.WorldSpacePosition;
-            d.texcoord0 = IN.uv0.xyxy;
-            d.screenPos = IN.ScreenPosition;
-
-            d.worldSpaceViewDir = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
-
-            d.tangentSpaceViewDir = mul(d.TBNMatrix, d.worldSpaceViewDir);
-
-            // these rarely get used, so we back transform them. Usually will be stripped.
-            #if _HDRP
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(GetCameraRelativePositionWS(d.worldSpacePosition), 1)).xyz;
-            #else
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(d.worldSpacePosition, 1)).xyz;
-            #endif
-            // d.localSpaceNormal = normalize(mul((float3x3)GetWorldToObjectMatrix(), d.worldSpaceNormal));
-            // d.localSpaceTangent = normalize(mul((float3x3)GetWorldToObjectMatrix(), d.worldSpaceTangent.xyz));
-
-            // #if %SCREENPOSREQUIREKEY%
-            // d.screenUV = (IN.ScreenPosition.xy / max(0.01, IN.ScreenPosition.w));
-            // #endif
-
-            return d;
-        }
-#else
-
-         ShaderData CreateShaderData(VertexToPixel i
-                  #if NEED_FACING
-                     , bool facing
-                  #endif
-         )
-         {
-            ShaderData d = (ShaderData)0;
-            d.clipPos = i.pos;
-            d.worldSpacePosition = i.worldPos;
-
-            d.worldSpaceNormal = normalize(i.worldNormal);
-            d.worldSpaceTangent.xyz = normalize(i.worldTangent.xyz);
-
-            d.tangentSign = i.worldTangent.w * unity_WorldTransformParams.w;
-            float3 bitangent = cross(d.worldSpaceTangent.xyz, d.worldSpaceNormal) * d.tangentSign;
-           
-            d.TBNMatrix = float3x3(d.worldSpaceTangent, -bitangent, d.worldSpaceNormal);
-            d.worldSpaceViewDir = normalize(_WorldSpaceCameraPos - i.worldPos);
-
-            d.tangentSpaceViewDir = mul(d.TBNMatrix, d.worldSpaceViewDir);
-            // d.texcoord0 = i.texcoord0;
-            // d.texcoord1 = i.texcoord1;
-            // d.texcoord2 = i.texcoord2;
-
-            // #if %TEXCOORD3REQUIREKEY%
-            // d.texcoord3 = i.texcoord3;
-            // #endif
-
-            // d.isFrontFace = facing;
-            // #if %VERTEXCOLORREQUIREKEY%
-            // d.vertexColor = i.vertexColor;
-            // #endif
-
-            // these rarely get used, so we back transform them. Usually will be stripped.
-            #if _HDRP
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(GetCameraRelativePositionWS(i.worldPos), 1)).xyz;
-            #else
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(i.worldPos, 1)).xyz;
-            #endif
-            // d.localSpaceNormal = normalize(mul((float3x3)GetWorldToObjectMatrix(), i.worldNormal));
-            // d.localSpaceTangent = normalize(mul((float3x3)GetWorldToObjectMatrix(), i.worldTangent.xyz));
-
-            // #if %SCREENPOSREQUIREKEY%
-            // d.screenPos = i.screenPos;
-            // d.screenUV = (i.screenPos.xy / i.screenPos.w);
-            // #endif
-
-
-            // #if %EXTRAV2F0REQUIREKEY%
-            // d.extraV2F0 = i.extraV2F0;
-            // #endif
-
-            // #if %EXTRAV2F1REQUIREKEY%
-            // d.extraV2F1 = i.extraV2F1;
-            // #endif
-
-            // #if %EXTRAV2F2REQUIREKEY%
-            // d.extraV2F2 = i.extraV2F2;
-            // #endif
-
-            // #if %EXTRAV2F3REQUIREKEY%
-            // d.extraV2F3 = i.extraV2F3;
-            // #endif
-
-            // #if %EXTRAV2F4REQUIREKEY%
-            // d.extraV2F4 = i.extraV2F4;
-            // #endif
-
-            // #if %EXTRAV2F5REQUIREKEY%
-            // d.extraV2F5 = i.extraV2F5;
-            // #endif
-
-            // #if %EXTRAV2F6REQUIREKEY%
-            // d.extraV2F6 = i.extraV2F6;
-            // #endif
-
-            // #if %EXTRAV2F7REQUIREKEY%
-            // d.extraV2F7 = i.extraV2F7;
-            // #endif
-
-            return d;
-         }
-
-#endif
-
-            
-         #if defined(_PASSSHADOW)
-            float3 _LightDirection;
-            float3 _LightPosition;
-         #endif
-
-         #if (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-
-            #define GetWorldToViewMatrix()     _ViewMatrix
-            #define UNITY_MATRIX_I_V   _InvViewMatrix
-            #define GetViewToHClipMatrix()     OptimizeProjectionMatrix(_ProjMatrix)
-            #define UNITY_MATRIX_I_P   _InvProjMatrix
-            #define GetWorldToHClipMatrix()    _ViewProjMatrix
-            #define UNITY_MATRIX_I_VP  _InvViewProjMatrix
-            #define UNITY_MATRIX_UNJITTERED_VP _NonJitteredViewProjMatrix
-            #define UNITY_MATRIX_PREV_VP _PrevViewProjMatrix
-            #define UNITY_MATRIX_PREV_I_VP _PrevInvViewProjMatrix
-
-            void MotionVectorPositionZBias(VertexToPixel input)
-            {
-                #if UNITY_REVERSED_Z
-                input.pos.z -= unity_MotionVectorsParams.z * input.pos.w;
-                #else
-                input.pos.z += unity_MotionVectorsParams.z * input.pos.w;
-                #endif
-            }
-
-        #endif
-
-         // vertex shader
-         VertexToPixel Vert (VertexData v)
-         {
-           VertexToPixel o = (VertexToPixel)0;
-
-           UNITY_SETUP_INSTANCE_ID(v);
-           UNITY_TRANSFER_INSTANCE_ID(v, o);
-           UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-
-            
-           #if _URP && (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-             VertexData previousMesh = v;
-           #endif
-           #if !_TESSELLATION_ON
-             ChainModifyVertex(v, o, _Time);
-           #endif
-
-           // o.texcoord0 = v.texcoord0;
-           // o.texcoord1 = v.texcoord1;
-           // o.texcoord2 = v.texcoord2;
-
-           // #if %TEXCOORD3REQUIREKEY%
-           // o.texcoord3 = v.texcoord3;
-           // #endif
-
-           // #if %VERTEXCOLORREQUIREKEY%
-           // o.vertexColor = v.vertexColor;
-           // #endif
-
-           // This return the camera relative position (if enable)
-           float3 positionWS = TransformObjectToWorld(v.vertex.xyz);
-           float3 normalWS = TransformObjectToWorldNormal(v.normal);
-           float4 tangentWS = float4(TransformObjectToWorldDir(v.tangent.xyz), v.tangent.w);
-           
-           VertexPositionInputs vertexInput = GetVertexPositionInputs(v.vertex.xyz);
-           o.worldPos = positionWS;
-           o.worldNormal = normalWS;
-           o.worldTangent = tangentWS;
-
-
-          // For some very odd reason, in 2021.2, we can't use Unity's defines, but have to use our own..
-          #if _PASSSHADOW
-              #if _CASTING_PUNCTUAL_LIGHT_SHADOW
-                 float3 lightDirectionWS = normalize(_LightPosition - o.worldPos);
-              #else
-                 float3 lightDirectionWS = _LightDirection;
-              #endif
-              // Define shadow pass specific clip position for Universal
-              o.pos = TransformWorldToHClip(ApplyShadowBias(o.worldPos, o.worldNormal, lightDirectionWS));
-              #if UNITY_REVERSED_Z
-                  o.pos.z = min(o.pos.z, UNITY_NEAR_CLIP_VALUE);
-              #else
-                  o.pos.z = max(o.pos.z, UNITY_NEAR_CLIP_VALUE);
-              #endif
-          #elif _PASSMETA
-              o.pos = MetaVertexPosition(float4(v.vertex.xyz, 0), v.texcoord1.xy, v.texcoord2.xy, unity_LightmapST, unity_DynamicLightmapST);
-          #else
-              o.pos = TransformWorldToHClip(o.worldPos);
-          #endif
-
-          // #if %SCREENPOSREQUIREKEY%
-          // o.screenPos = ComputeScreenPos(o.pos, _ProjectionParams.x);
-          // #endif
-
-          
-          #if _PASSFORWARD || _PASSGBUFFER
-              float2 uv1 = v.texcoord1.xy;
-              OUTPUT_LIGHTMAP_UV(uv1, unity_LightmapST, o.lightmapUV);
-              // o.texcoord1.xy = uv1;
-              OUTPUT_SH(o.worldNormal, o.sh);
-              
-              #if defined(DYNAMICLIGHTMAP_ON)
-                   o.dynamicLightmapUV.xy = v.texcoord2.xy * unity_DynamicLightmapST.xy + unity_DynamicLightmapST.zw;
-                   #if UNITY_VERSION >= 60000009
-                     OUTPUT_SH(o.worldNormal, o.sh);
-                   #endif
-              #elif (defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)) && UNITY_VERSION >= 60000009
-                   OUTPUT_SH4(vertexInput.positionWS, o.worldNormal.xyz, GetWorldSpaceNormalizeViewDir(vertexInput.positionWS), o.sh, o.probeOcclusion);
-              #endif
-          #endif
-
-          #ifdef VARYINGS_NEED_FOG_AND_VERTEX_LIGHT
-              half fogFactor = 0;
-              #if defined(_FOG_FRAGMENT)
-                fogFactor = ComputeFogFactor(o.pos.z);
-              #endif
-              #if _BAKEDLIT
-                 o.fogFactorAndVertexLight = half4(fogFactor, 0, 0, 0);
-              #else
-                 half3 vertexLight = VertexLighting(o.worldPos, o.worldNormal);
-                 o.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
-              #endif
-          #endif
-
-          #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
-             o.shadowCoord = GetShadowCoord(vertexInput);
-          #endif
-
-          #if _URP && (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-            #if !defined(TESSELLATION_ON)
-              MotionVectorPositionZBias(o);
-            #endif
-
-            o.previousPositionCS = float4(0.0, 0.0, 0.0, 1.0);
-            // Note: unity_MotionVectorsParams.y is 0 is forceNoMotion is enabled
-            bool forceNoMotion = unity_MotionVectorsParams.y == 0.0;
-
-            if (!forceNoMotion)
-            {
-              #if defined(HAVE_VFX_MODIFICATION)
-                float3 previousPositionOS = currentFrameMvData.vfxParticlePositionOS;
-                #if defined(VFX_FEATURE_MOTION_VECTORS_VERTS)
-                  const bool applyDeformation = false;
-                #else
-                  const bool applyDeformation = true;
-                #endif
-              #else
-                const bool hasDeformation = unity_MotionVectorsParams.x == 1; // Mesh has skinned deformation
-                float3 previousPositionOS = hasDeformation ? previousMesh.previousPositionOS : previousMesh.vertex.xyz;
-
-                #if defined(AUTOMATIC_TIME_BASED_MOTION_VECTORS) && defined(GRAPH_VERTEX_USES_TIME_PARAMETERS_INPUT)
-                  const bool applyDeformation = true;
-                #else
-                  const bool applyDeformation = hasDeformation;
-                #endif
-              #endif
-              // TODO
-              #if defined(FEATURES_GRAPH_VERTEX)
-                if (applyDeformation)
-                  previousPositionOS = GetLastFrameDeformedPosition(previousMesh, currentFrameMvData, previousPositionOS);
-                else
-                  previousPositionOS = previousMesh.positionOS;
-
-                #if defined(FEATURES_GRAPH_VERTEX_MOTION_VECTOR_OUTPUT)
-                  previousPositionOS -= previousMesh.precomputedVelocity;
-                #endif
-              #endif
-
-              #if defined(UNITY_DOTS_INSTANCING_ENABLED) && defined(DOTS_DEFORMED)
-                // Deformed vertices in DOTS are not cumulative with built-in Unity skinning/blend shapes
-                // Needs to be called after vertex modification has been applied otherwise it will be
-                // overwritten by Compute Deform node
-                ApplyPreviousFrameDeformedVertexPosition(previousMesh.vertexID, previousPositionOS);
-              #endif
-              #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                previousPositionOS -= previousMesh.precomputedVelocity;
-              #endif
-              o.positionCS = mul(UNITY_MATRIX_UNJITTERED_VP, float4(positionWS, 1.0f));
-
-              #if defined(HAVE_VFX_MODIFICATION)
-                #if defined(VFX_FEATURE_MOTION_VECTORS_VERTS)
-                  #if defined(FEATURES_GRAPH_VERTEX_MOTION_VECTOR_OUTPUT) || defined(_ADD_PRECOMPUTED_VELOCITY)
-                    #error Unexpected fast path rendering VFX motion vector while there are vertex modification afterwards.
-                  #endif
-                  o.previousPositionCS = VFXGetPreviousClipPosition(previousMesh, currentFrameMvData.vfxElementAttributes, o.positionCS);
-                #else
-                  #if VFX_WORLD_SPACE
-                    //previousPositionOS is already in world space
-                    const float3 previousPositionWS = previousPositionOS;
-                  #else
-                    const float3 previousPositionWS = mul(UNITY_PREV_MATRIX_M, float4(previousPositionOS, 1.0f)).xyz;
-                  #endif
-                  o.previousPositionCS = mul(UNITY_MATRIX_PREV_VP, float4(previousPositionWS, 1.0f));
-                #endif
-              #else
-                o.previousPositionCS = mul(UNITY_MATRIX_PREV_VP, mul(UNITY_PREV_MATRIX_M, float4(previousPositionOS, 1)));
-              #endif
-            }
-          #endif
-
-          return o;
-         }
-
-
-            
-
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/UnityGBuffer.hlsl"
-
-            // fragment shader
-            FragmentOutput Frag (VertexToPixel IN
-            #ifdef _DEPTHOFFSET_ON
-              , out float outputDepth : SV_Depth
-            #endif
-            #if NEED_FACING
-               , bool facing : SV_IsFrontFace
-            #endif
-            ) 
-            {
-               UNITY_SETUP_INSTANCE_ID(IN);
-               UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(IN);
-
-               #if defined(LOD_FADE_CROSSFADE)
-                  LODFadeCrossFade(IN.pos);
-               #endif
-
-               ShaderData d = CreateShaderData(IN
-                  #if NEED_FACING
-                     , facing
-                  #endif
-               );
-               Surface l = (Surface)0;
-
-               #ifdef _DEPTHOFFSET_ON
-                  l.outputDepth = outputDepth;
-               #endif
-
-               l.Albedo = half3(0.5, 0.5, 0.5);
-               l.Normal = float3(0,0,1);
-               l.Occlusion = 1;
-               l.Alpha = 1;
-
-               ChainSurfaceFunction(l, d);
-
-               #ifdef _DEPTHOFFSET_ON
-                  outputDepth = l.outputDepth;
-               #endif
-
-               #if _USESPECULAR || _SIMPLELIT
-                  float3 specular = l.Specular;
-                  float metallic = 0;
-               #else   
-                  float3 specular = 0;
-                  float metallic = l.Metallic;
-               #endif
-
-               InputData inputData = (InputData)0;
-               inputData.positionCS = IN.pos;
-               inputData.positionWS = IN.worldPos;
-               #if _WORLDSPACENORMAL
-                  inputData.normalWS = l.Normal;
-               #else
-                  inputData.normalWS = normalize(TangentToWorldSpace(d, l.Normal));
-               #endif
-
-               inputData.viewDirectionWS = SafeNormalize(d.worldSpaceViewDir);
-
-
-               #if defined(MAIN_LIGHT_CALCULATE_SHADOWS)
-                   inputData.shadowCoord = TransformWorldToShadowCoord(inputData.positionWS);
-               #else
-                   inputData.shadowCoord = float4(0, 0, 0, 0);
-               #endif
-
-               //inputData.fogCoord = IN.fogFactorAndVertexLight.x;
-               InitializeInputDataFog(float4(IN.worldPos, 1.0), IN.fogFactorAndVertexLight.x);
-               inputData.vertexLighting = IN.fogFactorAndVertexLight.yzw;
-
-
-               #if defined(_OVERRIDE_BAKEDGI)
-                  inputData.bakedGI = l.DiffuseGI;
-                  l.Emission += l.SpecularGI;
-               #else
-                  #if defined(DYNAMICLIGHTMAP_ON)
-                    inputData.bakedGI = SAMPLE_GI(IN.lightmapUV, IN.dynamicLightmapUV.xy, IN.sh, inputData.normalWS);
-                    inputData.shadowMask = SAMPLE_SHADOWMASK(IN.lightmapUV);
-		            #elif !defined(LIGHTMAP_ON) && (defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2))
-                     #if UNITY_VERSION >= 60000009
-                        inputData.bakedGI = SAMPLE_GI(IN.sh, IN.worldPos, inputData.normalWS, inputData.viewDirectionWS, IN.pos.xy, IN.probeOcclusion, inputData.shadowMask);
-                     #else
-                        inputData.bakedGI = SAMPLE_GI(IN.sh, IN.worldPos, inputData.normalWS, inputData.viewDirectionWS, IN.pos);
-                     #endif
-                  #else
-                    inputData.bakedGI = SAMPLE_GI(IN.lightmapUV, IN.sh, inputData.normalWS);
-                    inputData.shadowMask = SAMPLE_SHADOWMASK(IN.lightmapUV);
-                  #endif
-               #endif
-
-               inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(IN.pos);
-               inputData.shadowMask = SAMPLE_SHADOWMASK(IN.lightmapUV);
-
-               #if defined(DEBUG_DISPLAY)
-                   #if defined(DYNAMICLIGHTMAP_ON)
-                     inputData.dynamicLightmapUV = IN.dynamicLightmapUV.xy;
-                   #endif
-                   #if defined(LIGHTMAP_ON)
-                     inputData.staticLightmapUV = IN.lightmapUV;
-                   #else
-                     inputData.vertexSH = IN.sh;
-                   #endif
-               #endif
-
-               #ifdef _DBUFFER
-                   ApplyDecal(IN.pos,
-                       l.Albedo,
-                       specular,
-                       inputData.normalWS,
-                       metallic,
-                       l.Occlusion,
-                       l.Smoothness);
-               #endif
-
-               BRDFData brdfData;
-               InitializeBRDFData(l.Albedo, metallic, specular, l.Smoothness, l.Alpha, brdfData);
-               Light mainLight = GetMainLight(inputData.shadowCoord, inputData.positionWS, inputData.shadowMask);
-               MixRealtimeAndBakedGI(mainLight, inputData.normalWS, inputData.bakedGI, inputData.shadowMask);
-               half3 color = GlobalIllumination(brdfData, inputData.bakedGI, l.Occlusion, inputData.positionWS, inputData.normalWS, inputData.viewDirectionWS);
-
-               return BRDFDataToGbuffer(brdfData, inputData, l.Smoothness, l.Emission + color, l.Occlusion);
-            }
-
-         ENDHLSL
-
-      }
-
-
-      
-        Pass
-        {
-            Name "ShadowCaster"
-            Tags 
-            { 
-                "LightMode" = "ShadowCaster"
-            }
-           
-            // Render State
-            Blend One Zero, One Zero
-            Cull Back
-            ZTest LEqual
-            ZWrite On
-            // ColorMask: <None>
-
-            
-
-            HLSLPROGRAM
-
-               #pragma vertex Vert
-   #pragma fragment Frag
-
-            #if (defined(SHADER_API_GLES) || defined(SHADER_API_GLES3) || defined(SHADER_API_GLES30)) 
-            #pragma target 3.0
-#else
-            #pragma target 4.5
-#endif
-
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
-            #pragma multi_compile_instancing
-  
-            #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
-            #pragma multi_compile_fragment _ LOD_FADE_CROSSFADE
-
-            #define _NORMAL_DROPOFF_TS 1
-            #define ATTRIBUTES_NEED_NORMAL
-            #define ATTRIBUTES_NEED_TANGENT
-            #define _PASSSHADOW 1
-
-            
-
-
-   #define _URP 1
-
-#define _UNLIT 1
-
-
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Input.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
-            #include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderGraphFunctions.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
-            
-                  #undef WorldNormalVector
-      #define WorldNormalVector(data, normal) mul(normal, data.TBNMatrix)
-      
-      #define UnityObjectToWorldNormal(normal) mul(GetObjectToWorldMatrix(), normal)
-
-      #define _WorldSpaceLightPos0 _MainLightPosition
-      
-      #define UNITY_DECLARE_TEX2D(name) TEXTURE2D(name); SAMPLER(sampler##name);
-      #define UNITY_DECLARE_TEX2D_NOSAMPLER(name) TEXTURE2D(name);
-      #define UNITY_DECLARE_TEX2DARRAY(name) TEXTURE2D_ARRAY(name); SAMPLER(sampler##name);
-      #define UNITY_DECLARE_TEX2DARRAY_NOSAMPLER(name) TEXTURE2D_ARRAY(name);
-
-      #define UNITY_SAMPLE_TEX2DARRAY(tex,coord)            SAMPLE_TEXTURE2D_ARRAY(tex, sampler##tex, coord.xy, coord.z)
-      #define UNITY_SAMPLE_TEX2DARRAY_LOD(tex,coord,lod)    SAMPLE_TEXTURE2D_ARRAY_LOD(tex, sampler##tex, coord.xy, coord.z, lod)
-      #define UNITY_SAMPLE_TEX2D(tex, coord)                SAMPLE_TEXTURE2D(tex, sampler##tex, coord)
-      #define UNITY_SAMPLE_TEX2D_SAMPLER(tex, samp, coord)  SAMPLE_TEXTURE2D(tex, sampler##samp, coord)
-
-      #define UNITY_SAMPLE_TEX2D_LOD(tex,coord, lod)   SAMPLE_TEXTURE2D_LOD(tex, sampler_##tex, coord, lod)
-      #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord, lod) SAMPLE_TEXTURE2D_LOD (tex, sampler##samplertex,coord, lod)
-     
-      #if defined(UNITY_COMPILER_HLSL)
-         #define UNITY_INITIALIZE_OUTPUT(type,name) name = (type)0;
-      #else
-         #define UNITY_INITIALIZE_OUTPUT(type,name)
-      #endif
-
-      #define sampler2D_float sampler2D
-      #define sampler2D_half sampler2D
-
-      
-
-      // data across stages, stripped like the above.
-      struct VertexToPixel
-      {
-         float4 pos : SV_POSITION;
-         float3 worldPos : TEXCOORD0;
-         float3 worldNormal : TEXCOORD1;
-         float4 worldTangent : TEXCOORD2;
-         // float4 texcoord0 : TEXCOORD3;
-         // float4 texcoord1 : TEXCOORD4;
-         // float4 texcoord2 : TEXCOORD5;
-
-         // #if %TEXCOORD3REQUIREKEY%
-         // float4 texcoord3 : TEXCOORD6;
-         // #endif
-
-         // #if %SCREENPOSREQUIREKEY%
-         // float4 screenPos : TEXCOORD7;
-         // #endif
-
-         // #if %VERTEXCOLORREQUIREKEY%
-         // half4 vertexColor : COLOR;
-         // #endif
-
-         #if defined(LIGHTMAP_ON)
-            float2 lightmapUV : TEXCOORD8;
-         #endif
-         #if defined(DYNAMICLIGHTMAP_ON)
-            float2 dynamicLightmapUV : TEXCOORD9;
-         #endif
-         #if !defined(LIGHTMAP_ON)
-            float4 probeOcclusion : TEXCOORD8;
-            float3 sh : TEXCOORD10;
-         #endif
-
-         #if defined(VARYINGS_NEED_FOG_AND_VERTEX_LIGHT)
-            float4 fogFactorAndVertexLight : TEXCOORD11;
-         #endif
-
-         #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
-           float4 shadowCoord : TEXCOORD12;
-         #endif
-
-         // #if %EXTRAV2F0REQUIREKEY%
-         // float4 extraV2F0 : TEXCOORD13;
-         // #endif
-
-         // #if %EXTRAV2F1REQUIREKEY%
-         // float4 extraV2F1 : TEXCOORD14;
-         // #endif
-
-         // #if %EXTRAV2F2REQUIREKEY%
-         // float4 extraV2F2 : TEXCOORD15;
-         // #endif
-
-         // #if %EXTRAV2F3REQUIREKEY%
-         // float4 extraV2F3 : TEXCOORD16;
-         // #endif
-
-         // #if %EXTRAV2F4REQUIREKEY%
-         // float4 extraV2F4 : TEXCOORD17;
-         // #endif
-
-         // #if %EXTRAV2F5REQUIREKEY%
-         // float4 extraV2F5 : TEXCOORD18;
-         // #endif
-
-         // #if %EXTRAV2F6REQUIREKEY%
-         // float4 extraV2F6 : TEXCOORD19;
-         // #endif
-
-         // #if %EXTRAV2F7REQUIREKEY%
-         // float4 extraV2F7 : TEXCOORD20;
-         // #endif
-
-         #if UNITY_ANY_INSTANCING_ENABLED
-         uint instanceID : CUSTOM_INSTANCE_ID;
-         #endif
-         #if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
-         uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
-         #endif
-         #if (defined(UNITY_STEREO_INSTANCING_ENABLED))
-         uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
-         #endif
-         #if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
-         FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
-         #endif
-
-         #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-            float4 previousPositionCS : TEXCOORD21; // Contain previous transform position (in case of skinning for example)
-            float4 positionCS : TEXCOORD22;
-         #endif
-      };
-
-         
-            
-            
-            // data describing the user output of a pixel
-            struct Surface
-            {
-               half3 Albedo;
-               half Height;
-               half3 Normal;
-               half Smoothness;
-               half3 Emission;
-               half Metallic;
-               half3 Specular;
-               half Occlusion;
-               half SpecularPower; // for simple lighting
-               half Alpha;
-               float outputDepth; // if written, SV_Depth semantic is used. ShaderData.clipPos.z is unused value
-               // HDRP Only
-               half SpecularOcclusion;
-               half SubsurfaceMask;
-               half Thickness;
-               half CoatMask;
-               half CoatSmoothness;
-               half Anisotropy;
-               half IridescenceMask;
-               half IridescenceThickness;
-               int DiffusionProfileHash;
-               float SpecularAAThreshold;
-               float SpecularAAScreenSpaceVariance;
-               // requires _OVERRIDE_BAKEDGI to be defined, but is mapped in all pipelines
-               float3 DiffuseGI;
-               float3 BackDiffuseGI;
-               float3 SpecularGI;
-               float ior;
-               float3 transmittanceColor;
-               float atDistance;
-               float transmittanceMask;
-               // requires _OVERRIDE_SHADOWMASK to be defines
-               float4 ShadowMask;
-
-               // for decals
-               float NormalAlpha;
-               float MAOSAlpha;
-
-
-            };
-
-            // Data the user declares in blackboard blocks
-            struct Blackboard
-            {
-                
-                float blackboardDummyData;
-            };
-
-            // data the user might need, this will grow to be big. But easy to strip
-            struct ShaderData
-            {
-               float4 clipPos; // SV_POSITION
-               float3 localSpacePosition;
-               float3 localSpaceNormal;
-               float3 localSpaceTangent;
-        
-               float3 worldSpacePosition;
-               float3 worldSpaceNormal;
-               float3 worldSpaceTangent;
-               float tangentSign;
-
-               float3 worldSpaceViewDir;
-               float3 tangentSpaceViewDir;
-
-               float4 texcoord0;
-               float4 texcoord1;
-               float4 texcoord2;
-               float4 texcoord3;
-
-               float2 screenUV;
-               float4 screenPos;
-
-               float4 vertexColor;
-               bool isFrontFace;
-
-               float4 extraV2F0;
-               float4 extraV2F1;
-               float4 extraV2F2;
-               float4 extraV2F3;
-               float4 extraV2F4;
-               float4 extraV2F5;
-               float4 extraV2F6;
-               float4 extraV2F7;
-
-               float3x3 TBNMatrix;
-               Blackboard blackboard;
-            };
-
-            struct VertexData
-            {
-               #if SHADER_TARGET > 30
-               // uint vertexID : SV_VertexID;
-               #endif
-               float4 vertex : POSITION;
-               float3 normal : NORMAL;
-               float4 tangent : TANGENT;
-               float4 texcoord0 : TEXCOORD0;
-
-               // optimize out mesh coords when not in use by user or lighting system
-               #if _URP && (_USINGTEXCOORD1 || _PASSMETA || _PASSFORWARD || _PASSGBUFFER)
-                  float4 texcoord1 : TEXCOORD1;
-               #endif
-
-               #if _URP && (_USINGTEXCOORD2 || _PASSMETA || ((_PASSFORWARD || _PASSGBUFFER) && defined(DYNAMICLIGHTMAP_ON)))
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-               #if _STANDARD && (_USINGTEXCOORD1 || (_PASSMETA || ((_PASSFORWARD || _PASSGBUFFER || _PASSFORWARDADD) && LIGHTMAP_ON)))
-                  float4 texcoord1 : TEXCOORD1;
-               #endif
-               #if _STANDARD && (_USINGTEXCOORD2 || (_PASSMETA || ((_PASSFORWARD || _PASSGBUFFER) && DYNAMICLIGHTMAP_ON)))
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-
-               #if _HDRP
-                  float4 texcoord1 : TEXCOORD1;
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-               // #if %TEXCOORD3REQUIREKEY%
-               // float4 texcoord3 : TEXCOORD3;
-               // #endif
-
-               // #if %VERTEXCOLORREQUIREKEY%
-               // float4 vertexColor : COLOR;
-               // #endif
-
-               #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-                  float3 previousPositionOS : TEXCOORD4; // Contain previous transform position (in case of skinning for example)
-                  #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                     float3 precomputedVelocity    : TEXCOORD5; // Add Precomputed Velocity (Alembic computes velocities on runtime side).
-                  #endif
-               #endif
-
-               UNITY_VERTEX_INPUT_INSTANCE_ID
-            };
-
-            struct TessVertex 
-            {
-               float4 vertex : INTERNALTESSPOS;
-               float3 normal : NORMAL;
-               float4 tangent : TANGENT;
-               float4 texcoord0 : TEXCOORD0;
-               float4 texcoord1 : TEXCOORD1;
-               float4 texcoord2 : TEXCOORD2;
-
-               // #if %TEXCOORD3REQUIREKEY%
-               // float4 texcoord3 : TEXCOORD3;
-               // #endif
-
-               // #if %VERTEXCOLORREQUIREKEY%
-               // float4 vertexColor : COLOR;
-               // #endif
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // float4 extraV2F0 : TEXCOORD5;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // float4 extraV2F1 : TEXCOORD6;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // float4 extraV2F2 : TEXCOORD7;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // float4 extraV2F3 : TEXCOORD8;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // float4 extraV2F4 : TEXCOORD9;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // float4 extraV2F5 : TEXCOORD10;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // float4 extraV2F6 : TEXCOORD11;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // float4 extraV2F7 : TEXCOORD12;
-               // #endif
-
-               #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-                  float3 previousPositionOS : TEXCOORD13; // Contain previous transform position (in case of skinning for example)
-                  #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                     float3 precomputedVelocity : TEXCOORD14;
-                  #endif
-               #endif
-
-               UNITY_VERTEX_INPUT_INSTANCE_ID
-               UNITY_VERTEX_OUTPUT_STEREO
-            };
-
-            struct ExtraV2F
-            {
-               float4 extraV2F0;
-               float4 extraV2F1;
-               float4 extraV2F2;
-               float4 extraV2F3;
-               float4 extraV2F4;
-               float4 extraV2F5;
-               float4 extraV2F6;
-               float4 extraV2F7;
-               Blackboard blackboard;
-               float4 time;
-            };
-
-
-            float3 WorldToTangentSpace(ShaderData d, float3 normal)
-            {
-               return mul(d.TBNMatrix, normal);
-            }
-
-            float3 TangentToWorldSpace(ShaderData d, float3 normal)
-            {
-               return mul(normal, d.TBNMatrix);
-            }
-
-            // in this case, make standard more like SRPs, because we can't fix
-            // unity_WorldToObject in HDRP, since it already does macro-fu there
-
-            #if _STANDARD
-               float3 TransformWorldToObject(float3 p) { return mul(unity_WorldToObject, float4(p, 1)); };
-               float3 TransformObjectToWorld(float3 p) { return mul(unity_ObjectToWorld, float4(p, 1)); };
-               float4 TransformWorldToObject(float4 p) { return mul(unity_WorldToObject, p); };
-               float4 TransformObjectToWorld(float4 p) { return mul(unity_ObjectToWorld, p); };
-               float4x4 GetWorldToObjectMatrix() { return unity_WorldToObject; }
-               float4x4 GetObjectToWorldMatrix() { return unity_ObjectToWorld; }
-               #if (defined(SHADER_API_D3D11) || defined(SHADER_API_XBOXONE) || defined(UNITY_COMPILER_HLSLCC) || defined(SHADER_API_PSSL) || (SHADER_TARGET_SURFACE_ANALYSIS && !SHADER_TARGET_SURFACE_ANALYSIS_MOJOSHADER))
-                 #define UNITY_SAMPLE_TEX2D_LOD(tex,coord, lod) tex.SampleLevel (sampler##tex,coord, lod)
-                 #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord, lod) tex.SampleLevel (sampler##samplertex,coord, lod)
-              #else
-                 #define UNITY_SAMPLE_TEX2D_LOD(tex,coord,lod) tex2D (tex,coord,0,lod)
-                 #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord,lod) tex2D (tex,coord,0,lod)
-              #endif
-
-               #undef GetWorldToObjectMatrix()
-
-               #define GetWorldToObjectMatrix()   unity_WorldToObject
-
-
-            #endif
-
-            float3 GetCameraWorldPosition()
-            {
-               #if _HDRP
-                  return GetCameraRelativePositionWS(_WorldSpaceCameraPos);
-               #else
-                  return _WorldSpaceCameraPos;
-               #endif
-            }
-
-            #if _GRABPASSUSED
-               #if _STANDARD
-                  TEXTURE2D(%GRABTEXTURE%);
-                  SAMPLER(sampler_%GRABTEXTURE%);
-               #endif
-
-               half3 GetSceneColor(float2 uv)
-               {
-                  #if _STANDARD
-                     return SAMPLE_TEXTURE2D(%GRABTEXTURE%, sampler_%GRABTEXTURE%, uv).rgb;
-                  #else
-                     return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv);
-                  #endif
-               }
-            #endif
-
-
-      
-            #if _STANDARD
-               UNITY_DECLARE_DEPTH_TEXTURE(_CameraDepthTexture);
-               float GetSceneDepth(float2 uv) { return SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv); }
-               float GetLinear01Depth(float2 uv) { return Linear01Depth(GetSceneDepth(uv)); }
-               float GetLinearEyeDepth(float2 uv) { return LinearEyeDepth(GetSceneDepth(uv)); } 
-            #else
-               float GetSceneDepth(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv); }
-               float GetLinear01Depth(float2 uv) { return Linear01Depth(GetSceneDepth(uv), _ZBufferParams); }
-               float GetLinearEyeDepth(float2 uv) { return LinearEyeDepth(GetSceneDepth(uv), _ZBufferParams); } 
-            #endif
-
-            float3 GetWorldPositionFromDepthBuffer(float2 uv, float3 worldSpaceViewDir)
-            {
-               float eye = GetLinearEyeDepth(uv);
-               float3 camView = mul((float3x3)GetObjectToWorldMatrix(), transpose(mul(GetWorldToObjectMatrix(), UNITY_MATRIX_I_V)) [2].xyz);
-
-               float dt = dot(worldSpaceViewDir, camView);
-               float3 div = worldSpaceViewDir/dt;
-               float3 wpos = (eye * div) + GetCameraWorldPosition();
-               return wpos;
-            }
-
-            #if _HDRP
-            float3 ObjectToWorldSpacePosition(float3 pos)
-            {
-               return GetAbsolutePositionWS(TransformObjectToWorld(pos));
-            }
-            #else
-            float3 ObjectToWorldSpacePosition(float3 pos)
-            {
-               return TransformObjectToWorld(pos);
-            }
-            #endif
-
-            #if _STANDARD
-               UNITY_DECLARE_SCREENSPACE_TEXTURE(_CameraDepthNormalsTexture);
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  float4 depthNorms = UNITY_SAMPLE_SCREENSPACE_TEXTURE(_CameraDepthNormalsTexture, uv);
-                  float3 norms = DecodeViewNormalStereo(depthNorms);
-                  norms = mul((float3x3)GetWorldToViewMatrix(), norms) * 0.5 + 0.5;
-                  return norms;
-               }
-            #elif _HDRP && !_DECALSHADER
-               
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  NormalData nd;
-                  DecodeFromNormalBuffer(_ScreenSize.xy * uv, nd);
-                  return nd.normalWS;
-               }
-            #elif _URP
-               #if (SHADER_LIBRARY_VERSION_MAJOR >= 10)
-                  #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareNormalsTexture.hlsl"
-               #endif
-
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  #if (SHADER_LIBRARY_VERSION_MAJOR >= 10)
-                     return SampleSceneNormals(uv);
-                  #else
-                     float3 wpos = GetWorldPositionFromDepthBuffer(uv, worldSpaceViewDir);
-                     return normalize(-cross(ddx(wpos), ddy(wpos))) * 0.5 + 0.5;
-                  #endif
-
-                }
-             #endif
-
-             #if _HDRP
-
-               half3 UnpackNormalmapRGorAG(half4 packednormal)
-               {
-                     // This do the trick
-                  packednormal.x *= packednormal.w;
-
-                  half3 normal;
-                  normal.xy = packednormal.xy * 2 - 1;
-                  normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
-                  return normal;
-               }
-               half3 UnpackNormal(half4 packednormal)
-               {
-                  #if defined(UNITY_NO_DXT5nm)
-                     return packednormal.xyz * 2 - 1;
-                  #else
-                     return UnpackNormalmapRGorAG(packednormal);
-                  #endif
-               }
-            #endif
-            #if _HDRP || _URP
-
-               half3 UnpackScaleNormal(half4 packednormal, half scale)
-               {
-                 #ifndef UNITY_NO_DXT5nm
-                   // Unpack normal as DXT5nm (1, y, 1, x) or BC5 (x, y, 0, 1)
-                   // Note neutral texture like "bump" is (0, 0, 1, 1) to work with both plain RGB normal and DXT5nm/BC5
-                   packednormal.x *= packednormal.w;
-                 #endif
-                   half3 normal;
-                   normal.xy = (packednormal.xy * 2 - 1) * scale;
-                   normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
-                   return normal;
-               }	
-
-             #endif
-
-
-            void GetSun(out float3 lightDir, out float3 color)
-            {
-               lightDir = float3(0.5, 0.5, 0);
-               color = 1;
-               #if _HDRP
-                  if (_DirectionalLightCount > 0)
-                  {
-                     DirectionalLightData light = _DirectionalLightDatas[0];
-                     lightDir = -light.forward.xyz;
-                     color = light.color;
-                  }
-               #elif _STANDARD
-			         lightDir = normalize(_WorldSpaceLightPos0.xyz);
-                  color = _LightColor0.rgb;
-               #elif _URP
-	               Light light = GetMainLight();
-	               lightDir = light.direction;
-	               color = light.color;
-               #endif
-            }
-
-
-            
-            CBUFFER_START(UnityPerMaterial)
-
-               
-
-
-
-            CBUFFER_END
-
-            
-
-            
-
-            
-
-
-
-        
-            void ChainSurfaceFunction(inout Surface l, inout ShaderData d)
-            {
-                 // Ext_SurfaceFunction0(l, d);
-                 // Ext_SurfaceFunction1(l, d);
-                 // Ext_SurfaceFunction2(l, d);
-                 // Ext_SurfaceFunction3(l, d);
-                 // Ext_SurfaceFunction4(l, d);
-                 // Ext_SurfaceFunction5(l, d);
-                 // Ext_SurfaceFunction6(l, d);
-                 // Ext_SurfaceFunction7(l, d);
-                 // Ext_SurfaceFunction8(l, d);
-                 // Ext_SurfaceFunction9(l, d);
-		           // Ext_SurfaceFunction10(l, d);
-                 // Ext_SurfaceFunction11(l, d);
-                 // Ext_SurfaceFunction12(l, d);
-                 // Ext_SurfaceFunction13(l, d);
-                 // Ext_SurfaceFunction14(l, d);
-                 // Ext_SurfaceFunction15(l, d);
-                 // Ext_SurfaceFunction16(l, d);
-                 // Ext_SurfaceFunction17(l, d);
-                 // Ext_SurfaceFunction18(l, d);
-		           // Ext_SurfaceFunction19(l, d);
-                 // Ext_SurfaceFunction20(l, d);
-                 // Ext_SurfaceFunction21(l, d);
-                 // Ext_SurfaceFunction22(l, d);
-                 // Ext_SurfaceFunction23(l, d);
-                 // Ext_SurfaceFunction24(l, d);
-                 // Ext_SurfaceFunction25(l, d);
-                 // Ext_SurfaceFunction26(l, d);
-                 // Ext_SurfaceFunction27(l, d);
-                 // Ext_SurfaceFunction28(l, d);
-		           // Ext_SurfaceFunction29(l, d);
-            }
-
-#if !_DECALSHADER
-
-            void ChainModifyVertex(inout VertexData v, inout VertexToPixel v2p, float4 time)
-            {
-                 ExtraV2F d;
-                 
-                 ZERO_INITIALIZE(ExtraV2F, d);
-                 ZERO_INITIALIZE(Blackboard, d.blackboard);
-                 // due to motion vectors in HDRP, we need to use the last
-                 // time in certain spots. So if you are going to use _Time to adjust vertices,
-                 // you need to use this time or motion vectors will break. 
-                 d.time = time;
-
-                 //  Ext_ModifyVertex0(v, d);
-                 // Ext_ModifyVertex1(v, d);
-                 // Ext_ModifyVertex2(v, d);
-                 // Ext_ModifyVertex3(v, d);
-                 // Ext_ModifyVertex4(v, d);
-                 // Ext_ModifyVertex5(v, d);
-                 // Ext_ModifyVertex6(v, d);
-                 // Ext_ModifyVertex7(v, d);
-                 // Ext_ModifyVertex8(v, d);
-                 // Ext_ModifyVertex9(v, d);
-                 // Ext_ModifyVertex10(v, d);
-                 // Ext_ModifyVertex11(v, d);
-                 // Ext_ModifyVertex12(v, d);
-                 // Ext_ModifyVertex13(v, d);
-                 // Ext_ModifyVertex14(v, d);
-                 // Ext_ModifyVertex15(v, d);
-                 // Ext_ModifyVertex16(v, d);
-                 // Ext_ModifyVertex17(v, d);
-                 // Ext_ModifyVertex18(v, d);
-                 // Ext_ModifyVertex19(v, d);
-                 // Ext_ModifyVertex20(v, d);
-                 // Ext_ModifyVertex21(v, d);
-                 // Ext_ModifyVertex22(v, d);
-                 // Ext_ModifyVertex23(v, d);
-                 // Ext_ModifyVertex24(v, d);
-                 // Ext_ModifyVertex25(v, d);
-                 // Ext_ModifyVertex26(v, d);
-                 // Ext_ModifyVertex27(v, d);
-                 // Ext_ModifyVertex28(v, d);
-                 // Ext_ModifyVertex29(v, d);
-
-
-                 // #if %EXTRAV2F0REQUIREKEY%
-                 // v2p.extraV2F0 = d.extraV2F0;
-                 // #endif
-
-                 // #if %EXTRAV2F1REQUIREKEY%
-                 // v2p.extraV2F1 = d.extraV2F1;
-                 // #endif
-
-                 // #if %EXTRAV2F2REQUIREKEY%
-                 // v2p.extraV2F2 = d.extraV2F2;
-                 // #endif
-
-                 // #if %EXTRAV2F3REQUIREKEY%
-                 // v2p.extraV2F3 = d.extraV2F3;
-                 // #endif
-
-                 // #if %EXTRAV2F4REQUIREKEY%
-                 // v2p.extraV2F4 = d.extraV2F4;
-                 // #endif
-
-                 // #if %EXTRAV2F5REQUIREKEY%
-                 // v2p.extraV2F5 = d.extraV2F5;
-                 // #endif
-
-                 // #if %EXTRAV2F6REQUIREKEY%
-                 // v2p.extraV2F6 = d.extraV2F6;
-                 // #endif
-
-                 // #if %EXTRAV2F7REQUIREKEY%
-                 // v2p.extraV2F7 = d.extraV2F7;
-                 // #endif
-            }
-
-            void ChainModifyTessellatedVertex(inout VertexData v, inout VertexToPixel v2p)
-            {
-               ExtraV2F d;
-               ZERO_INITIALIZE(ExtraV2F, d);
-               ZERO_INITIALIZE(Blackboard, d.blackboard);
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // d.extraV2F0 = v2p.extraV2F0;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // d.extraV2F1 = v2p.extraV2F1;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // d.extraV2F2 = v2p.extraV2F2;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // d.extraV2F3 = v2p.extraV2F3;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // d.extraV2F4 = v2p.extraV2F4;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // d.extraV2F5 = v2p.extraV2F5;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // d.extraV2F6 = v2p.extraV2F6;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // d.extraV2F7 = v2p.extraV2F7;
-               // #endif
-
-
-               // Ext_ModifyTessellatedVertex0(v, d);
-               // Ext_ModifyTessellatedVertex1(v, d);
-               // Ext_ModifyTessellatedVertex2(v, d);
-               // Ext_ModifyTessellatedVertex3(v, d);
-               // Ext_ModifyTessellatedVertex4(v, d);
-               // Ext_ModifyTessellatedVertex5(v, d);
-               // Ext_ModifyTessellatedVertex6(v, d);
-               // Ext_ModifyTessellatedVertex7(v, d);
-               // Ext_ModifyTessellatedVertex8(v, d);
-               // Ext_ModifyTessellatedVertex9(v, d);
-               // Ext_ModifyTessellatedVertex10(v, d);
-               // Ext_ModifyTessellatedVertex11(v, d);
-               // Ext_ModifyTessellatedVertex12(v, d);
-               // Ext_ModifyTessellatedVertex13(v, d);
-               // Ext_ModifyTessellatedVertex14(v, d);
-               // Ext_ModifyTessellatedVertex15(v, d);
-               // Ext_ModifyTessellatedVertex16(v, d);
-               // Ext_ModifyTessellatedVertex17(v, d);
-               // Ext_ModifyTessellatedVertex18(v, d);
-               // Ext_ModifyTessellatedVertex19(v, d);
-               // Ext_ModifyTessellatedVertex20(v, d);
-               // Ext_ModifyTessellatedVertex21(v, d);
-               // Ext_ModifyTessellatedVertex22(v, d);
-               // Ext_ModifyTessellatedVertex23(v, d);
-               // Ext_ModifyTessellatedVertex24(v, d);
-               // Ext_ModifyTessellatedVertex25(v, d);
-               // Ext_ModifyTessellatedVertex26(v, d);
-               // Ext_ModifyTessellatedVertex27(v, d);
-               // Ext_ModifyTessellatedVertex28(v, d);
-               // Ext_ModifyTessellatedVertex29(v, d);
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // v2p.extraV2F0 = d.extraV2F0;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // v2p.extraV2F1 = d.extraV2F1;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // v2p.extraV2F2 = d.extraV2F2;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // v2p.extraV2F3 = d.extraV2F3;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // v2p.extraV2F4 = d.extraV2F4;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // v2p.extraV2F5 = d.extraV2F5;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // v2p.extraV2F6 = d.extraV2F6;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // v2p.extraV2F7 = d.extraV2F7;
-               // #endif
-            }
-
-            void ChainFinalColorForward(inout Surface l, inout ShaderData d, inout half4 color)
-            {
-               //   Ext_FinalColorForward0(l, d, color);
-               //   Ext_FinalColorForward1(l, d, color);
-               //   Ext_FinalColorForward2(l, d, color);
-               //   Ext_FinalColorForward3(l, d, color);
-               //   Ext_FinalColorForward4(l, d, color);
-               //   Ext_FinalColorForward5(l, d, color);
-               //   Ext_FinalColorForward6(l, d, color);
-               //   Ext_FinalColorForward7(l, d, color);
-               //   Ext_FinalColorForward8(l, d, color);
-               //   Ext_FinalColorForward9(l, d, color);
-               //  Ext_FinalColorForward10(l, d, color);
-               //  Ext_FinalColorForward11(l, d, color);
-               //  Ext_FinalColorForward12(l, d, color);
-               //  Ext_FinalColorForward13(l, d, color);
-               //  Ext_FinalColorForward14(l, d, color);
-               //  Ext_FinalColorForward15(l, d, color);
-               //  Ext_FinalColorForward16(l, d, color);
-               //  Ext_FinalColorForward17(l, d, color);
-               //  Ext_FinalColorForward18(l, d, color);
-               //  Ext_FinalColorForward19(l, d, color);
-               //  Ext_FinalColorForward20(l, d, color);
-               //  Ext_FinalColorForward21(l, d, color);
-               //  Ext_FinalColorForward22(l, d, color);
-               //  Ext_FinalColorForward23(l, d, color);
-               //  Ext_FinalColorForward24(l, d, color);
-               //  Ext_FinalColorForward25(l, d, color);
-               //  Ext_FinalColorForward26(l, d, color);
-               //  Ext_FinalColorForward27(l, d, color);
-               //  Ext_FinalColorForward28(l, d, color);
-               //  Ext_FinalColorForward29(l, d, color);
-            }
-
-            void ChainFinalGBufferStandard(inout Surface s, inout ShaderData d, inout half4 GBuffer0, inout half4 GBuffer1, inout half4 GBuffer2, inout half4 outEmission, inout half4 outShadowMask)
-            {
-               //   Ext_FinalGBufferStandard0(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard1(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard2(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard3(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard4(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard5(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard6(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard7(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard8(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard9(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard10(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard11(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard12(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard13(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard14(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard15(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard16(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard17(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard18(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard19(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard20(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard21(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard22(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard23(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard24(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard25(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard26(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard27(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard28(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard29(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-            }
-#endif
-
-
-            
-
-
-#if _DECALSHADER
-
-        ShaderData CreateShaderData(SurfaceDescriptionInputs IN)
-        {
-            ShaderData d = (ShaderData)0;
-            d.TBNMatrix = float3x3(IN.WorldSpaceTangent, IN.WorldSpaceBiTangent, IN.WorldSpaceNormal);
-            d.worldSpaceNormal = IN.WorldSpaceNormal;
-            d.worldSpaceTangent = IN.WorldSpaceTangent;
-
-            d.worldSpacePosition = IN.WorldSpacePosition;
-            d.texcoord0 = IN.uv0.xyxy;
-            d.screenPos = IN.ScreenPosition;
-
-            d.worldSpaceViewDir = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
-
-            d.tangentSpaceViewDir = mul(d.TBNMatrix, d.worldSpaceViewDir);
-
-            // these rarely get used, so we back transform them. Usually will be stripped.
-            #if _HDRP
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(GetCameraRelativePositionWS(d.worldSpacePosition), 1)).xyz;
-            #else
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(d.worldSpacePosition, 1)).xyz;
-            #endif
-            // d.localSpaceNormal = normalize(mul((float3x3)GetWorldToObjectMatrix(), d.worldSpaceNormal));
-            // d.localSpaceTangent = normalize(mul((float3x3)GetWorldToObjectMatrix(), d.worldSpaceTangent.xyz));
-
-            // #if %SCREENPOSREQUIREKEY%
-            // d.screenUV = (IN.ScreenPosition.xy / max(0.01, IN.ScreenPosition.w));
-            // #endif
-
-            return d;
-        }
-#else
-
-         ShaderData CreateShaderData(VertexToPixel i
-                  #if NEED_FACING
-                     , bool facing
-                  #endif
-         )
-         {
-            ShaderData d = (ShaderData)0;
-            d.clipPos = i.pos;
-            d.worldSpacePosition = i.worldPos;
-
-            d.worldSpaceNormal = normalize(i.worldNormal);
-            d.worldSpaceTangent.xyz = normalize(i.worldTangent.xyz);
-
-            d.tangentSign = i.worldTangent.w * unity_WorldTransformParams.w;
-            float3 bitangent = cross(d.worldSpaceTangent.xyz, d.worldSpaceNormal) * d.tangentSign;
-           
-            d.TBNMatrix = float3x3(d.worldSpaceTangent, -bitangent, d.worldSpaceNormal);
-            d.worldSpaceViewDir = normalize(_WorldSpaceCameraPos - i.worldPos);
-
-            d.tangentSpaceViewDir = mul(d.TBNMatrix, d.worldSpaceViewDir);
-            // d.texcoord0 = i.texcoord0;
-            // d.texcoord1 = i.texcoord1;
-            // d.texcoord2 = i.texcoord2;
-
-            // #if %TEXCOORD3REQUIREKEY%
-            // d.texcoord3 = i.texcoord3;
-            // #endif
-
-            // d.isFrontFace = facing;
-            // #if %VERTEXCOLORREQUIREKEY%
-            // d.vertexColor = i.vertexColor;
-            // #endif
-
-            // these rarely get used, so we back transform them. Usually will be stripped.
-            #if _HDRP
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(GetCameraRelativePositionWS(i.worldPos), 1)).xyz;
-            #else
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(i.worldPos, 1)).xyz;
-            #endif
-            // d.localSpaceNormal = normalize(mul((float3x3)GetWorldToObjectMatrix(), i.worldNormal));
-            // d.localSpaceTangent = normalize(mul((float3x3)GetWorldToObjectMatrix(), i.worldTangent.xyz));
-
-            // #if %SCREENPOSREQUIREKEY%
-            // d.screenPos = i.screenPos;
-            // d.screenUV = (i.screenPos.xy / i.screenPos.w);
-            // #endif
-
-
-            // #if %EXTRAV2F0REQUIREKEY%
-            // d.extraV2F0 = i.extraV2F0;
-            // #endif
-
-            // #if %EXTRAV2F1REQUIREKEY%
-            // d.extraV2F1 = i.extraV2F1;
-            // #endif
-
-            // #if %EXTRAV2F2REQUIREKEY%
-            // d.extraV2F2 = i.extraV2F2;
-            // #endif
-
-            // #if %EXTRAV2F3REQUIREKEY%
-            // d.extraV2F3 = i.extraV2F3;
-            // #endif
-
-            // #if %EXTRAV2F4REQUIREKEY%
-            // d.extraV2F4 = i.extraV2F4;
-            // #endif
-
-            // #if %EXTRAV2F5REQUIREKEY%
-            // d.extraV2F5 = i.extraV2F5;
-            // #endif
-
-            // #if %EXTRAV2F6REQUIREKEY%
-            // d.extraV2F6 = i.extraV2F6;
-            // #endif
-
-            // #if %EXTRAV2F7REQUIREKEY%
-            // d.extraV2F7 = i.extraV2F7;
-            // #endif
-
-            return d;
-         }
-
-#endif
-
-            
-         #if defined(_PASSSHADOW)
-            float3 _LightDirection;
-            float3 _LightPosition;
-         #endif
-
-         #if (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-
-            #define GetWorldToViewMatrix()     _ViewMatrix
-            #define UNITY_MATRIX_I_V   _InvViewMatrix
-            #define GetViewToHClipMatrix()     OptimizeProjectionMatrix(_ProjMatrix)
-            #define UNITY_MATRIX_I_P   _InvProjMatrix
-            #define GetWorldToHClipMatrix()    _ViewProjMatrix
-            #define UNITY_MATRIX_I_VP  _InvViewProjMatrix
-            #define UNITY_MATRIX_UNJITTERED_VP _NonJitteredViewProjMatrix
-            #define UNITY_MATRIX_PREV_VP _PrevViewProjMatrix
-            #define UNITY_MATRIX_PREV_I_VP _PrevInvViewProjMatrix
-
-            void MotionVectorPositionZBias(VertexToPixel input)
-            {
-                #if UNITY_REVERSED_Z
-                input.pos.z -= unity_MotionVectorsParams.z * input.pos.w;
-                #else
-                input.pos.z += unity_MotionVectorsParams.z * input.pos.w;
-                #endif
-            }
-
-        #endif
-
-         // vertex shader
-         VertexToPixel Vert (VertexData v)
-         {
-           VertexToPixel o = (VertexToPixel)0;
-
-           UNITY_SETUP_INSTANCE_ID(v);
-           UNITY_TRANSFER_INSTANCE_ID(v, o);
-           UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-
-            
-           #if _URP && (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-             VertexData previousMesh = v;
-           #endif
-           #if !_TESSELLATION_ON
-             ChainModifyVertex(v, o, _Time);
-           #endif
-
-           // o.texcoord0 = v.texcoord0;
-           // o.texcoord1 = v.texcoord1;
-           // o.texcoord2 = v.texcoord2;
-
-           // #if %TEXCOORD3REQUIREKEY%
-           // o.texcoord3 = v.texcoord3;
-           // #endif
-
-           // #if %VERTEXCOLORREQUIREKEY%
-           // o.vertexColor = v.vertexColor;
-           // #endif
-
-           // This return the camera relative position (if enable)
-           float3 positionWS = TransformObjectToWorld(v.vertex.xyz);
-           float3 normalWS = TransformObjectToWorldNormal(v.normal);
-           float4 tangentWS = float4(TransformObjectToWorldDir(v.tangent.xyz), v.tangent.w);
-           
-           VertexPositionInputs vertexInput = GetVertexPositionInputs(v.vertex.xyz);
-           o.worldPos = positionWS;
-           o.worldNormal = normalWS;
-           o.worldTangent = tangentWS;
-
-
-          // For some very odd reason, in 2021.2, we can't use Unity's defines, but have to use our own..
-          #if _PASSSHADOW
-              #if _CASTING_PUNCTUAL_LIGHT_SHADOW
-                 float3 lightDirectionWS = normalize(_LightPosition - o.worldPos);
-              #else
-                 float3 lightDirectionWS = _LightDirection;
-              #endif
-              // Define shadow pass specific clip position for Universal
-              o.pos = TransformWorldToHClip(ApplyShadowBias(o.worldPos, o.worldNormal, lightDirectionWS));
-              #if UNITY_REVERSED_Z
-                  o.pos.z = min(o.pos.z, UNITY_NEAR_CLIP_VALUE);
-              #else
-                  o.pos.z = max(o.pos.z, UNITY_NEAR_CLIP_VALUE);
-              #endif
-          #elif _PASSMETA
-              o.pos = MetaVertexPosition(float4(v.vertex.xyz, 0), v.texcoord1.xy, v.texcoord2.xy, unity_LightmapST, unity_DynamicLightmapST);
-          #else
-              o.pos = TransformWorldToHClip(o.worldPos);
-          #endif
-
-          // #if %SCREENPOSREQUIREKEY%
-          // o.screenPos = ComputeScreenPos(o.pos, _ProjectionParams.x);
-          // #endif
-
-          
-          #if _PASSFORWARD || _PASSGBUFFER
-              float2 uv1 = v.texcoord1.xy;
-              OUTPUT_LIGHTMAP_UV(uv1, unity_LightmapST, o.lightmapUV);
-              // o.texcoord1.xy = uv1;
-              OUTPUT_SH(o.worldNormal, o.sh);
-              
-              #if defined(DYNAMICLIGHTMAP_ON)
-                   o.dynamicLightmapUV.xy = v.texcoord2.xy * unity_DynamicLightmapST.xy + unity_DynamicLightmapST.zw;
-                   #if UNITY_VERSION >= 60000009
-                     OUTPUT_SH(o.worldNormal, o.sh);
-                   #endif
-              #elif (defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)) && UNITY_VERSION >= 60000009
-                   OUTPUT_SH4(vertexInput.positionWS, o.worldNormal.xyz, GetWorldSpaceNormalizeViewDir(vertexInput.positionWS), o.sh, o.probeOcclusion);
-              #endif
-          #endif
-
-          #ifdef VARYINGS_NEED_FOG_AND_VERTEX_LIGHT
-              half fogFactor = 0;
-              #if defined(_FOG_FRAGMENT)
-                fogFactor = ComputeFogFactor(o.pos.z);
-              #endif
-              #if _BAKEDLIT
-                 o.fogFactorAndVertexLight = half4(fogFactor, 0, 0, 0);
-              #else
-                 half3 vertexLight = VertexLighting(o.worldPos, o.worldNormal);
-                 o.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
-              #endif
-          #endif
-
-          #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
-             o.shadowCoord = GetShadowCoord(vertexInput);
-          #endif
-
-          #if _URP && (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-            #if !defined(TESSELLATION_ON)
-              MotionVectorPositionZBias(o);
-            #endif
-
-            o.previousPositionCS = float4(0.0, 0.0, 0.0, 1.0);
-            // Note: unity_MotionVectorsParams.y is 0 is forceNoMotion is enabled
-            bool forceNoMotion = unity_MotionVectorsParams.y == 0.0;
-
-            if (!forceNoMotion)
-            {
-              #if defined(HAVE_VFX_MODIFICATION)
-                float3 previousPositionOS = currentFrameMvData.vfxParticlePositionOS;
-                #if defined(VFX_FEATURE_MOTION_VECTORS_VERTS)
-                  const bool applyDeformation = false;
-                #else
-                  const bool applyDeformation = true;
-                #endif
-              #else
-                const bool hasDeformation = unity_MotionVectorsParams.x == 1; // Mesh has skinned deformation
-                float3 previousPositionOS = hasDeformation ? previousMesh.previousPositionOS : previousMesh.vertex.xyz;
-
-                #if defined(AUTOMATIC_TIME_BASED_MOTION_VECTORS) && defined(GRAPH_VERTEX_USES_TIME_PARAMETERS_INPUT)
-                  const bool applyDeformation = true;
-                #else
-                  const bool applyDeformation = hasDeformation;
-                #endif
-              #endif
-              // TODO
-              #if defined(FEATURES_GRAPH_VERTEX)
-                if (applyDeformation)
-                  previousPositionOS = GetLastFrameDeformedPosition(previousMesh, currentFrameMvData, previousPositionOS);
-                else
-                  previousPositionOS = previousMesh.positionOS;
-
-                #if defined(FEATURES_GRAPH_VERTEX_MOTION_VECTOR_OUTPUT)
-                  previousPositionOS -= previousMesh.precomputedVelocity;
-                #endif
-              #endif
-
-              #if defined(UNITY_DOTS_INSTANCING_ENABLED) && defined(DOTS_DEFORMED)
-                // Deformed vertices in DOTS are not cumulative with built-in Unity skinning/blend shapes
-                // Needs to be called after vertex modification has been applied otherwise it will be
-                // overwritten by Compute Deform node
-                ApplyPreviousFrameDeformedVertexPosition(previousMesh.vertexID, previousPositionOS);
-              #endif
-              #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                previousPositionOS -= previousMesh.precomputedVelocity;
-              #endif
-              o.positionCS = mul(UNITY_MATRIX_UNJITTERED_VP, float4(positionWS, 1.0f));
-
-              #if defined(HAVE_VFX_MODIFICATION)
-                #if defined(VFX_FEATURE_MOTION_VECTORS_VERTS)
-                  #if defined(FEATURES_GRAPH_VERTEX_MOTION_VECTOR_OUTPUT) || defined(_ADD_PRECOMPUTED_VELOCITY)
-                    #error Unexpected fast path rendering VFX motion vector while there are vertex modification afterwards.
-                  #endif
-                  o.previousPositionCS = VFXGetPreviousClipPosition(previousMesh, currentFrameMvData.vfxElementAttributes, o.positionCS);
-                #else
-                  #if VFX_WORLD_SPACE
-                    //previousPositionOS is already in world space
-                    const float3 previousPositionWS = previousPositionOS;
-                  #else
-                    const float3 previousPositionWS = mul(UNITY_PREV_MATRIX_M, float4(previousPositionOS, 1.0f)).xyz;
-                  #endif
-                  o.previousPositionCS = mul(UNITY_MATRIX_PREV_VP, float4(previousPositionWS, 1.0f));
-                #endif
-              #else
-                o.previousPositionCS = mul(UNITY_MATRIX_PREV_VP, mul(UNITY_PREV_MATRIX_M, float4(previousPositionOS, 1)));
-              #endif
-            }
-          #endif
-
-          return o;
-         }
-
-
-            
-
-            // fragment shader
-            half4 Frag (VertexToPixel IN
-            #ifdef _DEPTHOFFSET_ON
-              , out float outputDepth : SV_Depth
-            #endif
-            #if NEED_FACING
-               , bool facing : SV_IsFrontFace
-            #endif
-            ) : SV_Target
-            {
-               UNITY_SETUP_INSTANCE_ID(IN);
-
-               #if defined(LOD_FADE_CROSSFADE)
-                  LODFadeCrossFade(IN.pos);
-               #endif
-
-               ShaderData d = CreateShaderData(IN
-                  #if NEED_FACING
-                     , facing
-                  #endif
-               );
-               Surface l = (Surface)0;
-
-               #ifdef _DEPTHOFFSET_ON
-                  l.outputDepth = outputDepth;
-               #endif
-
-               l.Albedo = half3(0.5, 0.5, 0.5);
-               l.Normal = float3(0,0,1);
-               l.Occlusion = 1;
-               l.Alpha = 1;
-
-               ChainSurfaceFunction(l, d);
-
-               #ifdef _DEPTHOFFSET_ON
-                  outputDepth = l.outputDepth;
-               #endif
-
-             return 0;
-
-            }
-
-         ENDHLSL
-
-      }
-
-
-      
-        Pass
-        {
-            Name "DepthOnly"
-            Tags 
-            { 
-                "LightMode" = "DepthOnly"
-            }
-           
-            // Render State
-            Blend One Zero, One Zero
-            Cull Back
-            ZTest LEqual
-            ZWrite On
-            ColorMask 0
-            
-            
-
-            HLSLPROGRAM
-
-               #pragma vertex Vert
-   #pragma fragment Frag
-
-
-            #define _PASSDEPTH 1
-
-            #if (defined(SHADER_API_GLES) || defined(SHADER_API_GLES3) || defined(SHADER_API_GLES30)) 
-            #pragma target 3.0
-#else
-            #pragma target 4.5
-#endif
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
-            #pragma multi_compile_instancing
-            #if (!defined(SHADER_API_GLES) && !defined(SHADER_API_GLES3) && !defined(SHADER_API_GLES30))
-               #pragma multi_compile _ DOTS_INSTANCING_ON
-            #endif
-
-            
-
-
-   #define _URP 1
-
-#define _UNLIT 1
-
-            // Includes
-            //#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            //#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Input.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
-            #include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderGraphFunctions.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
-
-
-                  #undef WorldNormalVector
-      #define WorldNormalVector(data, normal) mul(normal, data.TBNMatrix)
-      
-      #define UnityObjectToWorldNormal(normal) mul(GetObjectToWorldMatrix(), normal)
-
-      #define _WorldSpaceLightPos0 _MainLightPosition
-      
-      #define UNITY_DECLARE_TEX2D(name) TEXTURE2D(name); SAMPLER(sampler##name);
-      #define UNITY_DECLARE_TEX2D_NOSAMPLER(name) TEXTURE2D(name);
-      #define UNITY_DECLARE_TEX2DARRAY(name) TEXTURE2D_ARRAY(name); SAMPLER(sampler##name);
-      #define UNITY_DECLARE_TEX2DARRAY_NOSAMPLER(name) TEXTURE2D_ARRAY(name);
-
-      #define UNITY_SAMPLE_TEX2DARRAY(tex,coord)            SAMPLE_TEXTURE2D_ARRAY(tex, sampler##tex, coord.xy, coord.z)
-      #define UNITY_SAMPLE_TEX2DARRAY_LOD(tex,coord,lod)    SAMPLE_TEXTURE2D_ARRAY_LOD(tex, sampler##tex, coord.xy, coord.z, lod)
-      #define UNITY_SAMPLE_TEX2D(tex, coord)                SAMPLE_TEXTURE2D(tex, sampler##tex, coord)
-      #define UNITY_SAMPLE_TEX2D_SAMPLER(tex, samp, coord)  SAMPLE_TEXTURE2D(tex, sampler##samp, coord)
-
-      #define UNITY_SAMPLE_TEX2D_LOD(tex,coord, lod)   SAMPLE_TEXTURE2D_LOD(tex, sampler_##tex, coord, lod)
-      #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord, lod) SAMPLE_TEXTURE2D_LOD (tex, sampler##samplertex,coord, lod)
-     
-      #if defined(UNITY_COMPILER_HLSL)
-         #define UNITY_INITIALIZE_OUTPUT(type,name) name = (type)0;
-      #else
-         #define UNITY_INITIALIZE_OUTPUT(type,name)
-      #endif
-
-      #define sampler2D_float sampler2D
-      #define sampler2D_half sampler2D
-
-      
-
-      // data across stages, stripped like the above.
-      struct VertexToPixel
-      {
-         float4 pos : SV_POSITION;
-         float3 worldPos : TEXCOORD0;
-         float3 worldNormal : TEXCOORD1;
-         float4 worldTangent : TEXCOORD2;
-         // float4 texcoord0 : TEXCOORD3;
-         // float4 texcoord1 : TEXCOORD4;
-         // float4 texcoord2 : TEXCOORD5;
-
-         // #if %TEXCOORD3REQUIREKEY%
-         // float4 texcoord3 : TEXCOORD6;
-         // #endif
-
-         // #if %SCREENPOSREQUIREKEY%
-         // float4 screenPos : TEXCOORD7;
-         // #endif
-
-         // #if %VERTEXCOLORREQUIREKEY%
-         // half4 vertexColor : COLOR;
-         // #endif
-
-         #if defined(LIGHTMAP_ON)
-            float2 lightmapUV : TEXCOORD8;
-         #endif
-         #if defined(DYNAMICLIGHTMAP_ON)
-            float2 dynamicLightmapUV : TEXCOORD9;
-         #endif
-         #if !defined(LIGHTMAP_ON)
-            float4 probeOcclusion : TEXCOORD8;
-            float3 sh : TEXCOORD10;
-         #endif
-
-         #if defined(VARYINGS_NEED_FOG_AND_VERTEX_LIGHT)
-            float4 fogFactorAndVertexLight : TEXCOORD11;
-         #endif
-
-         #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
-           float4 shadowCoord : TEXCOORD12;
-         #endif
-
-         // #if %EXTRAV2F0REQUIREKEY%
-         // float4 extraV2F0 : TEXCOORD13;
-         // #endif
-
-         // #if %EXTRAV2F1REQUIREKEY%
-         // float4 extraV2F1 : TEXCOORD14;
-         // #endif
-
-         // #if %EXTRAV2F2REQUIREKEY%
-         // float4 extraV2F2 : TEXCOORD15;
-         // #endif
-
-         // #if %EXTRAV2F3REQUIREKEY%
-         // float4 extraV2F3 : TEXCOORD16;
-         // #endif
-
-         // #if %EXTRAV2F4REQUIREKEY%
-         // float4 extraV2F4 : TEXCOORD17;
-         // #endif
-
-         // #if %EXTRAV2F5REQUIREKEY%
-         // float4 extraV2F5 : TEXCOORD18;
-         // #endif
-
-         // #if %EXTRAV2F6REQUIREKEY%
-         // float4 extraV2F6 : TEXCOORD19;
-         // #endif
-
-         // #if %EXTRAV2F7REQUIREKEY%
-         // float4 extraV2F7 : TEXCOORD20;
-         // #endif
-
-         #if UNITY_ANY_INSTANCING_ENABLED
-         uint instanceID : CUSTOM_INSTANCE_ID;
-         #endif
-         #if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
-         uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
-         #endif
-         #if (defined(UNITY_STEREO_INSTANCING_ENABLED))
-         uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
-         #endif
-         #if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
-         FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
-         #endif
-
-         #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-            float4 previousPositionCS : TEXCOORD21; // Contain previous transform position (in case of skinning for example)
-            float4 positionCS : TEXCOORD22;
-         #endif
-      };
-
-         
-            
-            
-            // data describing the user output of a pixel
-            struct Surface
-            {
-               half3 Albedo;
-               half Height;
-               half3 Normal;
-               half Smoothness;
-               half3 Emission;
-               half Metallic;
-               half3 Specular;
-               half Occlusion;
-               half SpecularPower; // for simple lighting
-               half Alpha;
-               float outputDepth; // if written, SV_Depth semantic is used. ShaderData.clipPos.z is unused value
-               // HDRP Only
-               half SpecularOcclusion;
-               half SubsurfaceMask;
-               half Thickness;
-               half CoatMask;
-               half CoatSmoothness;
-               half Anisotropy;
-               half IridescenceMask;
-               half IridescenceThickness;
-               int DiffusionProfileHash;
-               float SpecularAAThreshold;
-               float SpecularAAScreenSpaceVariance;
-               // requires _OVERRIDE_BAKEDGI to be defined, but is mapped in all pipelines
-               float3 DiffuseGI;
-               float3 BackDiffuseGI;
-               float3 SpecularGI;
-               float ior;
-               float3 transmittanceColor;
-               float atDistance;
-               float transmittanceMask;
-               // requires _OVERRIDE_SHADOWMASK to be defines
-               float4 ShadowMask;
-
-               // for decals
-               float NormalAlpha;
-               float MAOSAlpha;
-
-
-            };
-
-            // Data the user declares in blackboard blocks
-            struct Blackboard
-            {
-                
-                float blackboardDummyData;
-            };
-
-            // data the user might need, this will grow to be big. But easy to strip
-            struct ShaderData
-            {
-               float4 clipPos; // SV_POSITION
-               float3 localSpacePosition;
-               float3 localSpaceNormal;
-               float3 localSpaceTangent;
-        
-               float3 worldSpacePosition;
-               float3 worldSpaceNormal;
-               float3 worldSpaceTangent;
-               float tangentSign;
-
-               float3 worldSpaceViewDir;
-               float3 tangentSpaceViewDir;
-
-               float4 texcoord0;
-               float4 texcoord1;
-               float4 texcoord2;
-               float4 texcoord3;
-
-               float2 screenUV;
-               float4 screenPos;
-
-               float4 vertexColor;
-               bool isFrontFace;
-
-               float4 extraV2F0;
-               float4 extraV2F1;
-               float4 extraV2F2;
-               float4 extraV2F3;
-               float4 extraV2F4;
-               float4 extraV2F5;
-               float4 extraV2F6;
-               float4 extraV2F7;
-
-               float3x3 TBNMatrix;
-               Blackboard blackboard;
-            };
-
-            struct VertexData
-            {
-               #if SHADER_TARGET > 30
-               // uint vertexID : SV_VertexID;
-               #endif
-               float4 vertex : POSITION;
-               float3 normal : NORMAL;
-               float4 tangent : TANGENT;
-               float4 texcoord0 : TEXCOORD0;
-
-               // optimize out mesh coords when not in use by user or lighting system
-               #if _URP && (_USINGTEXCOORD1 || _PASSMETA || _PASSFORWARD || _PASSGBUFFER)
-                  float4 texcoord1 : TEXCOORD1;
-               #endif
-
-               #if _URP && (_USINGTEXCOORD2 || _PASSMETA || ((_PASSFORWARD || _PASSGBUFFER) && defined(DYNAMICLIGHTMAP_ON)))
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-               #if _STANDARD && (_USINGTEXCOORD1 || (_PASSMETA || ((_PASSFORWARD || _PASSGBUFFER || _PASSFORWARDADD) && LIGHTMAP_ON)))
-                  float4 texcoord1 : TEXCOORD1;
-               #endif
-               #if _STANDARD && (_USINGTEXCOORD2 || (_PASSMETA || ((_PASSFORWARD || _PASSGBUFFER) && DYNAMICLIGHTMAP_ON)))
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-
-               #if _HDRP
-                  float4 texcoord1 : TEXCOORD1;
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-               // #if %TEXCOORD3REQUIREKEY%
-               // float4 texcoord3 : TEXCOORD3;
-               // #endif
-
-               // #if %VERTEXCOLORREQUIREKEY%
-               // float4 vertexColor : COLOR;
-               // #endif
-
-               #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-                  float3 previousPositionOS : TEXCOORD4; // Contain previous transform position (in case of skinning for example)
-                  #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                     float3 precomputedVelocity    : TEXCOORD5; // Add Precomputed Velocity (Alembic computes velocities on runtime side).
-                  #endif
-               #endif
-
-               UNITY_VERTEX_INPUT_INSTANCE_ID
-            };
-
-            struct TessVertex 
-            {
-               float4 vertex : INTERNALTESSPOS;
-               float3 normal : NORMAL;
-               float4 tangent : TANGENT;
-               float4 texcoord0 : TEXCOORD0;
-               float4 texcoord1 : TEXCOORD1;
-               float4 texcoord2 : TEXCOORD2;
-
-               // #if %TEXCOORD3REQUIREKEY%
-               // float4 texcoord3 : TEXCOORD3;
-               // #endif
-
-               // #if %VERTEXCOLORREQUIREKEY%
-               // float4 vertexColor : COLOR;
-               // #endif
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // float4 extraV2F0 : TEXCOORD5;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // float4 extraV2F1 : TEXCOORD6;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // float4 extraV2F2 : TEXCOORD7;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // float4 extraV2F3 : TEXCOORD8;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // float4 extraV2F4 : TEXCOORD9;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // float4 extraV2F5 : TEXCOORD10;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // float4 extraV2F6 : TEXCOORD11;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // float4 extraV2F7 : TEXCOORD12;
-               // #endif
-
-               #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-                  float3 previousPositionOS : TEXCOORD13; // Contain previous transform position (in case of skinning for example)
-                  #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                     float3 precomputedVelocity : TEXCOORD14;
-                  #endif
-               #endif
-
-               UNITY_VERTEX_INPUT_INSTANCE_ID
-               UNITY_VERTEX_OUTPUT_STEREO
-            };
-
-            struct ExtraV2F
-            {
-               float4 extraV2F0;
-               float4 extraV2F1;
-               float4 extraV2F2;
-               float4 extraV2F3;
-               float4 extraV2F4;
-               float4 extraV2F5;
-               float4 extraV2F6;
-               float4 extraV2F7;
-               Blackboard blackboard;
-               float4 time;
-            };
-
-
-            float3 WorldToTangentSpace(ShaderData d, float3 normal)
-            {
-               return mul(d.TBNMatrix, normal);
-            }
-
-            float3 TangentToWorldSpace(ShaderData d, float3 normal)
-            {
-               return mul(normal, d.TBNMatrix);
-            }
-
-            // in this case, make standard more like SRPs, because we can't fix
-            // unity_WorldToObject in HDRP, since it already does macro-fu there
-
-            #if _STANDARD
-               float3 TransformWorldToObject(float3 p) { return mul(unity_WorldToObject, float4(p, 1)); };
-               float3 TransformObjectToWorld(float3 p) { return mul(unity_ObjectToWorld, float4(p, 1)); };
-               float4 TransformWorldToObject(float4 p) { return mul(unity_WorldToObject, p); };
-               float4 TransformObjectToWorld(float4 p) { return mul(unity_ObjectToWorld, p); };
-               float4x4 GetWorldToObjectMatrix() { return unity_WorldToObject; }
-               float4x4 GetObjectToWorldMatrix() { return unity_ObjectToWorld; }
-               #if (defined(SHADER_API_D3D11) || defined(SHADER_API_XBOXONE) || defined(UNITY_COMPILER_HLSLCC) || defined(SHADER_API_PSSL) || (SHADER_TARGET_SURFACE_ANALYSIS && !SHADER_TARGET_SURFACE_ANALYSIS_MOJOSHADER))
-                 #define UNITY_SAMPLE_TEX2D_LOD(tex,coord, lod) tex.SampleLevel (sampler##tex,coord, lod)
-                 #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord, lod) tex.SampleLevel (sampler##samplertex,coord, lod)
-              #else
-                 #define UNITY_SAMPLE_TEX2D_LOD(tex,coord,lod) tex2D (tex,coord,0,lod)
-                 #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord,lod) tex2D (tex,coord,0,lod)
-              #endif
-
-               #undef GetWorldToObjectMatrix()
-
-               #define GetWorldToObjectMatrix()   unity_WorldToObject
-
-
-            #endif
-
-            float3 GetCameraWorldPosition()
-            {
-               #if _HDRP
-                  return GetCameraRelativePositionWS(_WorldSpaceCameraPos);
-               #else
-                  return _WorldSpaceCameraPos;
-               #endif
-            }
-
-            #if _GRABPASSUSED
-               #if _STANDARD
-                  TEXTURE2D(%GRABTEXTURE%);
-                  SAMPLER(sampler_%GRABTEXTURE%);
-               #endif
-
-               half3 GetSceneColor(float2 uv)
-               {
-                  #if _STANDARD
-                     return SAMPLE_TEXTURE2D(%GRABTEXTURE%, sampler_%GRABTEXTURE%, uv).rgb;
-                  #else
-                     return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv);
-                  #endif
-               }
-            #endif
-
-
-      
-            #if _STANDARD
-               UNITY_DECLARE_DEPTH_TEXTURE(_CameraDepthTexture);
-               float GetSceneDepth(float2 uv) { return SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv); }
-               float GetLinear01Depth(float2 uv) { return Linear01Depth(GetSceneDepth(uv)); }
-               float GetLinearEyeDepth(float2 uv) { return LinearEyeDepth(GetSceneDepth(uv)); } 
-            #else
-               float GetSceneDepth(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv); }
-               float GetLinear01Depth(float2 uv) { return Linear01Depth(GetSceneDepth(uv), _ZBufferParams); }
-               float GetLinearEyeDepth(float2 uv) { return LinearEyeDepth(GetSceneDepth(uv), _ZBufferParams); } 
-            #endif
-
-            float3 GetWorldPositionFromDepthBuffer(float2 uv, float3 worldSpaceViewDir)
-            {
-               float eye = GetLinearEyeDepth(uv);
-               float3 camView = mul((float3x3)GetObjectToWorldMatrix(), transpose(mul(GetWorldToObjectMatrix(), UNITY_MATRIX_I_V)) [2].xyz);
-
-               float dt = dot(worldSpaceViewDir, camView);
-               float3 div = worldSpaceViewDir/dt;
-               float3 wpos = (eye * div) + GetCameraWorldPosition();
-               return wpos;
-            }
-
-            #if _HDRP
-            float3 ObjectToWorldSpacePosition(float3 pos)
-            {
-               return GetAbsolutePositionWS(TransformObjectToWorld(pos));
-            }
-            #else
-            float3 ObjectToWorldSpacePosition(float3 pos)
-            {
-               return TransformObjectToWorld(pos);
-            }
-            #endif
-
-            #if _STANDARD
-               UNITY_DECLARE_SCREENSPACE_TEXTURE(_CameraDepthNormalsTexture);
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  float4 depthNorms = UNITY_SAMPLE_SCREENSPACE_TEXTURE(_CameraDepthNormalsTexture, uv);
-                  float3 norms = DecodeViewNormalStereo(depthNorms);
-                  norms = mul((float3x3)GetWorldToViewMatrix(), norms) * 0.5 + 0.5;
-                  return norms;
-               }
-            #elif _HDRP && !_DECALSHADER
-               
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  NormalData nd;
-                  DecodeFromNormalBuffer(_ScreenSize.xy * uv, nd);
-                  return nd.normalWS;
-               }
-            #elif _URP
-               #if (SHADER_LIBRARY_VERSION_MAJOR >= 10)
-                  #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareNormalsTexture.hlsl"
-               #endif
-
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  #if (SHADER_LIBRARY_VERSION_MAJOR >= 10)
-                     return SampleSceneNormals(uv);
-                  #else
-                     float3 wpos = GetWorldPositionFromDepthBuffer(uv, worldSpaceViewDir);
-                     return normalize(-cross(ddx(wpos), ddy(wpos))) * 0.5 + 0.5;
-                  #endif
-
-                }
-             #endif
-
-             #if _HDRP
-
-               half3 UnpackNormalmapRGorAG(half4 packednormal)
-               {
-                     // This do the trick
-                  packednormal.x *= packednormal.w;
-
-                  half3 normal;
-                  normal.xy = packednormal.xy * 2 - 1;
-                  normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
-                  return normal;
-               }
-               half3 UnpackNormal(half4 packednormal)
-               {
-                  #if defined(UNITY_NO_DXT5nm)
-                     return packednormal.xyz * 2 - 1;
-                  #else
-                     return UnpackNormalmapRGorAG(packednormal);
-                  #endif
-               }
-            #endif
-            #if _HDRP || _URP
-
-               half3 UnpackScaleNormal(half4 packednormal, half scale)
-               {
-                 #ifndef UNITY_NO_DXT5nm
-                   // Unpack normal as DXT5nm (1, y, 1, x) or BC5 (x, y, 0, 1)
-                   // Note neutral texture like "bump" is (0, 0, 1, 1) to work with both plain RGB normal and DXT5nm/BC5
-                   packednormal.x *= packednormal.w;
-                 #endif
-                   half3 normal;
-                   normal.xy = (packednormal.xy * 2 - 1) * scale;
-                   normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
-                   return normal;
-               }	
-
-             #endif
-
-
-            void GetSun(out float3 lightDir, out float3 color)
-            {
-               lightDir = float3(0.5, 0.5, 0);
-               color = 1;
-               #if _HDRP
-                  if (_DirectionalLightCount > 0)
-                  {
-                     DirectionalLightData light = _DirectionalLightDatas[0];
-                     lightDir = -light.forward.xyz;
-                     color = light.color;
-                  }
-               #elif _STANDARD
-			         lightDir = normalize(_WorldSpaceLightPos0.xyz);
-                  color = _LightColor0.rgb;
-               #elif _URP
-	               Light light = GetMainLight();
-	               lightDir = light.direction;
-	               color = light.color;
-               #endif
-            }
-
-
-            
-            CBUFFER_START(UnityPerMaterial)
-
-               
-
-
-
-            CBUFFER_END
-
-            
-
-            
-
-            
-
-
-
-        
-            void ChainSurfaceFunction(inout Surface l, inout ShaderData d)
-            {
-                 // Ext_SurfaceFunction0(l, d);
-                 // Ext_SurfaceFunction1(l, d);
-                 // Ext_SurfaceFunction2(l, d);
-                 // Ext_SurfaceFunction3(l, d);
-                 // Ext_SurfaceFunction4(l, d);
-                 // Ext_SurfaceFunction5(l, d);
-                 // Ext_SurfaceFunction6(l, d);
-                 // Ext_SurfaceFunction7(l, d);
-                 // Ext_SurfaceFunction8(l, d);
-                 // Ext_SurfaceFunction9(l, d);
-		           // Ext_SurfaceFunction10(l, d);
-                 // Ext_SurfaceFunction11(l, d);
-                 // Ext_SurfaceFunction12(l, d);
-                 // Ext_SurfaceFunction13(l, d);
-                 // Ext_SurfaceFunction14(l, d);
-                 // Ext_SurfaceFunction15(l, d);
-                 // Ext_SurfaceFunction16(l, d);
-                 // Ext_SurfaceFunction17(l, d);
-                 // Ext_SurfaceFunction18(l, d);
-		           // Ext_SurfaceFunction19(l, d);
-                 // Ext_SurfaceFunction20(l, d);
-                 // Ext_SurfaceFunction21(l, d);
-                 // Ext_SurfaceFunction22(l, d);
-                 // Ext_SurfaceFunction23(l, d);
-                 // Ext_SurfaceFunction24(l, d);
-                 // Ext_SurfaceFunction25(l, d);
-                 // Ext_SurfaceFunction26(l, d);
-                 // Ext_SurfaceFunction27(l, d);
-                 // Ext_SurfaceFunction28(l, d);
-		           // Ext_SurfaceFunction29(l, d);
-            }
-
-#if !_DECALSHADER
-
-            void ChainModifyVertex(inout VertexData v, inout VertexToPixel v2p, float4 time)
-            {
-                 ExtraV2F d;
-                 
-                 ZERO_INITIALIZE(ExtraV2F, d);
-                 ZERO_INITIALIZE(Blackboard, d.blackboard);
-                 // due to motion vectors in HDRP, we need to use the last
-                 // time in certain spots. So if you are going to use _Time to adjust vertices,
-                 // you need to use this time or motion vectors will break. 
-                 d.time = time;
-
-                 //  Ext_ModifyVertex0(v, d);
-                 // Ext_ModifyVertex1(v, d);
-                 // Ext_ModifyVertex2(v, d);
-                 // Ext_ModifyVertex3(v, d);
-                 // Ext_ModifyVertex4(v, d);
-                 // Ext_ModifyVertex5(v, d);
-                 // Ext_ModifyVertex6(v, d);
-                 // Ext_ModifyVertex7(v, d);
-                 // Ext_ModifyVertex8(v, d);
-                 // Ext_ModifyVertex9(v, d);
-                 // Ext_ModifyVertex10(v, d);
-                 // Ext_ModifyVertex11(v, d);
-                 // Ext_ModifyVertex12(v, d);
-                 // Ext_ModifyVertex13(v, d);
-                 // Ext_ModifyVertex14(v, d);
-                 // Ext_ModifyVertex15(v, d);
-                 // Ext_ModifyVertex16(v, d);
-                 // Ext_ModifyVertex17(v, d);
-                 // Ext_ModifyVertex18(v, d);
-                 // Ext_ModifyVertex19(v, d);
-                 // Ext_ModifyVertex20(v, d);
-                 // Ext_ModifyVertex21(v, d);
-                 // Ext_ModifyVertex22(v, d);
-                 // Ext_ModifyVertex23(v, d);
-                 // Ext_ModifyVertex24(v, d);
-                 // Ext_ModifyVertex25(v, d);
-                 // Ext_ModifyVertex26(v, d);
-                 // Ext_ModifyVertex27(v, d);
-                 // Ext_ModifyVertex28(v, d);
-                 // Ext_ModifyVertex29(v, d);
-
-
-                 // #if %EXTRAV2F0REQUIREKEY%
-                 // v2p.extraV2F0 = d.extraV2F0;
-                 // #endif
-
-                 // #if %EXTRAV2F1REQUIREKEY%
-                 // v2p.extraV2F1 = d.extraV2F1;
-                 // #endif
-
-                 // #if %EXTRAV2F2REQUIREKEY%
-                 // v2p.extraV2F2 = d.extraV2F2;
-                 // #endif
-
-                 // #if %EXTRAV2F3REQUIREKEY%
-                 // v2p.extraV2F3 = d.extraV2F3;
-                 // #endif
-
-                 // #if %EXTRAV2F4REQUIREKEY%
-                 // v2p.extraV2F4 = d.extraV2F4;
-                 // #endif
-
-                 // #if %EXTRAV2F5REQUIREKEY%
-                 // v2p.extraV2F5 = d.extraV2F5;
-                 // #endif
-
-                 // #if %EXTRAV2F6REQUIREKEY%
-                 // v2p.extraV2F6 = d.extraV2F6;
-                 // #endif
-
-                 // #if %EXTRAV2F7REQUIREKEY%
-                 // v2p.extraV2F7 = d.extraV2F7;
-                 // #endif
-            }
-
-            void ChainModifyTessellatedVertex(inout VertexData v, inout VertexToPixel v2p)
-            {
-               ExtraV2F d;
-               ZERO_INITIALIZE(ExtraV2F, d);
-               ZERO_INITIALIZE(Blackboard, d.blackboard);
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // d.extraV2F0 = v2p.extraV2F0;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // d.extraV2F1 = v2p.extraV2F1;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // d.extraV2F2 = v2p.extraV2F2;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // d.extraV2F3 = v2p.extraV2F3;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // d.extraV2F4 = v2p.extraV2F4;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // d.extraV2F5 = v2p.extraV2F5;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // d.extraV2F6 = v2p.extraV2F6;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // d.extraV2F7 = v2p.extraV2F7;
-               // #endif
-
-
-               // Ext_ModifyTessellatedVertex0(v, d);
-               // Ext_ModifyTessellatedVertex1(v, d);
-               // Ext_ModifyTessellatedVertex2(v, d);
-               // Ext_ModifyTessellatedVertex3(v, d);
-               // Ext_ModifyTessellatedVertex4(v, d);
-               // Ext_ModifyTessellatedVertex5(v, d);
-               // Ext_ModifyTessellatedVertex6(v, d);
-               // Ext_ModifyTessellatedVertex7(v, d);
-               // Ext_ModifyTessellatedVertex8(v, d);
-               // Ext_ModifyTessellatedVertex9(v, d);
-               // Ext_ModifyTessellatedVertex10(v, d);
-               // Ext_ModifyTessellatedVertex11(v, d);
-               // Ext_ModifyTessellatedVertex12(v, d);
-               // Ext_ModifyTessellatedVertex13(v, d);
-               // Ext_ModifyTessellatedVertex14(v, d);
-               // Ext_ModifyTessellatedVertex15(v, d);
-               // Ext_ModifyTessellatedVertex16(v, d);
-               // Ext_ModifyTessellatedVertex17(v, d);
-               // Ext_ModifyTessellatedVertex18(v, d);
-               // Ext_ModifyTessellatedVertex19(v, d);
-               // Ext_ModifyTessellatedVertex20(v, d);
-               // Ext_ModifyTessellatedVertex21(v, d);
-               // Ext_ModifyTessellatedVertex22(v, d);
-               // Ext_ModifyTessellatedVertex23(v, d);
-               // Ext_ModifyTessellatedVertex24(v, d);
-               // Ext_ModifyTessellatedVertex25(v, d);
-               // Ext_ModifyTessellatedVertex26(v, d);
-               // Ext_ModifyTessellatedVertex27(v, d);
-               // Ext_ModifyTessellatedVertex28(v, d);
-               // Ext_ModifyTessellatedVertex29(v, d);
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // v2p.extraV2F0 = d.extraV2F0;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // v2p.extraV2F1 = d.extraV2F1;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // v2p.extraV2F2 = d.extraV2F2;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // v2p.extraV2F3 = d.extraV2F3;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // v2p.extraV2F4 = d.extraV2F4;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // v2p.extraV2F5 = d.extraV2F5;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // v2p.extraV2F6 = d.extraV2F6;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // v2p.extraV2F7 = d.extraV2F7;
-               // #endif
-            }
-
-            void ChainFinalColorForward(inout Surface l, inout ShaderData d, inout half4 color)
-            {
-               //   Ext_FinalColorForward0(l, d, color);
-               //   Ext_FinalColorForward1(l, d, color);
-               //   Ext_FinalColorForward2(l, d, color);
-               //   Ext_FinalColorForward3(l, d, color);
-               //   Ext_FinalColorForward4(l, d, color);
-               //   Ext_FinalColorForward5(l, d, color);
-               //   Ext_FinalColorForward6(l, d, color);
-               //   Ext_FinalColorForward7(l, d, color);
-               //   Ext_FinalColorForward8(l, d, color);
-               //   Ext_FinalColorForward9(l, d, color);
-               //  Ext_FinalColorForward10(l, d, color);
-               //  Ext_FinalColorForward11(l, d, color);
-               //  Ext_FinalColorForward12(l, d, color);
-               //  Ext_FinalColorForward13(l, d, color);
-               //  Ext_FinalColorForward14(l, d, color);
-               //  Ext_FinalColorForward15(l, d, color);
-               //  Ext_FinalColorForward16(l, d, color);
-               //  Ext_FinalColorForward17(l, d, color);
-               //  Ext_FinalColorForward18(l, d, color);
-               //  Ext_FinalColorForward19(l, d, color);
-               //  Ext_FinalColorForward20(l, d, color);
-               //  Ext_FinalColorForward21(l, d, color);
-               //  Ext_FinalColorForward22(l, d, color);
-               //  Ext_FinalColorForward23(l, d, color);
-               //  Ext_FinalColorForward24(l, d, color);
-               //  Ext_FinalColorForward25(l, d, color);
-               //  Ext_FinalColorForward26(l, d, color);
-               //  Ext_FinalColorForward27(l, d, color);
-               //  Ext_FinalColorForward28(l, d, color);
-               //  Ext_FinalColorForward29(l, d, color);
-            }
-
-            void ChainFinalGBufferStandard(inout Surface s, inout ShaderData d, inout half4 GBuffer0, inout half4 GBuffer1, inout half4 GBuffer2, inout half4 outEmission, inout half4 outShadowMask)
-            {
-               //   Ext_FinalGBufferStandard0(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard1(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard2(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard3(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard4(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard5(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard6(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard7(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard8(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard9(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard10(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard11(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard12(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard13(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard14(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard15(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard16(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard17(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard18(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard19(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard20(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard21(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard22(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard23(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard24(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard25(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard26(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard27(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard28(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard29(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-            }
-#endif
-
-
-            
-
-
-#if _DECALSHADER
-
-        ShaderData CreateShaderData(SurfaceDescriptionInputs IN)
-        {
-            ShaderData d = (ShaderData)0;
-            d.TBNMatrix = float3x3(IN.WorldSpaceTangent, IN.WorldSpaceBiTangent, IN.WorldSpaceNormal);
-            d.worldSpaceNormal = IN.WorldSpaceNormal;
-            d.worldSpaceTangent = IN.WorldSpaceTangent;
-
-            d.worldSpacePosition = IN.WorldSpacePosition;
-            d.texcoord0 = IN.uv0.xyxy;
-            d.screenPos = IN.ScreenPosition;
-
-            d.worldSpaceViewDir = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
-
-            d.tangentSpaceViewDir = mul(d.TBNMatrix, d.worldSpaceViewDir);
-
-            // these rarely get used, so we back transform them. Usually will be stripped.
-            #if _HDRP
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(GetCameraRelativePositionWS(d.worldSpacePosition), 1)).xyz;
-            #else
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(d.worldSpacePosition, 1)).xyz;
-            #endif
-            // d.localSpaceNormal = normalize(mul((float3x3)GetWorldToObjectMatrix(), d.worldSpaceNormal));
-            // d.localSpaceTangent = normalize(mul((float3x3)GetWorldToObjectMatrix(), d.worldSpaceTangent.xyz));
-
-            // #if %SCREENPOSREQUIREKEY%
-            // d.screenUV = (IN.ScreenPosition.xy / max(0.01, IN.ScreenPosition.w));
-            // #endif
-
-            return d;
-        }
-#else
-
-         ShaderData CreateShaderData(VertexToPixel i
-                  #if NEED_FACING
-                     , bool facing
-                  #endif
-         )
-         {
-            ShaderData d = (ShaderData)0;
-            d.clipPos = i.pos;
-            d.worldSpacePosition = i.worldPos;
-
-            d.worldSpaceNormal = normalize(i.worldNormal);
-            d.worldSpaceTangent.xyz = normalize(i.worldTangent.xyz);
-
-            d.tangentSign = i.worldTangent.w * unity_WorldTransformParams.w;
-            float3 bitangent = cross(d.worldSpaceTangent.xyz, d.worldSpaceNormal) * d.tangentSign;
-           
-            d.TBNMatrix = float3x3(d.worldSpaceTangent, -bitangent, d.worldSpaceNormal);
-            d.worldSpaceViewDir = normalize(_WorldSpaceCameraPos - i.worldPos);
-
-            d.tangentSpaceViewDir = mul(d.TBNMatrix, d.worldSpaceViewDir);
-            // d.texcoord0 = i.texcoord0;
-            // d.texcoord1 = i.texcoord1;
-            // d.texcoord2 = i.texcoord2;
-
-            // #if %TEXCOORD3REQUIREKEY%
-            // d.texcoord3 = i.texcoord3;
-            // #endif
-
-            // d.isFrontFace = facing;
-            // #if %VERTEXCOLORREQUIREKEY%
-            // d.vertexColor = i.vertexColor;
-            // #endif
-
-            // these rarely get used, so we back transform them. Usually will be stripped.
-            #if _HDRP
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(GetCameraRelativePositionWS(i.worldPos), 1)).xyz;
-            #else
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(i.worldPos, 1)).xyz;
-            #endif
-            // d.localSpaceNormal = normalize(mul((float3x3)GetWorldToObjectMatrix(), i.worldNormal));
-            // d.localSpaceTangent = normalize(mul((float3x3)GetWorldToObjectMatrix(), i.worldTangent.xyz));
-
-            // #if %SCREENPOSREQUIREKEY%
-            // d.screenPos = i.screenPos;
-            // d.screenUV = (i.screenPos.xy / i.screenPos.w);
-            // #endif
-
-
-            // #if %EXTRAV2F0REQUIREKEY%
-            // d.extraV2F0 = i.extraV2F0;
-            // #endif
-
-            // #if %EXTRAV2F1REQUIREKEY%
-            // d.extraV2F1 = i.extraV2F1;
-            // #endif
-
-            // #if %EXTRAV2F2REQUIREKEY%
-            // d.extraV2F2 = i.extraV2F2;
-            // #endif
-
-            // #if %EXTRAV2F3REQUIREKEY%
-            // d.extraV2F3 = i.extraV2F3;
-            // #endif
-
-            // #if %EXTRAV2F4REQUIREKEY%
-            // d.extraV2F4 = i.extraV2F4;
-            // #endif
-
-            // #if %EXTRAV2F5REQUIREKEY%
-            // d.extraV2F5 = i.extraV2F5;
-            // #endif
-
-            // #if %EXTRAV2F6REQUIREKEY%
-            // d.extraV2F6 = i.extraV2F6;
-            // #endif
-
-            // #if %EXTRAV2F7REQUIREKEY%
-            // d.extraV2F7 = i.extraV2F7;
-            // #endif
-
-            return d;
-         }
-
-#endif
-
-            
-         #if defined(_PASSSHADOW)
-            float3 _LightDirection;
-            float3 _LightPosition;
-         #endif
-
-         #if (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-
-            #define GetWorldToViewMatrix()     _ViewMatrix
-            #define UNITY_MATRIX_I_V   _InvViewMatrix
-            #define GetViewToHClipMatrix()     OptimizeProjectionMatrix(_ProjMatrix)
-            #define UNITY_MATRIX_I_P   _InvProjMatrix
-            #define GetWorldToHClipMatrix()    _ViewProjMatrix
-            #define UNITY_MATRIX_I_VP  _InvViewProjMatrix
-            #define UNITY_MATRIX_UNJITTERED_VP _NonJitteredViewProjMatrix
-            #define UNITY_MATRIX_PREV_VP _PrevViewProjMatrix
-            #define UNITY_MATRIX_PREV_I_VP _PrevInvViewProjMatrix
-
-            void MotionVectorPositionZBias(VertexToPixel input)
-            {
-                #if UNITY_REVERSED_Z
-                input.pos.z -= unity_MotionVectorsParams.z * input.pos.w;
-                #else
-                input.pos.z += unity_MotionVectorsParams.z * input.pos.w;
-                #endif
-            }
-
-        #endif
-
-         // vertex shader
-         VertexToPixel Vert (VertexData v)
-         {
-           VertexToPixel o = (VertexToPixel)0;
-
-           UNITY_SETUP_INSTANCE_ID(v);
-           UNITY_TRANSFER_INSTANCE_ID(v, o);
-           UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-
-            
-           #if _URP && (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-             VertexData previousMesh = v;
-           #endif
-           #if !_TESSELLATION_ON
-             ChainModifyVertex(v, o, _Time);
-           #endif
-
-           // o.texcoord0 = v.texcoord0;
-           // o.texcoord1 = v.texcoord1;
-           // o.texcoord2 = v.texcoord2;
-
-           // #if %TEXCOORD3REQUIREKEY%
-           // o.texcoord3 = v.texcoord3;
-           // #endif
-
-           // #if %VERTEXCOLORREQUIREKEY%
-           // o.vertexColor = v.vertexColor;
-           // #endif
-
-           // This return the camera relative position (if enable)
-           float3 positionWS = TransformObjectToWorld(v.vertex.xyz);
-           float3 normalWS = TransformObjectToWorldNormal(v.normal);
-           float4 tangentWS = float4(TransformObjectToWorldDir(v.tangent.xyz), v.tangent.w);
-           
-           VertexPositionInputs vertexInput = GetVertexPositionInputs(v.vertex.xyz);
-           o.worldPos = positionWS;
-           o.worldNormal = normalWS;
-           o.worldTangent = tangentWS;
-
-
-          // For some very odd reason, in 2021.2, we can't use Unity's defines, but have to use our own..
-          #if _PASSSHADOW
-              #if _CASTING_PUNCTUAL_LIGHT_SHADOW
-                 float3 lightDirectionWS = normalize(_LightPosition - o.worldPos);
-              #else
-                 float3 lightDirectionWS = _LightDirection;
-              #endif
-              // Define shadow pass specific clip position for Universal
-              o.pos = TransformWorldToHClip(ApplyShadowBias(o.worldPos, o.worldNormal, lightDirectionWS));
-              #if UNITY_REVERSED_Z
-                  o.pos.z = min(o.pos.z, UNITY_NEAR_CLIP_VALUE);
-              #else
-                  o.pos.z = max(o.pos.z, UNITY_NEAR_CLIP_VALUE);
-              #endif
-          #elif _PASSMETA
-              o.pos = MetaVertexPosition(float4(v.vertex.xyz, 0), v.texcoord1.xy, v.texcoord2.xy, unity_LightmapST, unity_DynamicLightmapST);
-          #else
-              o.pos = TransformWorldToHClip(o.worldPos);
-          #endif
-
-          // #if %SCREENPOSREQUIREKEY%
-          // o.screenPos = ComputeScreenPos(o.pos, _ProjectionParams.x);
-          // #endif
-
-          
-          #if _PASSFORWARD || _PASSGBUFFER
-              float2 uv1 = v.texcoord1.xy;
-              OUTPUT_LIGHTMAP_UV(uv1, unity_LightmapST, o.lightmapUV);
-              // o.texcoord1.xy = uv1;
-              OUTPUT_SH(o.worldNormal, o.sh);
-              
-              #if defined(DYNAMICLIGHTMAP_ON)
-                   o.dynamicLightmapUV.xy = v.texcoord2.xy * unity_DynamicLightmapST.xy + unity_DynamicLightmapST.zw;
-                   #if UNITY_VERSION >= 60000009
-                     OUTPUT_SH(o.worldNormal, o.sh);
-                   #endif
-              #elif (defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)) && UNITY_VERSION >= 60000009
-                   OUTPUT_SH4(vertexInput.positionWS, o.worldNormal.xyz, GetWorldSpaceNormalizeViewDir(vertexInput.positionWS), o.sh, o.probeOcclusion);
-              #endif
-          #endif
-
-          #ifdef VARYINGS_NEED_FOG_AND_VERTEX_LIGHT
-              half fogFactor = 0;
-              #if defined(_FOG_FRAGMENT)
-                fogFactor = ComputeFogFactor(o.pos.z);
-              #endif
-              #if _BAKEDLIT
-                 o.fogFactorAndVertexLight = half4(fogFactor, 0, 0, 0);
-              #else
-                 half3 vertexLight = VertexLighting(o.worldPos, o.worldNormal);
-                 o.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
-              #endif
-          #endif
-
-          #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
-             o.shadowCoord = GetShadowCoord(vertexInput);
-          #endif
-
-          #if _URP && (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-            #if !defined(TESSELLATION_ON)
-              MotionVectorPositionZBias(o);
-            #endif
-
-            o.previousPositionCS = float4(0.0, 0.0, 0.0, 1.0);
-            // Note: unity_MotionVectorsParams.y is 0 is forceNoMotion is enabled
-            bool forceNoMotion = unity_MotionVectorsParams.y == 0.0;
-
-            if (!forceNoMotion)
-            {
-              #if defined(HAVE_VFX_MODIFICATION)
-                float3 previousPositionOS = currentFrameMvData.vfxParticlePositionOS;
-                #if defined(VFX_FEATURE_MOTION_VECTORS_VERTS)
-                  const bool applyDeformation = false;
-                #else
-                  const bool applyDeformation = true;
-                #endif
-              #else
-                const bool hasDeformation = unity_MotionVectorsParams.x == 1; // Mesh has skinned deformation
-                float3 previousPositionOS = hasDeformation ? previousMesh.previousPositionOS : previousMesh.vertex.xyz;
-
-                #if defined(AUTOMATIC_TIME_BASED_MOTION_VECTORS) && defined(GRAPH_VERTEX_USES_TIME_PARAMETERS_INPUT)
-                  const bool applyDeformation = true;
-                #else
-                  const bool applyDeformation = hasDeformation;
-                #endif
-              #endif
-              // TODO
-              #if defined(FEATURES_GRAPH_VERTEX)
-                if (applyDeformation)
-                  previousPositionOS = GetLastFrameDeformedPosition(previousMesh, currentFrameMvData, previousPositionOS);
-                else
-                  previousPositionOS = previousMesh.positionOS;
-
-                #if defined(FEATURES_GRAPH_VERTEX_MOTION_VECTOR_OUTPUT)
-                  previousPositionOS -= previousMesh.precomputedVelocity;
-                #endif
-              #endif
-
-              #if defined(UNITY_DOTS_INSTANCING_ENABLED) && defined(DOTS_DEFORMED)
-                // Deformed vertices in DOTS are not cumulative with built-in Unity skinning/blend shapes
-                // Needs to be called after vertex modification has been applied otherwise it will be
-                // overwritten by Compute Deform node
-                ApplyPreviousFrameDeformedVertexPosition(previousMesh.vertexID, previousPositionOS);
-              #endif
-              #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                previousPositionOS -= previousMesh.precomputedVelocity;
-              #endif
-              o.positionCS = mul(UNITY_MATRIX_UNJITTERED_VP, float4(positionWS, 1.0f));
-
-              #if defined(HAVE_VFX_MODIFICATION)
-                #if defined(VFX_FEATURE_MOTION_VECTORS_VERTS)
-                  #if defined(FEATURES_GRAPH_VERTEX_MOTION_VECTOR_OUTPUT) || defined(_ADD_PRECOMPUTED_VELOCITY)
-                    #error Unexpected fast path rendering VFX motion vector while there are vertex modification afterwards.
-                  #endif
-                  o.previousPositionCS = VFXGetPreviousClipPosition(previousMesh, currentFrameMvData.vfxElementAttributes, o.positionCS);
-                #else
-                  #if VFX_WORLD_SPACE
-                    //previousPositionOS is already in world space
-                    const float3 previousPositionWS = previousPositionOS;
-                  #else
-                    const float3 previousPositionWS = mul(UNITY_PREV_MATRIX_M, float4(previousPositionOS, 1.0f)).xyz;
-                  #endif
-                  o.previousPositionCS = mul(UNITY_MATRIX_PREV_VP, float4(previousPositionWS, 1.0f));
-                #endif
-              #else
-                o.previousPositionCS = mul(UNITY_MATRIX_PREV_VP, mul(UNITY_PREV_MATRIX_M, float4(previousPositionOS, 1)));
-              #endif
-            }
-          #endif
-
-          return o;
-         }
-
-
-            
-
-            // fragment shader
-            half4 Frag (VertexToPixel IN
-            #ifdef _DEPTHOFFSET_ON
-              , out float outputDepth : SV_Depth
-            #endif
-            #if NEED_FACING
-               , bool facing : SV_IsFrontFace
-            #endif
-            ) : SV_Target
-            {
-               UNITY_SETUP_INSTANCE_ID(IN);
-               UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(IN);
-
-                #if defined(LOD_FADE_CROSSFADE) && USE_UNITY_CROSSFADE
-                    LODFadeCrossFade(IN.pos);
-                #endif
-
-               ShaderData d = CreateShaderData(IN
-                  #if NEED_FACING
-                     , facing
-                  #endif
-               );
-               Surface l = (Surface)0;
-
-               #ifdef _DEPTHOFFSET_ON
-                  l.outputDepth = outputDepth;
-               #endif
-
-               l.Albedo = half3(0.5, 0.5, 0.5);
-               l.Normal = float3(0,0,1);
-               l.Occlusion = 1;
-               l.Alpha = 1;
-
-               ChainSurfaceFunction(l, d);
-
-               #ifdef _DEPTHOFFSET_ON
-                  outputDepth = l.outputDepth;
-               #endif
-
-               return 0;
-
-            }
-
-         ENDHLSL
-
-      }
-
-
-      
-        Pass
-        {
-            Name "Meta"
-            Tags 
-            { 
-                "LightMode" = "Meta"
-            }
-
-            Cull Off
-            
-
-            
-
-            HLSLPROGRAM
-
-               #pragma vertex Vert
-   #pragma fragment Frag
-
-            #if (defined(SHADER_API_GLES) || defined(SHADER_API_GLES3) || defined(SHADER_API_GLES30)) 
-            #pragma target 3.0
-#else
-            #pragma target 4.5
-#endif
-
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
-        
-            #define SHADERPASS SHADERPASS_META
-            #define _PASSMETA 1
-
-
-            
-
-
-   #define _URP 1
-
-#define _UNLIT 1
-
-
-
-            // Includes
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Input.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
-            #include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderGraphFunctions.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/MetaInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
-
-                  #undef WorldNormalVector
-      #define WorldNormalVector(data, normal) mul(normal, data.TBNMatrix)
-      
-      #define UnityObjectToWorldNormal(normal) mul(GetObjectToWorldMatrix(), normal)
-
-      #define _WorldSpaceLightPos0 _MainLightPosition
-      
-      #define UNITY_DECLARE_TEX2D(name) TEXTURE2D(name); SAMPLER(sampler##name);
-      #define UNITY_DECLARE_TEX2D_NOSAMPLER(name) TEXTURE2D(name);
-      #define UNITY_DECLARE_TEX2DARRAY(name) TEXTURE2D_ARRAY(name); SAMPLER(sampler##name);
-      #define UNITY_DECLARE_TEX2DARRAY_NOSAMPLER(name) TEXTURE2D_ARRAY(name);
-
-      #define UNITY_SAMPLE_TEX2DARRAY(tex,coord)            SAMPLE_TEXTURE2D_ARRAY(tex, sampler##tex, coord.xy, coord.z)
-      #define UNITY_SAMPLE_TEX2DARRAY_LOD(tex,coord,lod)    SAMPLE_TEXTURE2D_ARRAY_LOD(tex, sampler##tex, coord.xy, coord.z, lod)
-      #define UNITY_SAMPLE_TEX2D(tex, coord)                SAMPLE_TEXTURE2D(tex, sampler##tex, coord)
-      #define UNITY_SAMPLE_TEX2D_SAMPLER(tex, samp, coord)  SAMPLE_TEXTURE2D(tex, sampler##samp, coord)
-
-      #define UNITY_SAMPLE_TEX2D_LOD(tex,coord, lod)   SAMPLE_TEXTURE2D_LOD(tex, sampler_##tex, coord, lod)
-      #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord, lod) SAMPLE_TEXTURE2D_LOD (tex, sampler##samplertex,coord, lod)
-     
-      #if defined(UNITY_COMPILER_HLSL)
-         #define UNITY_INITIALIZE_OUTPUT(type,name) name = (type)0;
-      #else
-         #define UNITY_INITIALIZE_OUTPUT(type,name)
-      #endif
-
-      #define sampler2D_float sampler2D
-      #define sampler2D_half sampler2D
-
-      
-
-      // data across stages, stripped like the above.
-      struct VertexToPixel
-      {
-         float4 pos : SV_POSITION;
-         float3 worldPos : TEXCOORD0;
-         float3 worldNormal : TEXCOORD1;
-         float4 worldTangent : TEXCOORD2;
-         // float4 texcoord0 : TEXCOORD3;
-         // float4 texcoord1 : TEXCOORD4;
-         // float4 texcoord2 : TEXCOORD5;
-
-         // #if %TEXCOORD3REQUIREKEY%
-         // float4 texcoord3 : TEXCOORD6;
-         // #endif
-
-         // #if %SCREENPOSREQUIREKEY%
-         // float4 screenPos : TEXCOORD7;
-         // #endif
-
-         // #if %VERTEXCOLORREQUIREKEY%
-         // half4 vertexColor : COLOR;
-         // #endif
-
-         #if defined(LIGHTMAP_ON)
-            float2 lightmapUV : TEXCOORD8;
-         #endif
-         #if defined(DYNAMICLIGHTMAP_ON)
-            float2 dynamicLightmapUV : TEXCOORD9;
-         #endif
-         #if !defined(LIGHTMAP_ON)
-            float4 probeOcclusion : TEXCOORD8;
-            float3 sh : TEXCOORD10;
-         #endif
-
-         #if defined(VARYINGS_NEED_FOG_AND_VERTEX_LIGHT)
-            float4 fogFactorAndVertexLight : TEXCOORD11;
-         #endif
-
-         #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
-           float4 shadowCoord : TEXCOORD12;
-         #endif
-
-         // #if %EXTRAV2F0REQUIREKEY%
-         // float4 extraV2F0 : TEXCOORD13;
-         // #endif
-
-         // #if %EXTRAV2F1REQUIREKEY%
-         // float4 extraV2F1 : TEXCOORD14;
-         // #endif
-
-         // #if %EXTRAV2F2REQUIREKEY%
-         // float4 extraV2F2 : TEXCOORD15;
-         // #endif
-
-         // #if %EXTRAV2F3REQUIREKEY%
-         // float4 extraV2F3 : TEXCOORD16;
-         // #endif
-
-         // #if %EXTRAV2F4REQUIREKEY%
-         // float4 extraV2F4 : TEXCOORD17;
-         // #endif
-
-         // #if %EXTRAV2F5REQUIREKEY%
-         // float4 extraV2F5 : TEXCOORD18;
-         // #endif
-
-         // #if %EXTRAV2F6REQUIREKEY%
-         // float4 extraV2F6 : TEXCOORD19;
-         // #endif
-
-         // #if %EXTRAV2F7REQUIREKEY%
-         // float4 extraV2F7 : TEXCOORD20;
-         // #endif
-
-         #if UNITY_ANY_INSTANCING_ENABLED
-         uint instanceID : CUSTOM_INSTANCE_ID;
-         #endif
-         #if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
-         uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
-         #endif
-         #if (defined(UNITY_STEREO_INSTANCING_ENABLED))
-         uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
-         #endif
-         #if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
-         FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
-         #endif
-
-         #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-            float4 previousPositionCS : TEXCOORD21; // Contain previous transform position (in case of skinning for example)
-            float4 positionCS : TEXCOORD22;
-         #endif
-      };
-
-
-            
-            
-            // data describing the user output of a pixel
-            struct Surface
-            {
-               half3 Albedo;
-               half Height;
-               half3 Normal;
-               half Smoothness;
-               half3 Emission;
-               half Metallic;
-               half3 Specular;
-               half Occlusion;
-               half SpecularPower; // for simple lighting
-               half Alpha;
-               float outputDepth; // if written, SV_Depth semantic is used. ShaderData.clipPos.z is unused value
-               // HDRP Only
-               half SpecularOcclusion;
-               half SubsurfaceMask;
-               half Thickness;
-               half CoatMask;
-               half CoatSmoothness;
-               half Anisotropy;
-               half IridescenceMask;
-               half IridescenceThickness;
-               int DiffusionProfileHash;
-               float SpecularAAThreshold;
-               float SpecularAAScreenSpaceVariance;
-               // requires _OVERRIDE_BAKEDGI to be defined, but is mapped in all pipelines
-               float3 DiffuseGI;
-               float3 BackDiffuseGI;
-               float3 SpecularGI;
-               float ior;
-               float3 transmittanceColor;
-               float atDistance;
-               float transmittanceMask;
-               // requires _OVERRIDE_SHADOWMASK to be defines
-               float4 ShadowMask;
-
-               // for decals
-               float NormalAlpha;
-               float MAOSAlpha;
-
-
-            };
-
-            // Data the user declares in blackboard blocks
-            struct Blackboard
-            {
-                
-                float blackboardDummyData;
-            };
-
-            // data the user might need, this will grow to be big. But easy to strip
-            struct ShaderData
-            {
-               float4 clipPos; // SV_POSITION
-               float3 localSpacePosition;
-               float3 localSpaceNormal;
-               float3 localSpaceTangent;
-        
-               float3 worldSpacePosition;
-               float3 worldSpaceNormal;
-               float3 worldSpaceTangent;
-               float tangentSign;
-
-               float3 worldSpaceViewDir;
-               float3 tangentSpaceViewDir;
-
-               float4 texcoord0;
-               float4 texcoord1;
-               float4 texcoord2;
-               float4 texcoord3;
-
-               float2 screenUV;
-               float4 screenPos;
-
-               float4 vertexColor;
-               bool isFrontFace;
-
-               float4 extraV2F0;
-               float4 extraV2F1;
-               float4 extraV2F2;
-               float4 extraV2F3;
-               float4 extraV2F4;
-               float4 extraV2F5;
-               float4 extraV2F6;
-               float4 extraV2F7;
-
-               float3x3 TBNMatrix;
-               Blackboard blackboard;
-            };
-
-            struct VertexData
-            {
-               #if SHADER_TARGET > 30
-               // uint vertexID : SV_VertexID;
-               #endif
-               float4 vertex : POSITION;
-               float3 normal : NORMAL;
-               float4 tangent : TANGENT;
-               float4 texcoord0 : TEXCOORD0;
-
-               // optimize out mesh coords when not in use by user or lighting system
-               #if _URP && (_USINGTEXCOORD1 || _PASSMETA || _PASSFORWARD || _PASSGBUFFER)
-                  float4 texcoord1 : TEXCOORD1;
-               #endif
-
-               #if _URP && (_USINGTEXCOORD2 || _PASSMETA || ((_PASSFORWARD || _PASSGBUFFER) && defined(DYNAMICLIGHTMAP_ON)))
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-               #if _STANDARD && (_USINGTEXCOORD1 || (_PASSMETA || ((_PASSFORWARD || _PASSGBUFFER || _PASSFORWARDADD) && LIGHTMAP_ON)))
-                  float4 texcoord1 : TEXCOORD1;
-               #endif
-               #if _STANDARD && (_USINGTEXCOORD2 || (_PASSMETA || ((_PASSFORWARD || _PASSGBUFFER) && DYNAMICLIGHTMAP_ON)))
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-
-               #if _HDRP
-                  float4 texcoord1 : TEXCOORD1;
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-               // #if %TEXCOORD3REQUIREKEY%
-               // float4 texcoord3 : TEXCOORD3;
-               // #endif
-
-               // #if %VERTEXCOLORREQUIREKEY%
-               // float4 vertexColor : COLOR;
-               // #endif
-
-               #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-                  float3 previousPositionOS : TEXCOORD4; // Contain previous transform position (in case of skinning for example)
-                  #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                     float3 precomputedVelocity    : TEXCOORD5; // Add Precomputed Velocity (Alembic computes velocities on runtime side).
-                  #endif
-               #endif
-
-               UNITY_VERTEX_INPUT_INSTANCE_ID
-            };
-
-            struct TessVertex 
-            {
-               float4 vertex : INTERNALTESSPOS;
-               float3 normal : NORMAL;
-               float4 tangent : TANGENT;
-               float4 texcoord0 : TEXCOORD0;
-               float4 texcoord1 : TEXCOORD1;
-               float4 texcoord2 : TEXCOORD2;
-
-               // #if %TEXCOORD3REQUIREKEY%
-               // float4 texcoord3 : TEXCOORD3;
-               // #endif
-
-               // #if %VERTEXCOLORREQUIREKEY%
-               // float4 vertexColor : COLOR;
-               // #endif
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // float4 extraV2F0 : TEXCOORD5;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // float4 extraV2F1 : TEXCOORD6;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // float4 extraV2F2 : TEXCOORD7;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // float4 extraV2F3 : TEXCOORD8;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // float4 extraV2F4 : TEXCOORD9;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // float4 extraV2F5 : TEXCOORD10;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // float4 extraV2F6 : TEXCOORD11;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // float4 extraV2F7 : TEXCOORD12;
-               // #endif
-
-               #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-                  float3 previousPositionOS : TEXCOORD13; // Contain previous transform position (in case of skinning for example)
-                  #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                     float3 precomputedVelocity : TEXCOORD14;
-                  #endif
-               #endif
-
-               UNITY_VERTEX_INPUT_INSTANCE_ID
-               UNITY_VERTEX_OUTPUT_STEREO
-            };
-
-            struct ExtraV2F
-            {
-               float4 extraV2F0;
-               float4 extraV2F1;
-               float4 extraV2F2;
-               float4 extraV2F3;
-               float4 extraV2F4;
-               float4 extraV2F5;
-               float4 extraV2F6;
-               float4 extraV2F7;
-               Blackboard blackboard;
-               float4 time;
-            };
-
-
-            float3 WorldToTangentSpace(ShaderData d, float3 normal)
-            {
-               return mul(d.TBNMatrix, normal);
-            }
-
-            float3 TangentToWorldSpace(ShaderData d, float3 normal)
-            {
-               return mul(normal, d.TBNMatrix);
-            }
-
-            // in this case, make standard more like SRPs, because we can't fix
-            // unity_WorldToObject in HDRP, since it already does macro-fu there
-
-            #if _STANDARD
-               float3 TransformWorldToObject(float3 p) { return mul(unity_WorldToObject, float4(p, 1)); };
-               float3 TransformObjectToWorld(float3 p) { return mul(unity_ObjectToWorld, float4(p, 1)); };
-               float4 TransformWorldToObject(float4 p) { return mul(unity_WorldToObject, p); };
-               float4 TransformObjectToWorld(float4 p) { return mul(unity_ObjectToWorld, p); };
-               float4x4 GetWorldToObjectMatrix() { return unity_WorldToObject; }
-               float4x4 GetObjectToWorldMatrix() { return unity_ObjectToWorld; }
-               #if (defined(SHADER_API_D3D11) || defined(SHADER_API_XBOXONE) || defined(UNITY_COMPILER_HLSLCC) || defined(SHADER_API_PSSL) || (SHADER_TARGET_SURFACE_ANALYSIS && !SHADER_TARGET_SURFACE_ANALYSIS_MOJOSHADER))
-                 #define UNITY_SAMPLE_TEX2D_LOD(tex,coord, lod) tex.SampleLevel (sampler##tex,coord, lod)
-                 #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord, lod) tex.SampleLevel (sampler##samplertex,coord, lod)
-              #else
-                 #define UNITY_SAMPLE_TEX2D_LOD(tex,coord,lod) tex2D (tex,coord,0,lod)
-                 #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord,lod) tex2D (tex,coord,0,lod)
-              #endif
-
-               #undef GetWorldToObjectMatrix()
-
-               #define GetWorldToObjectMatrix()   unity_WorldToObject
-
-
-            #endif
-
-            float3 GetCameraWorldPosition()
-            {
-               #if _HDRP
-                  return GetCameraRelativePositionWS(_WorldSpaceCameraPos);
-               #else
-                  return _WorldSpaceCameraPos;
-               #endif
-            }
-
-            #if _GRABPASSUSED
-               #if _STANDARD
-                  TEXTURE2D(%GRABTEXTURE%);
-                  SAMPLER(sampler_%GRABTEXTURE%);
-               #endif
-
-               half3 GetSceneColor(float2 uv)
-               {
-                  #if _STANDARD
-                     return SAMPLE_TEXTURE2D(%GRABTEXTURE%, sampler_%GRABTEXTURE%, uv).rgb;
-                  #else
-                     return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv);
-                  #endif
-               }
-            #endif
-
-
-      
-            #if _STANDARD
-               UNITY_DECLARE_DEPTH_TEXTURE(_CameraDepthTexture);
-               float GetSceneDepth(float2 uv) { return SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv); }
-               float GetLinear01Depth(float2 uv) { return Linear01Depth(GetSceneDepth(uv)); }
-               float GetLinearEyeDepth(float2 uv) { return LinearEyeDepth(GetSceneDepth(uv)); } 
-            #else
-               float GetSceneDepth(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv); }
-               float GetLinear01Depth(float2 uv) { return Linear01Depth(GetSceneDepth(uv), _ZBufferParams); }
-               float GetLinearEyeDepth(float2 uv) { return LinearEyeDepth(GetSceneDepth(uv), _ZBufferParams); } 
-            #endif
-
-            float3 GetWorldPositionFromDepthBuffer(float2 uv, float3 worldSpaceViewDir)
-            {
-               float eye = GetLinearEyeDepth(uv);
-               float3 camView = mul((float3x3)GetObjectToWorldMatrix(), transpose(mul(GetWorldToObjectMatrix(), UNITY_MATRIX_I_V)) [2].xyz);
-
-               float dt = dot(worldSpaceViewDir, camView);
-               float3 div = worldSpaceViewDir/dt;
-               float3 wpos = (eye * div) + GetCameraWorldPosition();
-               return wpos;
-            }
-
-            #if _HDRP
-            float3 ObjectToWorldSpacePosition(float3 pos)
-            {
-               return GetAbsolutePositionWS(TransformObjectToWorld(pos));
-            }
-            #else
-            float3 ObjectToWorldSpacePosition(float3 pos)
-            {
-               return TransformObjectToWorld(pos);
-            }
-            #endif
-
-            #if _STANDARD
-               UNITY_DECLARE_SCREENSPACE_TEXTURE(_CameraDepthNormalsTexture);
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  float4 depthNorms = UNITY_SAMPLE_SCREENSPACE_TEXTURE(_CameraDepthNormalsTexture, uv);
-                  float3 norms = DecodeViewNormalStereo(depthNorms);
-                  norms = mul((float3x3)GetWorldToViewMatrix(), norms) * 0.5 + 0.5;
-                  return norms;
-               }
-            #elif _HDRP && !_DECALSHADER
-               
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  NormalData nd;
-                  DecodeFromNormalBuffer(_ScreenSize.xy * uv, nd);
-                  return nd.normalWS;
-               }
-            #elif _URP
-               #if (SHADER_LIBRARY_VERSION_MAJOR >= 10)
-                  #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareNormalsTexture.hlsl"
-               #endif
-
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  #if (SHADER_LIBRARY_VERSION_MAJOR >= 10)
-                     return SampleSceneNormals(uv);
-                  #else
-                     float3 wpos = GetWorldPositionFromDepthBuffer(uv, worldSpaceViewDir);
-                     return normalize(-cross(ddx(wpos), ddy(wpos))) * 0.5 + 0.5;
-                  #endif
-
-                }
-             #endif
-
-             #if _HDRP
-
-               half3 UnpackNormalmapRGorAG(half4 packednormal)
-               {
-                     // This do the trick
-                  packednormal.x *= packednormal.w;
-
-                  half3 normal;
-                  normal.xy = packednormal.xy * 2 - 1;
-                  normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
-                  return normal;
-               }
-               half3 UnpackNormal(half4 packednormal)
-               {
-                  #if defined(UNITY_NO_DXT5nm)
-                     return packednormal.xyz * 2 - 1;
-                  #else
-                     return UnpackNormalmapRGorAG(packednormal);
-                  #endif
-               }
-            #endif
-            #if _HDRP || _URP
-
-               half3 UnpackScaleNormal(half4 packednormal, half scale)
-               {
-                 #ifndef UNITY_NO_DXT5nm
-                   // Unpack normal as DXT5nm (1, y, 1, x) or BC5 (x, y, 0, 1)
-                   // Note neutral texture like "bump" is (0, 0, 1, 1) to work with both plain RGB normal and DXT5nm/BC5
-                   packednormal.x *= packednormal.w;
-                 #endif
-                   half3 normal;
-                   normal.xy = (packednormal.xy * 2 - 1) * scale;
-                   normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
-                   return normal;
-               }	
-
-             #endif
-
-
-            void GetSun(out float3 lightDir, out float3 color)
-            {
-               lightDir = float3(0.5, 0.5, 0);
-               color = 1;
-               #if _HDRP
-                  if (_DirectionalLightCount > 0)
-                  {
-                     DirectionalLightData light = _DirectionalLightDatas[0];
-                     lightDir = -light.forward.xyz;
-                     color = light.color;
-                  }
-               #elif _STANDARD
-			         lightDir = normalize(_WorldSpaceLightPos0.xyz);
-                  color = _LightColor0.rgb;
-               #elif _URP
-	               Light light = GetMainLight();
-	               lightDir = light.direction;
-	               color = light.color;
-               #endif
-            }
-
-
-            
-            CBUFFER_START(UnityPerMaterial)
-
-               
-
-
-
-            CBUFFER_END
-
-            
-
-            
-
-            
-
-
-
-        
-            void ChainSurfaceFunction(inout Surface l, inout ShaderData d)
-            {
-                 // Ext_SurfaceFunction0(l, d);
-                 // Ext_SurfaceFunction1(l, d);
-                 // Ext_SurfaceFunction2(l, d);
-                 // Ext_SurfaceFunction3(l, d);
-                 // Ext_SurfaceFunction4(l, d);
-                 // Ext_SurfaceFunction5(l, d);
-                 // Ext_SurfaceFunction6(l, d);
-                 // Ext_SurfaceFunction7(l, d);
-                 // Ext_SurfaceFunction8(l, d);
-                 // Ext_SurfaceFunction9(l, d);
-		           // Ext_SurfaceFunction10(l, d);
-                 // Ext_SurfaceFunction11(l, d);
-                 // Ext_SurfaceFunction12(l, d);
-                 // Ext_SurfaceFunction13(l, d);
-                 // Ext_SurfaceFunction14(l, d);
-                 // Ext_SurfaceFunction15(l, d);
-                 // Ext_SurfaceFunction16(l, d);
-                 // Ext_SurfaceFunction17(l, d);
-                 // Ext_SurfaceFunction18(l, d);
-		           // Ext_SurfaceFunction19(l, d);
-                 // Ext_SurfaceFunction20(l, d);
-                 // Ext_SurfaceFunction21(l, d);
-                 // Ext_SurfaceFunction22(l, d);
-                 // Ext_SurfaceFunction23(l, d);
-                 // Ext_SurfaceFunction24(l, d);
-                 // Ext_SurfaceFunction25(l, d);
-                 // Ext_SurfaceFunction26(l, d);
-                 // Ext_SurfaceFunction27(l, d);
-                 // Ext_SurfaceFunction28(l, d);
-		           // Ext_SurfaceFunction29(l, d);
-            }
-
-#if !_DECALSHADER
-
-            void ChainModifyVertex(inout VertexData v, inout VertexToPixel v2p, float4 time)
-            {
-                 ExtraV2F d;
-                 
-                 ZERO_INITIALIZE(ExtraV2F, d);
-                 ZERO_INITIALIZE(Blackboard, d.blackboard);
-                 // due to motion vectors in HDRP, we need to use the last
-                 // time in certain spots. So if you are going to use _Time to adjust vertices,
-                 // you need to use this time or motion vectors will break. 
-                 d.time = time;
-
-                 //  Ext_ModifyVertex0(v, d);
-                 // Ext_ModifyVertex1(v, d);
-                 // Ext_ModifyVertex2(v, d);
-                 // Ext_ModifyVertex3(v, d);
-                 // Ext_ModifyVertex4(v, d);
-                 // Ext_ModifyVertex5(v, d);
-                 // Ext_ModifyVertex6(v, d);
-                 // Ext_ModifyVertex7(v, d);
-                 // Ext_ModifyVertex8(v, d);
-                 // Ext_ModifyVertex9(v, d);
-                 // Ext_ModifyVertex10(v, d);
-                 // Ext_ModifyVertex11(v, d);
-                 // Ext_ModifyVertex12(v, d);
-                 // Ext_ModifyVertex13(v, d);
-                 // Ext_ModifyVertex14(v, d);
-                 // Ext_ModifyVertex15(v, d);
-                 // Ext_ModifyVertex16(v, d);
-                 // Ext_ModifyVertex17(v, d);
-                 // Ext_ModifyVertex18(v, d);
-                 // Ext_ModifyVertex19(v, d);
-                 // Ext_ModifyVertex20(v, d);
-                 // Ext_ModifyVertex21(v, d);
-                 // Ext_ModifyVertex22(v, d);
-                 // Ext_ModifyVertex23(v, d);
-                 // Ext_ModifyVertex24(v, d);
-                 // Ext_ModifyVertex25(v, d);
-                 // Ext_ModifyVertex26(v, d);
-                 // Ext_ModifyVertex27(v, d);
-                 // Ext_ModifyVertex28(v, d);
-                 // Ext_ModifyVertex29(v, d);
-
-
-                 // #if %EXTRAV2F0REQUIREKEY%
-                 // v2p.extraV2F0 = d.extraV2F0;
-                 // #endif
-
-                 // #if %EXTRAV2F1REQUIREKEY%
-                 // v2p.extraV2F1 = d.extraV2F1;
-                 // #endif
-
-                 // #if %EXTRAV2F2REQUIREKEY%
-                 // v2p.extraV2F2 = d.extraV2F2;
-                 // #endif
-
-                 // #if %EXTRAV2F3REQUIREKEY%
-                 // v2p.extraV2F3 = d.extraV2F3;
-                 // #endif
-
-                 // #if %EXTRAV2F4REQUIREKEY%
-                 // v2p.extraV2F4 = d.extraV2F4;
-                 // #endif
-
-                 // #if %EXTRAV2F5REQUIREKEY%
-                 // v2p.extraV2F5 = d.extraV2F5;
-                 // #endif
-
-                 // #if %EXTRAV2F6REQUIREKEY%
-                 // v2p.extraV2F6 = d.extraV2F6;
-                 // #endif
-
-                 // #if %EXTRAV2F7REQUIREKEY%
-                 // v2p.extraV2F7 = d.extraV2F7;
-                 // #endif
-            }
-
-            void ChainModifyTessellatedVertex(inout VertexData v, inout VertexToPixel v2p)
-            {
-               ExtraV2F d;
-               ZERO_INITIALIZE(ExtraV2F, d);
-               ZERO_INITIALIZE(Blackboard, d.blackboard);
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // d.extraV2F0 = v2p.extraV2F0;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // d.extraV2F1 = v2p.extraV2F1;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // d.extraV2F2 = v2p.extraV2F2;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // d.extraV2F3 = v2p.extraV2F3;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // d.extraV2F4 = v2p.extraV2F4;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // d.extraV2F5 = v2p.extraV2F5;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // d.extraV2F6 = v2p.extraV2F6;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // d.extraV2F7 = v2p.extraV2F7;
-               // #endif
-
-
-               // Ext_ModifyTessellatedVertex0(v, d);
-               // Ext_ModifyTessellatedVertex1(v, d);
-               // Ext_ModifyTessellatedVertex2(v, d);
-               // Ext_ModifyTessellatedVertex3(v, d);
-               // Ext_ModifyTessellatedVertex4(v, d);
-               // Ext_ModifyTessellatedVertex5(v, d);
-               // Ext_ModifyTessellatedVertex6(v, d);
-               // Ext_ModifyTessellatedVertex7(v, d);
-               // Ext_ModifyTessellatedVertex8(v, d);
-               // Ext_ModifyTessellatedVertex9(v, d);
-               // Ext_ModifyTessellatedVertex10(v, d);
-               // Ext_ModifyTessellatedVertex11(v, d);
-               // Ext_ModifyTessellatedVertex12(v, d);
-               // Ext_ModifyTessellatedVertex13(v, d);
-               // Ext_ModifyTessellatedVertex14(v, d);
-               // Ext_ModifyTessellatedVertex15(v, d);
-               // Ext_ModifyTessellatedVertex16(v, d);
-               // Ext_ModifyTessellatedVertex17(v, d);
-               // Ext_ModifyTessellatedVertex18(v, d);
-               // Ext_ModifyTessellatedVertex19(v, d);
-               // Ext_ModifyTessellatedVertex20(v, d);
-               // Ext_ModifyTessellatedVertex21(v, d);
-               // Ext_ModifyTessellatedVertex22(v, d);
-               // Ext_ModifyTessellatedVertex23(v, d);
-               // Ext_ModifyTessellatedVertex24(v, d);
-               // Ext_ModifyTessellatedVertex25(v, d);
-               // Ext_ModifyTessellatedVertex26(v, d);
-               // Ext_ModifyTessellatedVertex27(v, d);
-               // Ext_ModifyTessellatedVertex28(v, d);
-               // Ext_ModifyTessellatedVertex29(v, d);
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // v2p.extraV2F0 = d.extraV2F0;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // v2p.extraV2F1 = d.extraV2F1;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // v2p.extraV2F2 = d.extraV2F2;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // v2p.extraV2F3 = d.extraV2F3;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // v2p.extraV2F4 = d.extraV2F4;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // v2p.extraV2F5 = d.extraV2F5;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // v2p.extraV2F6 = d.extraV2F6;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // v2p.extraV2F7 = d.extraV2F7;
-               // #endif
-            }
-
-            void ChainFinalColorForward(inout Surface l, inout ShaderData d, inout half4 color)
-            {
-               //   Ext_FinalColorForward0(l, d, color);
-               //   Ext_FinalColorForward1(l, d, color);
-               //   Ext_FinalColorForward2(l, d, color);
-               //   Ext_FinalColorForward3(l, d, color);
-               //   Ext_FinalColorForward4(l, d, color);
-               //   Ext_FinalColorForward5(l, d, color);
-               //   Ext_FinalColorForward6(l, d, color);
-               //   Ext_FinalColorForward7(l, d, color);
-               //   Ext_FinalColorForward8(l, d, color);
-               //   Ext_FinalColorForward9(l, d, color);
-               //  Ext_FinalColorForward10(l, d, color);
-               //  Ext_FinalColorForward11(l, d, color);
-               //  Ext_FinalColorForward12(l, d, color);
-               //  Ext_FinalColorForward13(l, d, color);
-               //  Ext_FinalColorForward14(l, d, color);
-               //  Ext_FinalColorForward15(l, d, color);
-               //  Ext_FinalColorForward16(l, d, color);
-               //  Ext_FinalColorForward17(l, d, color);
-               //  Ext_FinalColorForward18(l, d, color);
-               //  Ext_FinalColorForward19(l, d, color);
-               //  Ext_FinalColorForward20(l, d, color);
-               //  Ext_FinalColorForward21(l, d, color);
-               //  Ext_FinalColorForward22(l, d, color);
-               //  Ext_FinalColorForward23(l, d, color);
-               //  Ext_FinalColorForward24(l, d, color);
-               //  Ext_FinalColorForward25(l, d, color);
-               //  Ext_FinalColorForward26(l, d, color);
-               //  Ext_FinalColorForward27(l, d, color);
-               //  Ext_FinalColorForward28(l, d, color);
-               //  Ext_FinalColorForward29(l, d, color);
-            }
-
-            void ChainFinalGBufferStandard(inout Surface s, inout ShaderData d, inout half4 GBuffer0, inout half4 GBuffer1, inout half4 GBuffer2, inout half4 outEmission, inout half4 outShadowMask)
-            {
-               //   Ext_FinalGBufferStandard0(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard1(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard2(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard3(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard4(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard5(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard6(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard7(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard8(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard9(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard10(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard11(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard12(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard13(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard14(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard15(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard16(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard17(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard18(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard19(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard20(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard21(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard22(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard23(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard24(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard25(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard26(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard27(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard28(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard29(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-            }
-#endif
-
-
-            
-
-
-#if _DECALSHADER
-
-        ShaderData CreateShaderData(SurfaceDescriptionInputs IN)
-        {
-            ShaderData d = (ShaderData)0;
-            d.TBNMatrix = float3x3(IN.WorldSpaceTangent, IN.WorldSpaceBiTangent, IN.WorldSpaceNormal);
-            d.worldSpaceNormal = IN.WorldSpaceNormal;
-            d.worldSpaceTangent = IN.WorldSpaceTangent;
-
-            d.worldSpacePosition = IN.WorldSpacePosition;
-            d.texcoord0 = IN.uv0.xyxy;
-            d.screenPos = IN.ScreenPosition;
-
-            d.worldSpaceViewDir = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
-
-            d.tangentSpaceViewDir = mul(d.TBNMatrix, d.worldSpaceViewDir);
-
-            // these rarely get used, so we back transform them. Usually will be stripped.
-            #if _HDRP
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(GetCameraRelativePositionWS(d.worldSpacePosition), 1)).xyz;
-            #else
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(d.worldSpacePosition, 1)).xyz;
-            #endif
-            // d.localSpaceNormal = normalize(mul((float3x3)GetWorldToObjectMatrix(), d.worldSpaceNormal));
-            // d.localSpaceTangent = normalize(mul((float3x3)GetWorldToObjectMatrix(), d.worldSpaceTangent.xyz));
-
-            // #if %SCREENPOSREQUIREKEY%
-            // d.screenUV = (IN.ScreenPosition.xy / max(0.01, IN.ScreenPosition.w));
-            // #endif
-
-            return d;
-        }
-#else
-
-         ShaderData CreateShaderData(VertexToPixel i
-                  #if NEED_FACING
-                     , bool facing
-                  #endif
-         )
-         {
-            ShaderData d = (ShaderData)0;
-            d.clipPos = i.pos;
-            d.worldSpacePosition = i.worldPos;
-
-            d.worldSpaceNormal = normalize(i.worldNormal);
-            d.worldSpaceTangent.xyz = normalize(i.worldTangent.xyz);
-
-            d.tangentSign = i.worldTangent.w * unity_WorldTransformParams.w;
-            float3 bitangent = cross(d.worldSpaceTangent.xyz, d.worldSpaceNormal) * d.tangentSign;
-           
-            d.TBNMatrix = float3x3(d.worldSpaceTangent, -bitangent, d.worldSpaceNormal);
-            d.worldSpaceViewDir = normalize(_WorldSpaceCameraPos - i.worldPos);
-
-            d.tangentSpaceViewDir = mul(d.TBNMatrix, d.worldSpaceViewDir);
-            // d.texcoord0 = i.texcoord0;
-            // d.texcoord1 = i.texcoord1;
-            // d.texcoord2 = i.texcoord2;
-
-            // #if %TEXCOORD3REQUIREKEY%
-            // d.texcoord3 = i.texcoord3;
-            // #endif
-
-            // d.isFrontFace = facing;
-            // #if %VERTEXCOLORREQUIREKEY%
-            // d.vertexColor = i.vertexColor;
-            // #endif
-
-            // these rarely get used, so we back transform them. Usually will be stripped.
-            #if _HDRP
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(GetCameraRelativePositionWS(i.worldPos), 1)).xyz;
-            #else
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(i.worldPos, 1)).xyz;
-            #endif
-            // d.localSpaceNormal = normalize(mul((float3x3)GetWorldToObjectMatrix(), i.worldNormal));
-            // d.localSpaceTangent = normalize(mul((float3x3)GetWorldToObjectMatrix(), i.worldTangent.xyz));
-
-            // #if %SCREENPOSREQUIREKEY%
-            // d.screenPos = i.screenPos;
-            // d.screenUV = (i.screenPos.xy / i.screenPos.w);
-            // #endif
-
-
-            // #if %EXTRAV2F0REQUIREKEY%
-            // d.extraV2F0 = i.extraV2F0;
-            // #endif
-
-            // #if %EXTRAV2F1REQUIREKEY%
-            // d.extraV2F1 = i.extraV2F1;
-            // #endif
-
-            // #if %EXTRAV2F2REQUIREKEY%
-            // d.extraV2F2 = i.extraV2F2;
-            // #endif
-
-            // #if %EXTRAV2F3REQUIREKEY%
-            // d.extraV2F3 = i.extraV2F3;
-            // #endif
-
-            // #if %EXTRAV2F4REQUIREKEY%
-            // d.extraV2F4 = i.extraV2F4;
-            // #endif
-
-            // #if %EXTRAV2F5REQUIREKEY%
-            // d.extraV2F5 = i.extraV2F5;
-            // #endif
-
-            // #if %EXTRAV2F6REQUIREKEY%
-            // d.extraV2F6 = i.extraV2F6;
-            // #endif
-
-            // #if %EXTRAV2F7REQUIREKEY%
-            // d.extraV2F7 = i.extraV2F7;
-            // #endif
-
-            return d;
-         }
-
-#endif
-
-            
-         #if defined(_PASSSHADOW)
-            float3 _LightDirection;
-            float3 _LightPosition;
-         #endif
-
-         #if (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-
-            #define GetWorldToViewMatrix()     _ViewMatrix
-            #define UNITY_MATRIX_I_V   _InvViewMatrix
-            #define GetViewToHClipMatrix()     OptimizeProjectionMatrix(_ProjMatrix)
-            #define UNITY_MATRIX_I_P   _InvProjMatrix
-            #define GetWorldToHClipMatrix()    _ViewProjMatrix
-            #define UNITY_MATRIX_I_VP  _InvViewProjMatrix
-            #define UNITY_MATRIX_UNJITTERED_VP _NonJitteredViewProjMatrix
-            #define UNITY_MATRIX_PREV_VP _PrevViewProjMatrix
-            #define UNITY_MATRIX_PREV_I_VP _PrevInvViewProjMatrix
-
-            void MotionVectorPositionZBias(VertexToPixel input)
-            {
-                #if UNITY_REVERSED_Z
-                input.pos.z -= unity_MotionVectorsParams.z * input.pos.w;
-                #else
-                input.pos.z += unity_MotionVectorsParams.z * input.pos.w;
-                #endif
-            }
-
-        #endif
-
-         // vertex shader
-         VertexToPixel Vert (VertexData v)
-         {
-           VertexToPixel o = (VertexToPixel)0;
-
-           UNITY_SETUP_INSTANCE_ID(v);
-           UNITY_TRANSFER_INSTANCE_ID(v, o);
-           UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-
-            
-           #if _URP && (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-             VertexData previousMesh = v;
-           #endif
-           #if !_TESSELLATION_ON
-             ChainModifyVertex(v, o, _Time);
-           #endif
-
-           // o.texcoord0 = v.texcoord0;
-           // o.texcoord1 = v.texcoord1;
-           // o.texcoord2 = v.texcoord2;
-
-           // #if %TEXCOORD3REQUIREKEY%
-           // o.texcoord3 = v.texcoord3;
-           // #endif
-
-           // #if %VERTEXCOLORREQUIREKEY%
-           // o.vertexColor = v.vertexColor;
-           // #endif
-
-           // This return the camera relative position (if enable)
-           float3 positionWS = TransformObjectToWorld(v.vertex.xyz);
-           float3 normalWS = TransformObjectToWorldNormal(v.normal);
-           float4 tangentWS = float4(TransformObjectToWorldDir(v.tangent.xyz), v.tangent.w);
-           
-           VertexPositionInputs vertexInput = GetVertexPositionInputs(v.vertex.xyz);
-           o.worldPos = positionWS;
-           o.worldNormal = normalWS;
-           o.worldTangent = tangentWS;
-
-
-          // For some very odd reason, in 2021.2, we can't use Unity's defines, but have to use our own..
-          #if _PASSSHADOW
-              #if _CASTING_PUNCTUAL_LIGHT_SHADOW
-                 float3 lightDirectionWS = normalize(_LightPosition - o.worldPos);
-              #else
-                 float3 lightDirectionWS = _LightDirection;
-              #endif
-              // Define shadow pass specific clip position for Universal
-              o.pos = TransformWorldToHClip(ApplyShadowBias(o.worldPos, o.worldNormal, lightDirectionWS));
-              #if UNITY_REVERSED_Z
-                  o.pos.z = min(o.pos.z, UNITY_NEAR_CLIP_VALUE);
-              #else
-                  o.pos.z = max(o.pos.z, UNITY_NEAR_CLIP_VALUE);
-              #endif
-          #elif _PASSMETA
-              o.pos = MetaVertexPosition(float4(v.vertex.xyz, 0), v.texcoord1.xy, v.texcoord2.xy, unity_LightmapST, unity_DynamicLightmapST);
-          #else
-              o.pos = TransformWorldToHClip(o.worldPos);
-          #endif
-
-          // #if %SCREENPOSREQUIREKEY%
-          // o.screenPos = ComputeScreenPos(o.pos, _ProjectionParams.x);
-          // #endif
-
-          
-          #if _PASSFORWARD || _PASSGBUFFER
-              float2 uv1 = v.texcoord1.xy;
-              OUTPUT_LIGHTMAP_UV(uv1, unity_LightmapST, o.lightmapUV);
-              // o.texcoord1.xy = uv1;
-              OUTPUT_SH(o.worldNormal, o.sh);
-              
-              #if defined(DYNAMICLIGHTMAP_ON)
-                   o.dynamicLightmapUV.xy = v.texcoord2.xy * unity_DynamicLightmapST.xy + unity_DynamicLightmapST.zw;
-                   #if UNITY_VERSION >= 60000009
-                     OUTPUT_SH(o.worldNormal, o.sh);
-                   #endif
-              #elif (defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)) && UNITY_VERSION >= 60000009
-                   OUTPUT_SH4(vertexInput.positionWS, o.worldNormal.xyz, GetWorldSpaceNormalizeViewDir(vertexInput.positionWS), o.sh, o.probeOcclusion);
-              #endif
-          #endif
-
-          #ifdef VARYINGS_NEED_FOG_AND_VERTEX_LIGHT
-              half fogFactor = 0;
-              #if defined(_FOG_FRAGMENT)
-                fogFactor = ComputeFogFactor(o.pos.z);
-              #endif
-              #if _BAKEDLIT
-                 o.fogFactorAndVertexLight = half4(fogFactor, 0, 0, 0);
-              #else
-                 half3 vertexLight = VertexLighting(o.worldPos, o.worldNormal);
-                 o.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
-              #endif
-          #endif
-
-          #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
-             o.shadowCoord = GetShadowCoord(vertexInput);
-          #endif
-
-          #if _URP && (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-            #if !defined(TESSELLATION_ON)
-              MotionVectorPositionZBias(o);
-            #endif
-
-            o.previousPositionCS = float4(0.0, 0.0, 0.0, 1.0);
-            // Note: unity_MotionVectorsParams.y is 0 is forceNoMotion is enabled
-            bool forceNoMotion = unity_MotionVectorsParams.y == 0.0;
-
-            if (!forceNoMotion)
-            {
-              #if defined(HAVE_VFX_MODIFICATION)
-                float3 previousPositionOS = currentFrameMvData.vfxParticlePositionOS;
-                #if defined(VFX_FEATURE_MOTION_VECTORS_VERTS)
-                  const bool applyDeformation = false;
-                #else
-                  const bool applyDeformation = true;
-                #endif
-              #else
-                const bool hasDeformation = unity_MotionVectorsParams.x == 1; // Mesh has skinned deformation
-                float3 previousPositionOS = hasDeformation ? previousMesh.previousPositionOS : previousMesh.vertex.xyz;
-
-                #if defined(AUTOMATIC_TIME_BASED_MOTION_VECTORS) && defined(GRAPH_VERTEX_USES_TIME_PARAMETERS_INPUT)
-                  const bool applyDeformation = true;
-                #else
-                  const bool applyDeformation = hasDeformation;
-                #endif
-              #endif
-              // TODO
-              #if defined(FEATURES_GRAPH_VERTEX)
-                if (applyDeformation)
-                  previousPositionOS = GetLastFrameDeformedPosition(previousMesh, currentFrameMvData, previousPositionOS);
-                else
-                  previousPositionOS = previousMesh.positionOS;
-
-                #if defined(FEATURES_GRAPH_VERTEX_MOTION_VECTOR_OUTPUT)
-                  previousPositionOS -= previousMesh.precomputedVelocity;
-                #endif
-              #endif
-
-              #if defined(UNITY_DOTS_INSTANCING_ENABLED) && defined(DOTS_DEFORMED)
-                // Deformed vertices in DOTS are not cumulative with built-in Unity skinning/blend shapes
-                // Needs to be called after vertex modification has been applied otherwise it will be
-                // overwritten by Compute Deform node
-                ApplyPreviousFrameDeformedVertexPosition(previousMesh.vertexID, previousPositionOS);
-              #endif
-              #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                previousPositionOS -= previousMesh.precomputedVelocity;
-              #endif
-              o.positionCS = mul(UNITY_MATRIX_UNJITTERED_VP, float4(positionWS, 1.0f));
-
-              #if defined(HAVE_VFX_MODIFICATION)
-                #if defined(VFX_FEATURE_MOTION_VECTORS_VERTS)
-                  #if defined(FEATURES_GRAPH_VERTEX_MOTION_VECTOR_OUTPUT) || defined(_ADD_PRECOMPUTED_VELOCITY)
-                    #error Unexpected fast path rendering VFX motion vector while there are vertex modification afterwards.
-                  #endif
-                  o.previousPositionCS = VFXGetPreviousClipPosition(previousMesh, currentFrameMvData.vfxElementAttributes, o.positionCS);
-                #else
-                  #if VFX_WORLD_SPACE
-                    //previousPositionOS is already in world space
-                    const float3 previousPositionWS = previousPositionOS;
-                  #else
-                    const float3 previousPositionWS = mul(UNITY_PREV_MATRIX_M, float4(previousPositionOS, 1.0f)).xyz;
-                  #endif
-                  o.previousPositionCS = mul(UNITY_MATRIX_PREV_VP, float4(previousPositionWS, 1.0f));
-                #endif
-              #else
-                o.previousPositionCS = mul(UNITY_MATRIX_PREV_VP, mul(UNITY_PREV_MATRIX_M, float4(previousPositionOS, 1)));
-              #endif
-            }
-          #endif
-
-          return o;
-         }
-
-
-            
-
-            // fragment shader
-            half4 Frag (VertexToPixel IN
-               #if NEED_FACING
-                  , bool facing : SV_IsFrontFace
-               #endif
-            ) : SV_Target
-            {
-               UNITY_SETUP_INSTANCE_ID(IN);
-
-               ShaderData d = CreateShaderData(IN
-                  #if NEED_FACING
-                     , facing
-                  #endif
-               );
-
-               Surface l = (Surface)0;
-
-               l.Albedo = half3(0.5, 0.5, 0.5);
-               l.Normal = float3(0,0,1);
-               l.Occlusion = 1;
-               l.Alpha = 1;
-
-               ChainSurfaceFunction(l, d);
-
-               MetaInput metaInput = (MetaInput)0;
-               metaInput.Albedo = l.Albedo;
-               metaInput.Emission = l.Emission;
-
-               return MetaFragment(metaInput);
-
-            }
-
-         ENDHLSL
-
-      }
-
-
-      
-        Pass
-        {
-            Name "DepthNormals"
-            Tags
-            {
-               "LightMode" = "DepthNormals"
-            }
-    
-            // Render State
-             Cull Back
-                ZTest LEqual
-                ZWrite On
-
-            
-
-            HLSLPROGRAM
-
-               #pragma vertex Vert
-   #pragma fragment Frag
-
-            #if (defined(SHADER_API_GLES) || defined(SHADER_API_GLES3) || defined(SHADER_API_GLES30)) 
-            #pragma target 3.0
-#else
-            #pragma target 4.5
-#endif
-
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
-            #pragma multi_compile_fog
-            #pragma multi_compile_instancing
-            #pragma multi_compile_fragment _ LOD_FADE_CROSSFADE
-            #pragma multi_compile_fragment _ _WRITE_RENDERING_LAYERS
-
-            #define SHADERPASS SHADERPASS_DEPTHNORMALSONLY
-            #define _PASSDEPTH 1
-            #define _PASSDEPTHNORMALS 1
-
-
-            
-
-
-   #define _URP 1
-
-#define _UNLIT 1
-
-
-            // this has to be here or specular color will be ignored. Not in SG code
-            #if _SIMPLELIT
-               #define _SPECULAR_COLOR
-            #endif
-
-
-            // Includes
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
-            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Input.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
-            #include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderGraphFunctions.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/LODCrossFade.hlsl"
-            
-            
-
-        
-
-               #undef WorldNormalVector
-      #define WorldNormalVector(data, normal) mul(normal, data.TBNMatrix)
-      
-      #define UnityObjectToWorldNormal(normal) mul(GetObjectToWorldMatrix(), normal)
-
-      #define _WorldSpaceLightPos0 _MainLightPosition
-      
-      #define UNITY_DECLARE_TEX2D(name) TEXTURE2D(name); SAMPLER(sampler##name);
-      #define UNITY_DECLARE_TEX2D_NOSAMPLER(name) TEXTURE2D(name);
-      #define UNITY_DECLARE_TEX2DARRAY(name) TEXTURE2D_ARRAY(name); SAMPLER(sampler##name);
-      #define UNITY_DECLARE_TEX2DARRAY_NOSAMPLER(name) TEXTURE2D_ARRAY(name);
-
-      #define UNITY_SAMPLE_TEX2DARRAY(tex,coord)            SAMPLE_TEXTURE2D_ARRAY(tex, sampler##tex, coord.xy, coord.z)
-      #define UNITY_SAMPLE_TEX2DARRAY_LOD(tex,coord,lod)    SAMPLE_TEXTURE2D_ARRAY_LOD(tex, sampler##tex, coord.xy, coord.z, lod)
-      #define UNITY_SAMPLE_TEX2D(tex, coord)                SAMPLE_TEXTURE2D(tex, sampler##tex, coord)
-      #define UNITY_SAMPLE_TEX2D_SAMPLER(tex, samp, coord)  SAMPLE_TEXTURE2D(tex, sampler##samp, coord)
-
-      #define UNITY_SAMPLE_TEX2D_LOD(tex,coord, lod)   SAMPLE_TEXTURE2D_LOD(tex, sampler_##tex, coord, lod)
-      #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord, lod) SAMPLE_TEXTURE2D_LOD (tex, sampler##samplertex,coord, lod)
-     
-      #if defined(UNITY_COMPILER_HLSL)
-         #define UNITY_INITIALIZE_OUTPUT(type,name) name = (type)0;
-      #else
-         #define UNITY_INITIALIZE_OUTPUT(type,name)
-      #endif
-
-      #define sampler2D_float sampler2D
-      #define sampler2D_half sampler2D
-
-      
-
-      // data across stages, stripped like the above.
-      struct VertexToPixel
-      {
-         float4 pos : SV_POSITION;
-         float3 worldPos : TEXCOORD0;
-         float3 worldNormal : TEXCOORD1;
-         float4 worldTangent : TEXCOORD2;
-         // float4 texcoord0 : TEXCOORD3;
-         // float4 texcoord1 : TEXCOORD4;
-         // float4 texcoord2 : TEXCOORD5;
-
-         // #if %TEXCOORD3REQUIREKEY%
-         // float4 texcoord3 : TEXCOORD6;
-         // #endif
-
-         // #if %SCREENPOSREQUIREKEY%
-         // float4 screenPos : TEXCOORD7;
-         // #endif
-
-         // #if %VERTEXCOLORREQUIREKEY%
-         // half4 vertexColor : COLOR;
-         // #endif
-
-         #if defined(LIGHTMAP_ON)
-            float2 lightmapUV : TEXCOORD8;
-         #endif
-         #if defined(DYNAMICLIGHTMAP_ON)
-            float2 dynamicLightmapUV : TEXCOORD9;
-         #endif
-         #if !defined(LIGHTMAP_ON)
-            float4 probeOcclusion : TEXCOORD8;
-            float3 sh : TEXCOORD10;
-         #endif
-
-         #if defined(VARYINGS_NEED_FOG_AND_VERTEX_LIGHT)
-            float4 fogFactorAndVertexLight : TEXCOORD11;
-         #endif
-
-         #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
-           float4 shadowCoord : TEXCOORD12;
-         #endif
-
-         // #if %EXTRAV2F0REQUIREKEY%
-         // float4 extraV2F0 : TEXCOORD13;
-         // #endif
-
-         // #if %EXTRAV2F1REQUIREKEY%
-         // float4 extraV2F1 : TEXCOORD14;
-         // #endif
-
-         // #if %EXTRAV2F2REQUIREKEY%
-         // float4 extraV2F2 : TEXCOORD15;
-         // #endif
-
-         // #if %EXTRAV2F3REQUIREKEY%
-         // float4 extraV2F3 : TEXCOORD16;
-         // #endif
-
-         // #if %EXTRAV2F4REQUIREKEY%
-         // float4 extraV2F4 : TEXCOORD17;
-         // #endif
-
-         // #if %EXTRAV2F5REQUIREKEY%
-         // float4 extraV2F5 : TEXCOORD18;
-         // #endif
-
-         // #if %EXTRAV2F6REQUIREKEY%
-         // float4 extraV2F6 : TEXCOORD19;
-         // #endif
-
-         // #if %EXTRAV2F7REQUIREKEY%
-         // float4 extraV2F7 : TEXCOORD20;
-         // #endif
-
-         #if UNITY_ANY_INSTANCING_ENABLED
-         uint instanceID : CUSTOM_INSTANCE_ID;
-         #endif
-         #if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
-         uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
-         #endif
-         #if (defined(UNITY_STEREO_INSTANCING_ENABLED))
-         uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
-         #endif
-         #if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
-         FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
-         #endif
-
-         #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-            float4 previousPositionCS : TEXCOORD21; // Contain previous transform position (in case of skinning for example)
-            float4 positionCS : TEXCOORD22;
-         #endif
-      };
-
-
-         
-            
-            // data describing the user output of a pixel
-            struct Surface
-            {
-               half3 Albedo;
-               half Height;
-               half3 Normal;
-               half Smoothness;
-               half3 Emission;
-               half Metallic;
-               half3 Specular;
-               half Occlusion;
-               half SpecularPower; // for simple lighting
-               half Alpha;
-               float outputDepth; // if written, SV_Depth semantic is used. ShaderData.clipPos.z is unused value
-               // HDRP Only
-               half SpecularOcclusion;
-               half SubsurfaceMask;
-               half Thickness;
-               half CoatMask;
-               half CoatSmoothness;
-               half Anisotropy;
-               half IridescenceMask;
-               half IridescenceThickness;
-               int DiffusionProfileHash;
-               float SpecularAAThreshold;
-               float SpecularAAScreenSpaceVariance;
-               // requires _OVERRIDE_BAKEDGI to be defined, but is mapped in all pipelines
-               float3 DiffuseGI;
-               float3 BackDiffuseGI;
-               float3 SpecularGI;
-               float ior;
-               float3 transmittanceColor;
-               float atDistance;
-               float transmittanceMask;
-               // requires _OVERRIDE_SHADOWMASK to be defines
-               float4 ShadowMask;
-
-               // for decals
-               float NormalAlpha;
-               float MAOSAlpha;
-
-
-            };
-
-            // Data the user declares in blackboard blocks
-            struct Blackboard
-            {
-                
-                float blackboardDummyData;
-            };
-
-            // data the user might need, this will grow to be big. But easy to strip
-            struct ShaderData
-            {
-               float4 clipPos; // SV_POSITION
-               float3 localSpacePosition;
-               float3 localSpaceNormal;
-               float3 localSpaceTangent;
-        
-               float3 worldSpacePosition;
-               float3 worldSpaceNormal;
-               float3 worldSpaceTangent;
-               float tangentSign;
-
-               float3 worldSpaceViewDir;
-               float3 tangentSpaceViewDir;
-
-               float4 texcoord0;
-               float4 texcoord1;
-               float4 texcoord2;
-               float4 texcoord3;
-
-               float2 screenUV;
-               float4 screenPos;
-
-               float4 vertexColor;
-               bool isFrontFace;
-
-               float4 extraV2F0;
-               float4 extraV2F1;
-               float4 extraV2F2;
-               float4 extraV2F3;
-               float4 extraV2F4;
-               float4 extraV2F5;
-               float4 extraV2F6;
-               float4 extraV2F7;
-
-               float3x3 TBNMatrix;
-               Blackboard blackboard;
-            };
-
-            struct VertexData
-            {
-               #if SHADER_TARGET > 30
-               // uint vertexID : SV_VertexID;
-               #endif
-               float4 vertex : POSITION;
-               float3 normal : NORMAL;
-               float4 tangent : TANGENT;
-               float4 texcoord0 : TEXCOORD0;
-
-               // optimize out mesh coords when not in use by user or lighting system
-               #if _URP && (_USINGTEXCOORD1 || _PASSMETA || _PASSFORWARD || _PASSGBUFFER)
-                  float4 texcoord1 : TEXCOORD1;
-               #endif
-
-               #if _URP && (_USINGTEXCOORD2 || _PASSMETA || ((_PASSFORWARD || _PASSGBUFFER) && defined(DYNAMICLIGHTMAP_ON)))
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-               #if _STANDARD && (_USINGTEXCOORD1 || (_PASSMETA || ((_PASSFORWARD || _PASSGBUFFER || _PASSFORWARDADD) && LIGHTMAP_ON)))
-                  float4 texcoord1 : TEXCOORD1;
-               #endif
-               #if _STANDARD && (_USINGTEXCOORD2 || (_PASSMETA || ((_PASSFORWARD || _PASSGBUFFER) && DYNAMICLIGHTMAP_ON)))
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-
-               #if _HDRP
-                  float4 texcoord1 : TEXCOORD1;
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-               // #if %TEXCOORD3REQUIREKEY%
-               // float4 texcoord3 : TEXCOORD3;
-               // #endif
-
-               // #if %VERTEXCOLORREQUIREKEY%
-               // float4 vertexColor : COLOR;
-               // #endif
-
-               #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-                  float3 previousPositionOS : TEXCOORD4; // Contain previous transform position (in case of skinning for example)
-                  #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                     float3 precomputedVelocity    : TEXCOORD5; // Add Precomputed Velocity (Alembic computes velocities on runtime side).
-                  #endif
-               #endif
-
-               UNITY_VERTEX_INPUT_INSTANCE_ID
-            };
-
-            struct TessVertex 
-            {
-               float4 vertex : INTERNALTESSPOS;
-               float3 normal : NORMAL;
-               float4 tangent : TANGENT;
-               float4 texcoord0 : TEXCOORD0;
-               float4 texcoord1 : TEXCOORD1;
-               float4 texcoord2 : TEXCOORD2;
-
-               // #if %TEXCOORD3REQUIREKEY%
-               // float4 texcoord3 : TEXCOORD3;
-               // #endif
-
-               // #if %VERTEXCOLORREQUIREKEY%
-               // float4 vertexColor : COLOR;
-               // #endif
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // float4 extraV2F0 : TEXCOORD5;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // float4 extraV2F1 : TEXCOORD6;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // float4 extraV2F2 : TEXCOORD7;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // float4 extraV2F3 : TEXCOORD8;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // float4 extraV2F4 : TEXCOORD9;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // float4 extraV2F5 : TEXCOORD10;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // float4 extraV2F6 : TEXCOORD11;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // float4 extraV2F7 : TEXCOORD12;
-               // #endif
-
-               #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-                  float3 previousPositionOS : TEXCOORD13; // Contain previous transform position (in case of skinning for example)
-                  #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                     float3 precomputedVelocity : TEXCOORD14;
-                  #endif
-               #endif
-
-               UNITY_VERTEX_INPUT_INSTANCE_ID
-               UNITY_VERTEX_OUTPUT_STEREO
-            };
-
-            struct ExtraV2F
-            {
-               float4 extraV2F0;
-               float4 extraV2F1;
-               float4 extraV2F2;
-               float4 extraV2F3;
-               float4 extraV2F4;
-               float4 extraV2F5;
-               float4 extraV2F6;
-               float4 extraV2F7;
-               Blackboard blackboard;
-               float4 time;
-            };
-
-
-            float3 WorldToTangentSpace(ShaderData d, float3 normal)
-            {
-               return mul(d.TBNMatrix, normal);
-            }
-
-            float3 TangentToWorldSpace(ShaderData d, float3 normal)
-            {
-               return mul(normal, d.TBNMatrix);
-            }
-
-            // in this case, make standard more like SRPs, because we can't fix
-            // unity_WorldToObject in HDRP, since it already does macro-fu there
-
-            #if _STANDARD
-               float3 TransformWorldToObject(float3 p) { return mul(unity_WorldToObject, float4(p, 1)); };
-               float3 TransformObjectToWorld(float3 p) { return mul(unity_ObjectToWorld, float4(p, 1)); };
-               float4 TransformWorldToObject(float4 p) { return mul(unity_WorldToObject, p); };
-               float4 TransformObjectToWorld(float4 p) { return mul(unity_ObjectToWorld, p); };
-               float4x4 GetWorldToObjectMatrix() { return unity_WorldToObject; }
-               float4x4 GetObjectToWorldMatrix() { return unity_ObjectToWorld; }
-               #if (defined(SHADER_API_D3D11) || defined(SHADER_API_XBOXONE) || defined(UNITY_COMPILER_HLSLCC) || defined(SHADER_API_PSSL) || (SHADER_TARGET_SURFACE_ANALYSIS && !SHADER_TARGET_SURFACE_ANALYSIS_MOJOSHADER))
-                 #define UNITY_SAMPLE_TEX2D_LOD(tex,coord, lod) tex.SampleLevel (sampler##tex,coord, lod)
-                 #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord, lod) tex.SampleLevel (sampler##samplertex,coord, lod)
-              #else
-                 #define UNITY_SAMPLE_TEX2D_LOD(tex,coord,lod) tex2D (tex,coord,0,lod)
-                 #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord,lod) tex2D (tex,coord,0,lod)
-              #endif
-
-               #undef GetWorldToObjectMatrix()
-
-               #define GetWorldToObjectMatrix()   unity_WorldToObject
-
-
-            #endif
-
-            float3 GetCameraWorldPosition()
-            {
-               #if _HDRP
-                  return GetCameraRelativePositionWS(_WorldSpaceCameraPos);
-               #else
-                  return _WorldSpaceCameraPos;
-               #endif
-            }
-
-            #if _GRABPASSUSED
-               #if _STANDARD
-                  TEXTURE2D(%GRABTEXTURE%);
-                  SAMPLER(sampler_%GRABTEXTURE%);
-               #endif
-
-               half3 GetSceneColor(float2 uv)
-               {
-                  #if _STANDARD
-                     return SAMPLE_TEXTURE2D(%GRABTEXTURE%, sampler_%GRABTEXTURE%, uv).rgb;
-                  #else
-                     return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv);
-                  #endif
-               }
-            #endif
-
-
-      
-            #if _STANDARD
-               UNITY_DECLARE_DEPTH_TEXTURE(_CameraDepthTexture);
-               float GetSceneDepth(float2 uv) { return SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv); }
-               float GetLinear01Depth(float2 uv) { return Linear01Depth(GetSceneDepth(uv)); }
-               float GetLinearEyeDepth(float2 uv) { return LinearEyeDepth(GetSceneDepth(uv)); } 
-            #else
-               float GetSceneDepth(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv); }
-               float GetLinear01Depth(float2 uv) { return Linear01Depth(GetSceneDepth(uv), _ZBufferParams); }
-               float GetLinearEyeDepth(float2 uv) { return LinearEyeDepth(GetSceneDepth(uv), _ZBufferParams); } 
-            #endif
-
-            float3 GetWorldPositionFromDepthBuffer(float2 uv, float3 worldSpaceViewDir)
-            {
-               float eye = GetLinearEyeDepth(uv);
-               float3 camView = mul((float3x3)GetObjectToWorldMatrix(), transpose(mul(GetWorldToObjectMatrix(), UNITY_MATRIX_I_V)) [2].xyz);
-
-               float dt = dot(worldSpaceViewDir, camView);
-               float3 div = worldSpaceViewDir/dt;
-               float3 wpos = (eye * div) + GetCameraWorldPosition();
-               return wpos;
-            }
-
-            #if _HDRP
-            float3 ObjectToWorldSpacePosition(float3 pos)
-            {
-               return GetAbsolutePositionWS(TransformObjectToWorld(pos));
-            }
-            #else
-            float3 ObjectToWorldSpacePosition(float3 pos)
-            {
-               return TransformObjectToWorld(pos);
-            }
-            #endif
-
-            #if _STANDARD
-               UNITY_DECLARE_SCREENSPACE_TEXTURE(_CameraDepthNormalsTexture);
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  float4 depthNorms = UNITY_SAMPLE_SCREENSPACE_TEXTURE(_CameraDepthNormalsTexture, uv);
-                  float3 norms = DecodeViewNormalStereo(depthNorms);
-                  norms = mul((float3x3)GetWorldToViewMatrix(), norms) * 0.5 + 0.5;
-                  return norms;
-               }
-            #elif _HDRP && !_DECALSHADER
-               
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  NormalData nd;
-                  DecodeFromNormalBuffer(_ScreenSize.xy * uv, nd);
-                  return nd.normalWS;
-               }
-            #elif _URP
-               #if (SHADER_LIBRARY_VERSION_MAJOR >= 10)
-                  #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareNormalsTexture.hlsl"
-               #endif
-
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  #if (SHADER_LIBRARY_VERSION_MAJOR >= 10)
-                     return SampleSceneNormals(uv);
-                  #else
-                     float3 wpos = GetWorldPositionFromDepthBuffer(uv, worldSpaceViewDir);
-                     return normalize(-cross(ddx(wpos), ddy(wpos))) * 0.5 + 0.5;
-                  #endif
-
-                }
-             #endif
-
-             #if _HDRP
-
-               half3 UnpackNormalmapRGorAG(half4 packednormal)
-               {
-                     // This do the trick
-                  packednormal.x *= packednormal.w;
-
-                  half3 normal;
-                  normal.xy = packednormal.xy * 2 - 1;
-                  normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
-                  return normal;
-               }
-               half3 UnpackNormal(half4 packednormal)
-               {
-                  #if defined(UNITY_NO_DXT5nm)
-                     return packednormal.xyz * 2 - 1;
-                  #else
-                     return UnpackNormalmapRGorAG(packednormal);
-                  #endif
-               }
-            #endif
-            #if _HDRP || _URP
-
-               half3 UnpackScaleNormal(half4 packednormal, half scale)
-               {
-                 #ifndef UNITY_NO_DXT5nm
-                   // Unpack normal as DXT5nm (1, y, 1, x) or BC5 (x, y, 0, 1)
-                   // Note neutral texture like "bump" is (0, 0, 1, 1) to work with both plain RGB normal and DXT5nm/BC5
-                   packednormal.x *= packednormal.w;
-                 #endif
-                   half3 normal;
-                   normal.xy = (packednormal.xy * 2 - 1) * scale;
-                   normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
-                   return normal;
-               }	
-
-             #endif
-
-
-            void GetSun(out float3 lightDir, out float3 color)
-            {
-               lightDir = float3(0.5, 0.5, 0);
-               color = 1;
-               #if _HDRP
-                  if (_DirectionalLightCount > 0)
-                  {
-                     DirectionalLightData light = _DirectionalLightDatas[0];
-                     lightDir = -light.forward.xyz;
-                     color = light.color;
-                  }
-               #elif _STANDARD
-			         lightDir = normalize(_WorldSpaceLightPos0.xyz);
-                  color = _LightColor0.rgb;
-               #elif _URP
-	               Light light = GetMainLight();
-	               lightDir = light.direction;
-	               color = light.color;
-               #endif
-            }
-
-
-            
-         CBUFFER_START(UnityPerMaterial)
-
-            
-
-
-
-         CBUFFER_END
-
-         
-
-         
-
-         
-
-
-
-        
-            void ChainSurfaceFunction(inout Surface l, inout ShaderData d)
-            {
-                 // Ext_SurfaceFunction0(l, d);
-                 // Ext_SurfaceFunction1(l, d);
-                 // Ext_SurfaceFunction2(l, d);
-                 // Ext_SurfaceFunction3(l, d);
-                 // Ext_SurfaceFunction4(l, d);
-                 // Ext_SurfaceFunction5(l, d);
-                 // Ext_SurfaceFunction6(l, d);
-                 // Ext_SurfaceFunction7(l, d);
-                 // Ext_SurfaceFunction8(l, d);
-                 // Ext_SurfaceFunction9(l, d);
-		           // Ext_SurfaceFunction10(l, d);
-                 // Ext_SurfaceFunction11(l, d);
-                 // Ext_SurfaceFunction12(l, d);
-                 // Ext_SurfaceFunction13(l, d);
-                 // Ext_SurfaceFunction14(l, d);
-                 // Ext_SurfaceFunction15(l, d);
-                 // Ext_SurfaceFunction16(l, d);
-                 // Ext_SurfaceFunction17(l, d);
-                 // Ext_SurfaceFunction18(l, d);
-		           // Ext_SurfaceFunction19(l, d);
-                 // Ext_SurfaceFunction20(l, d);
-                 // Ext_SurfaceFunction21(l, d);
-                 // Ext_SurfaceFunction22(l, d);
-                 // Ext_SurfaceFunction23(l, d);
-                 // Ext_SurfaceFunction24(l, d);
-                 // Ext_SurfaceFunction25(l, d);
-                 // Ext_SurfaceFunction26(l, d);
-                 // Ext_SurfaceFunction27(l, d);
-                 // Ext_SurfaceFunction28(l, d);
-		           // Ext_SurfaceFunction29(l, d);
-            }
-
-#if !_DECALSHADER
-
-            void ChainModifyVertex(inout VertexData v, inout VertexToPixel v2p, float4 time)
-            {
-                 ExtraV2F d;
-                 
-                 ZERO_INITIALIZE(ExtraV2F, d);
-                 ZERO_INITIALIZE(Blackboard, d.blackboard);
-                 // due to motion vectors in HDRP, we need to use the last
-                 // time in certain spots. So if you are going to use _Time to adjust vertices,
-                 // you need to use this time or motion vectors will break. 
-                 d.time = time;
-
-                 //  Ext_ModifyVertex0(v, d);
-                 // Ext_ModifyVertex1(v, d);
-                 // Ext_ModifyVertex2(v, d);
-                 // Ext_ModifyVertex3(v, d);
-                 // Ext_ModifyVertex4(v, d);
-                 // Ext_ModifyVertex5(v, d);
-                 // Ext_ModifyVertex6(v, d);
-                 // Ext_ModifyVertex7(v, d);
-                 // Ext_ModifyVertex8(v, d);
-                 // Ext_ModifyVertex9(v, d);
-                 // Ext_ModifyVertex10(v, d);
-                 // Ext_ModifyVertex11(v, d);
-                 // Ext_ModifyVertex12(v, d);
-                 // Ext_ModifyVertex13(v, d);
-                 // Ext_ModifyVertex14(v, d);
-                 // Ext_ModifyVertex15(v, d);
-                 // Ext_ModifyVertex16(v, d);
-                 // Ext_ModifyVertex17(v, d);
-                 // Ext_ModifyVertex18(v, d);
-                 // Ext_ModifyVertex19(v, d);
-                 // Ext_ModifyVertex20(v, d);
-                 // Ext_ModifyVertex21(v, d);
-                 // Ext_ModifyVertex22(v, d);
-                 // Ext_ModifyVertex23(v, d);
-                 // Ext_ModifyVertex24(v, d);
-                 // Ext_ModifyVertex25(v, d);
-                 // Ext_ModifyVertex26(v, d);
-                 // Ext_ModifyVertex27(v, d);
-                 // Ext_ModifyVertex28(v, d);
-                 // Ext_ModifyVertex29(v, d);
-
-
-                 // #if %EXTRAV2F0REQUIREKEY%
-                 // v2p.extraV2F0 = d.extraV2F0;
-                 // #endif
-
-                 // #if %EXTRAV2F1REQUIREKEY%
-                 // v2p.extraV2F1 = d.extraV2F1;
-                 // #endif
-
-                 // #if %EXTRAV2F2REQUIREKEY%
-                 // v2p.extraV2F2 = d.extraV2F2;
-                 // #endif
-
-                 // #if %EXTRAV2F3REQUIREKEY%
-                 // v2p.extraV2F3 = d.extraV2F3;
-                 // #endif
-
-                 // #if %EXTRAV2F4REQUIREKEY%
-                 // v2p.extraV2F4 = d.extraV2F4;
-                 // #endif
-
-                 // #if %EXTRAV2F5REQUIREKEY%
-                 // v2p.extraV2F5 = d.extraV2F5;
-                 // #endif
-
-                 // #if %EXTRAV2F6REQUIREKEY%
-                 // v2p.extraV2F6 = d.extraV2F6;
-                 // #endif
-
-                 // #if %EXTRAV2F7REQUIREKEY%
-                 // v2p.extraV2F7 = d.extraV2F7;
-                 // #endif
-            }
-
-            void ChainModifyTessellatedVertex(inout VertexData v, inout VertexToPixel v2p)
-            {
-               ExtraV2F d;
-               ZERO_INITIALIZE(ExtraV2F, d);
-               ZERO_INITIALIZE(Blackboard, d.blackboard);
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // d.extraV2F0 = v2p.extraV2F0;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // d.extraV2F1 = v2p.extraV2F1;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // d.extraV2F2 = v2p.extraV2F2;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // d.extraV2F3 = v2p.extraV2F3;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // d.extraV2F4 = v2p.extraV2F4;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // d.extraV2F5 = v2p.extraV2F5;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // d.extraV2F6 = v2p.extraV2F6;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // d.extraV2F7 = v2p.extraV2F7;
-               // #endif
-
-
-               // Ext_ModifyTessellatedVertex0(v, d);
-               // Ext_ModifyTessellatedVertex1(v, d);
-               // Ext_ModifyTessellatedVertex2(v, d);
-               // Ext_ModifyTessellatedVertex3(v, d);
-               // Ext_ModifyTessellatedVertex4(v, d);
-               // Ext_ModifyTessellatedVertex5(v, d);
-               // Ext_ModifyTessellatedVertex6(v, d);
-               // Ext_ModifyTessellatedVertex7(v, d);
-               // Ext_ModifyTessellatedVertex8(v, d);
-               // Ext_ModifyTessellatedVertex9(v, d);
-               // Ext_ModifyTessellatedVertex10(v, d);
-               // Ext_ModifyTessellatedVertex11(v, d);
-               // Ext_ModifyTessellatedVertex12(v, d);
-               // Ext_ModifyTessellatedVertex13(v, d);
-               // Ext_ModifyTessellatedVertex14(v, d);
-               // Ext_ModifyTessellatedVertex15(v, d);
-               // Ext_ModifyTessellatedVertex16(v, d);
-               // Ext_ModifyTessellatedVertex17(v, d);
-               // Ext_ModifyTessellatedVertex18(v, d);
-               // Ext_ModifyTessellatedVertex19(v, d);
-               // Ext_ModifyTessellatedVertex20(v, d);
-               // Ext_ModifyTessellatedVertex21(v, d);
-               // Ext_ModifyTessellatedVertex22(v, d);
-               // Ext_ModifyTessellatedVertex23(v, d);
-               // Ext_ModifyTessellatedVertex24(v, d);
-               // Ext_ModifyTessellatedVertex25(v, d);
-               // Ext_ModifyTessellatedVertex26(v, d);
-               // Ext_ModifyTessellatedVertex27(v, d);
-               // Ext_ModifyTessellatedVertex28(v, d);
-               // Ext_ModifyTessellatedVertex29(v, d);
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // v2p.extraV2F0 = d.extraV2F0;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // v2p.extraV2F1 = d.extraV2F1;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // v2p.extraV2F2 = d.extraV2F2;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // v2p.extraV2F3 = d.extraV2F3;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // v2p.extraV2F4 = d.extraV2F4;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // v2p.extraV2F5 = d.extraV2F5;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // v2p.extraV2F6 = d.extraV2F6;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // v2p.extraV2F7 = d.extraV2F7;
-               // #endif
-            }
-
-            void ChainFinalColorForward(inout Surface l, inout ShaderData d, inout half4 color)
-            {
-               //   Ext_FinalColorForward0(l, d, color);
-               //   Ext_FinalColorForward1(l, d, color);
-               //   Ext_FinalColorForward2(l, d, color);
-               //   Ext_FinalColorForward3(l, d, color);
-               //   Ext_FinalColorForward4(l, d, color);
-               //   Ext_FinalColorForward5(l, d, color);
-               //   Ext_FinalColorForward6(l, d, color);
-               //   Ext_FinalColorForward7(l, d, color);
-               //   Ext_FinalColorForward8(l, d, color);
-               //   Ext_FinalColorForward9(l, d, color);
-               //  Ext_FinalColorForward10(l, d, color);
-               //  Ext_FinalColorForward11(l, d, color);
-               //  Ext_FinalColorForward12(l, d, color);
-               //  Ext_FinalColorForward13(l, d, color);
-               //  Ext_FinalColorForward14(l, d, color);
-               //  Ext_FinalColorForward15(l, d, color);
-               //  Ext_FinalColorForward16(l, d, color);
-               //  Ext_FinalColorForward17(l, d, color);
-               //  Ext_FinalColorForward18(l, d, color);
-               //  Ext_FinalColorForward19(l, d, color);
-               //  Ext_FinalColorForward20(l, d, color);
-               //  Ext_FinalColorForward21(l, d, color);
-               //  Ext_FinalColorForward22(l, d, color);
-               //  Ext_FinalColorForward23(l, d, color);
-               //  Ext_FinalColorForward24(l, d, color);
-               //  Ext_FinalColorForward25(l, d, color);
-               //  Ext_FinalColorForward26(l, d, color);
-               //  Ext_FinalColorForward27(l, d, color);
-               //  Ext_FinalColorForward28(l, d, color);
-               //  Ext_FinalColorForward29(l, d, color);
-            }
-
-            void ChainFinalGBufferStandard(inout Surface s, inout ShaderData d, inout half4 GBuffer0, inout half4 GBuffer1, inout half4 GBuffer2, inout half4 outEmission, inout half4 outShadowMask)
-            {
-               //   Ext_FinalGBufferStandard0(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard1(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard2(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard3(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard4(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard5(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard6(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard7(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard8(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard9(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard10(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard11(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard12(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard13(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard14(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard15(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard16(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard17(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard18(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard19(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard20(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard21(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard22(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard23(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard24(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard25(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard26(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard27(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard28(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard29(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-            }
-#endif
-
-
-         
-
-
-#if _DECALSHADER
-
-        ShaderData CreateShaderData(SurfaceDescriptionInputs IN)
-        {
-            ShaderData d = (ShaderData)0;
-            d.TBNMatrix = float3x3(IN.WorldSpaceTangent, IN.WorldSpaceBiTangent, IN.WorldSpaceNormal);
-            d.worldSpaceNormal = IN.WorldSpaceNormal;
-            d.worldSpaceTangent = IN.WorldSpaceTangent;
-
-            d.worldSpacePosition = IN.WorldSpacePosition;
-            d.texcoord0 = IN.uv0.xyxy;
-            d.screenPos = IN.ScreenPosition;
-
-            d.worldSpaceViewDir = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
-
-            d.tangentSpaceViewDir = mul(d.TBNMatrix, d.worldSpaceViewDir);
-
-            // these rarely get used, so we back transform them. Usually will be stripped.
-            #if _HDRP
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(GetCameraRelativePositionWS(d.worldSpacePosition), 1)).xyz;
-            #else
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(d.worldSpacePosition, 1)).xyz;
-            #endif
-            // d.localSpaceNormal = normalize(mul((float3x3)GetWorldToObjectMatrix(), d.worldSpaceNormal));
-            // d.localSpaceTangent = normalize(mul((float3x3)GetWorldToObjectMatrix(), d.worldSpaceTangent.xyz));
-
-            // #if %SCREENPOSREQUIREKEY%
-            // d.screenUV = (IN.ScreenPosition.xy / max(0.01, IN.ScreenPosition.w));
-            // #endif
-
-            return d;
-        }
-#else
-
-         ShaderData CreateShaderData(VertexToPixel i
-                  #if NEED_FACING
-                     , bool facing
-                  #endif
-         )
-         {
-            ShaderData d = (ShaderData)0;
-            d.clipPos = i.pos;
-            d.worldSpacePosition = i.worldPos;
-
-            d.worldSpaceNormal = normalize(i.worldNormal);
-            d.worldSpaceTangent.xyz = normalize(i.worldTangent.xyz);
-
-            d.tangentSign = i.worldTangent.w * unity_WorldTransformParams.w;
-            float3 bitangent = cross(d.worldSpaceTangent.xyz, d.worldSpaceNormal) * d.tangentSign;
-           
-            d.TBNMatrix = float3x3(d.worldSpaceTangent, -bitangent, d.worldSpaceNormal);
-            d.worldSpaceViewDir = normalize(_WorldSpaceCameraPos - i.worldPos);
-
-            d.tangentSpaceViewDir = mul(d.TBNMatrix, d.worldSpaceViewDir);
-            // d.texcoord0 = i.texcoord0;
-            // d.texcoord1 = i.texcoord1;
-            // d.texcoord2 = i.texcoord2;
-
-            // #if %TEXCOORD3REQUIREKEY%
-            // d.texcoord3 = i.texcoord3;
-            // #endif
-
-            // d.isFrontFace = facing;
-            // #if %VERTEXCOLORREQUIREKEY%
-            // d.vertexColor = i.vertexColor;
-            // #endif
-
-            // these rarely get used, so we back transform them. Usually will be stripped.
-            #if _HDRP
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(GetCameraRelativePositionWS(i.worldPos), 1)).xyz;
-            #else
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(i.worldPos, 1)).xyz;
-            #endif
-            // d.localSpaceNormal = normalize(mul((float3x3)GetWorldToObjectMatrix(), i.worldNormal));
-            // d.localSpaceTangent = normalize(mul((float3x3)GetWorldToObjectMatrix(), i.worldTangent.xyz));
-
-            // #if %SCREENPOSREQUIREKEY%
-            // d.screenPos = i.screenPos;
-            // d.screenUV = (i.screenPos.xy / i.screenPos.w);
-            // #endif
-
-
-            // #if %EXTRAV2F0REQUIREKEY%
-            // d.extraV2F0 = i.extraV2F0;
-            // #endif
-
-            // #if %EXTRAV2F1REQUIREKEY%
-            // d.extraV2F1 = i.extraV2F1;
-            // #endif
-
-            // #if %EXTRAV2F2REQUIREKEY%
-            // d.extraV2F2 = i.extraV2F2;
-            // #endif
-
-            // #if %EXTRAV2F3REQUIREKEY%
-            // d.extraV2F3 = i.extraV2F3;
-            // #endif
-
-            // #if %EXTRAV2F4REQUIREKEY%
-            // d.extraV2F4 = i.extraV2F4;
-            // #endif
-
-            // #if %EXTRAV2F5REQUIREKEY%
-            // d.extraV2F5 = i.extraV2F5;
-            // #endif
-
-            // #if %EXTRAV2F6REQUIREKEY%
-            // d.extraV2F6 = i.extraV2F6;
-            // #endif
-
-            // #if %EXTRAV2F7REQUIREKEY%
-            // d.extraV2F7 = i.extraV2F7;
-            // #endif
-
-            return d;
-         }
-
-#endif
-
-         
-         #if defined(_PASSSHADOW)
-            float3 _LightDirection;
-            float3 _LightPosition;
-         #endif
-
-         #if (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-
-            #define GetWorldToViewMatrix()     _ViewMatrix
-            #define UNITY_MATRIX_I_V   _InvViewMatrix
-            #define GetViewToHClipMatrix()     OptimizeProjectionMatrix(_ProjMatrix)
-            #define UNITY_MATRIX_I_P   _InvProjMatrix
-            #define GetWorldToHClipMatrix()    _ViewProjMatrix
-            #define UNITY_MATRIX_I_VP  _InvViewProjMatrix
-            #define UNITY_MATRIX_UNJITTERED_VP _NonJitteredViewProjMatrix
-            #define UNITY_MATRIX_PREV_VP _PrevViewProjMatrix
-            #define UNITY_MATRIX_PREV_I_VP _PrevInvViewProjMatrix
-
-            void MotionVectorPositionZBias(VertexToPixel input)
-            {
-                #if UNITY_REVERSED_Z
-                input.pos.z -= unity_MotionVectorsParams.z * input.pos.w;
-                #else
-                input.pos.z += unity_MotionVectorsParams.z * input.pos.w;
-                #endif
-            }
-
-        #endif
-
-         // vertex shader
-         VertexToPixel Vert (VertexData v)
-         {
-           VertexToPixel o = (VertexToPixel)0;
-
-           UNITY_SETUP_INSTANCE_ID(v);
-           UNITY_TRANSFER_INSTANCE_ID(v, o);
-           UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-
-            
-           #if _URP && (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-             VertexData previousMesh = v;
-           #endif
-           #if !_TESSELLATION_ON
-             ChainModifyVertex(v, o, _Time);
-           #endif
-
-           // o.texcoord0 = v.texcoord0;
-           // o.texcoord1 = v.texcoord1;
-           // o.texcoord2 = v.texcoord2;
-
-           // #if %TEXCOORD3REQUIREKEY%
-           // o.texcoord3 = v.texcoord3;
-           // #endif
-
-           // #if %VERTEXCOLORREQUIREKEY%
-           // o.vertexColor = v.vertexColor;
-           // #endif
-
-           // This return the camera relative position (if enable)
-           float3 positionWS = TransformObjectToWorld(v.vertex.xyz);
-           float3 normalWS = TransformObjectToWorldNormal(v.normal);
-           float4 tangentWS = float4(TransformObjectToWorldDir(v.tangent.xyz), v.tangent.w);
-           
-           VertexPositionInputs vertexInput = GetVertexPositionInputs(v.vertex.xyz);
-           o.worldPos = positionWS;
-           o.worldNormal = normalWS;
-           o.worldTangent = tangentWS;
-
-
-          // For some very odd reason, in 2021.2, we can't use Unity's defines, but have to use our own..
-          #if _PASSSHADOW
-              #if _CASTING_PUNCTUAL_LIGHT_SHADOW
-                 float3 lightDirectionWS = normalize(_LightPosition - o.worldPos);
-              #else
-                 float3 lightDirectionWS = _LightDirection;
-              #endif
-              // Define shadow pass specific clip position for Universal
-              o.pos = TransformWorldToHClip(ApplyShadowBias(o.worldPos, o.worldNormal, lightDirectionWS));
-              #if UNITY_REVERSED_Z
-                  o.pos.z = min(o.pos.z, UNITY_NEAR_CLIP_VALUE);
-              #else
-                  o.pos.z = max(o.pos.z, UNITY_NEAR_CLIP_VALUE);
-              #endif
-          #elif _PASSMETA
-              o.pos = MetaVertexPosition(float4(v.vertex.xyz, 0), v.texcoord1.xy, v.texcoord2.xy, unity_LightmapST, unity_DynamicLightmapST);
-          #else
-              o.pos = TransformWorldToHClip(o.worldPos);
-          #endif
-
-          // #if %SCREENPOSREQUIREKEY%
-          // o.screenPos = ComputeScreenPos(o.pos, _ProjectionParams.x);
-          // #endif
-
-          
-          #if _PASSFORWARD || _PASSGBUFFER
-              float2 uv1 = v.texcoord1.xy;
-              OUTPUT_LIGHTMAP_UV(uv1, unity_LightmapST, o.lightmapUV);
-              // o.texcoord1.xy = uv1;
-              OUTPUT_SH(o.worldNormal, o.sh);
-              
-              #if defined(DYNAMICLIGHTMAP_ON)
-                   o.dynamicLightmapUV.xy = v.texcoord2.xy * unity_DynamicLightmapST.xy + unity_DynamicLightmapST.zw;
-                   #if UNITY_VERSION >= 60000009
-                     OUTPUT_SH(o.worldNormal, o.sh);
-                   #endif
-              #elif (defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)) && UNITY_VERSION >= 60000009
-                   OUTPUT_SH4(vertexInput.positionWS, o.worldNormal.xyz, GetWorldSpaceNormalizeViewDir(vertexInput.positionWS), o.sh, o.probeOcclusion);
-              #endif
-          #endif
-
-          #ifdef VARYINGS_NEED_FOG_AND_VERTEX_LIGHT
-              half fogFactor = 0;
-              #if defined(_FOG_FRAGMENT)
-                fogFactor = ComputeFogFactor(o.pos.z);
-              #endif
-              #if _BAKEDLIT
-                 o.fogFactorAndVertexLight = half4(fogFactor, 0, 0, 0);
-              #else
-                 half3 vertexLight = VertexLighting(o.worldPos, o.worldNormal);
-                 o.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
-              #endif
-          #endif
-
-          #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
-             o.shadowCoord = GetShadowCoord(vertexInput);
-          #endif
-
-          #if _URP && (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-            #if !defined(TESSELLATION_ON)
-              MotionVectorPositionZBias(o);
-            #endif
-
-            o.previousPositionCS = float4(0.0, 0.0, 0.0, 1.0);
-            // Note: unity_MotionVectorsParams.y is 0 is forceNoMotion is enabled
-            bool forceNoMotion = unity_MotionVectorsParams.y == 0.0;
-
-            if (!forceNoMotion)
-            {
-              #if defined(HAVE_VFX_MODIFICATION)
-                float3 previousPositionOS = currentFrameMvData.vfxParticlePositionOS;
-                #if defined(VFX_FEATURE_MOTION_VECTORS_VERTS)
-                  const bool applyDeformation = false;
-                #else
-                  const bool applyDeformation = true;
-                #endif
-              #else
-                const bool hasDeformation = unity_MotionVectorsParams.x == 1; // Mesh has skinned deformation
-                float3 previousPositionOS = hasDeformation ? previousMesh.previousPositionOS : previousMesh.vertex.xyz;
-
-                #if defined(AUTOMATIC_TIME_BASED_MOTION_VECTORS) && defined(GRAPH_VERTEX_USES_TIME_PARAMETERS_INPUT)
-                  const bool applyDeformation = true;
-                #else
-                  const bool applyDeformation = hasDeformation;
-                #endif
-              #endif
-              // TODO
-              #if defined(FEATURES_GRAPH_VERTEX)
-                if (applyDeformation)
-                  previousPositionOS = GetLastFrameDeformedPosition(previousMesh, currentFrameMvData, previousPositionOS);
-                else
-                  previousPositionOS = previousMesh.positionOS;
-
-                #if defined(FEATURES_GRAPH_VERTEX_MOTION_VECTOR_OUTPUT)
-                  previousPositionOS -= previousMesh.precomputedVelocity;
-                #endif
-              #endif
-
-              #if defined(UNITY_DOTS_INSTANCING_ENABLED) && defined(DOTS_DEFORMED)
-                // Deformed vertices in DOTS are not cumulative with built-in Unity skinning/blend shapes
-                // Needs to be called after vertex modification has been applied otherwise it will be
-                // overwritten by Compute Deform node
-                ApplyPreviousFrameDeformedVertexPosition(previousMesh.vertexID, previousPositionOS);
-              #endif
-              #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                previousPositionOS -= previousMesh.precomputedVelocity;
-              #endif
-              o.positionCS = mul(UNITY_MATRIX_UNJITTERED_VP, float4(positionWS, 1.0f));
-
-              #if defined(HAVE_VFX_MODIFICATION)
-                #if defined(VFX_FEATURE_MOTION_VECTORS_VERTS)
-                  #if defined(FEATURES_GRAPH_VERTEX_MOTION_VECTOR_OUTPUT) || defined(_ADD_PRECOMPUTED_VELOCITY)
-                    #error Unexpected fast path rendering VFX motion vector while there are vertex modification afterwards.
-                  #endif
-                  o.previousPositionCS = VFXGetPreviousClipPosition(previousMesh, currentFrameMvData.vfxElementAttributes, o.positionCS);
-                #else
-                  #if VFX_WORLD_SPACE
-                    //previousPositionOS is already in world space
-                    const float3 previousPositionWS = previousPositionOS;
-                  #else
-                    const float3 previousPositionWS = mul(UNITY_PREV_MATRIX_M, float4(previousPositionOS, 1.0f)).xyz;
-                  #endif
-                  o.previousPositionCS = mul(UNITY_MATRIX_PREV_VP, float4(previousPositionWS, 1.0f));
-                #endif
-              #else
-                o.previousPositionCS = mul(UNITY_MATRIX_PREV_VP, mul(UNITY_PREV_MATRIX_M, float4(previousPositionOS, 1)));
-              #endif
-            }
-          #endif
-
-          return o;
-         }
-
-
-         
-
-         // fragment shader
-         void Frag (VertexToPixel IN
-            , out half4 outNormalWS : SV_Target0
-         #ifdef _WRITE_RENDERING_LAYERS
-            , out float4 outRenderingLayers : SV_Target1
-         #endif
-            #ifdef _DEPTHOFFSET_ON
-              , out float outputDepth : SV_Depth
-            #endif
-            #if NEED_FACING
-               , bool facing : SV_IsFrontFace
-            #endif
-         )
-         {
-           UNITY_SETUP_INSTANCE_ID(IN);
-           UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(IN);
-
-           #if defined(LOD_FADE_CROSSFADE)
-              LODFadeCrossFade(IN.pos);
-           #endif
-
-           ShaderData d = CreateShaderData(IN
-                  #if NEED_FACING
-                     , facing
-                  #endif
-               );
-           Surface l = (Surface)0;
-
-           #ifdef _DEPTHOFFSET_ON
-              l.outputDepth = outputDepth;
-           #endif
-
-           l.Albedo = half3(0.5, 0.5, 0.5);
-           l.Normal = float3(0,0,1);
-           l.Occlusion = 1;
-           l.Alpha = 1;
-
-           ChainSurfaceFunction(l, d);
-
-           #ifdef _DEPTHOFFSET_ON
-              outputDepth = l.outputDepth;
-           #endif
-
-          #if defined(_GBUFFER_NORMALS_OCT)
-              float3 normalWS = d.worldSpaceNormal;
-              float2 octNormalWS = PackNormalOctQuadEncode(normalWS);           // values between [-1, +1], must use fp32 on some platforms
-              float2 remappedOctNormalWS = saturate(octNormalWS * 0.5 + 0.5);   // values between [ 0,  1]
-              half3 packedNormalWS = PackFloat2To888(remappedOctNormalWS);      // values between [ 0,  1]
-              outNormalWS = half4(packedNormalWS, 0.0);
-          #else
-              float3 wsn = l.Normal;
-              #if !_WORLDSPACENORMAL
-                wsn = TangentToWorldSpace(d, l.Normal);
-              #endif
-              outNormalWS = half4(NormalizeNormalPerPixel(wsn), 0.0);
-          #endif
-
-          #ifdef _WRITE_RENDERING_LAYERS
-            uint renderingLayers = GetMeshRenderingLayer();
-            outRenderingLayers = float4(EncodeMeshRenderingLayer(renderingLayers), 0, 0, 0);
-          #endif
-
-         
-         }
-
-         ENDHLSL
-
-      }
-
-
-      
-        Pass
-        {
-            Name "MotionVectors"
-            Tags
-            {
-                "LightMode" = "MotionVectors"
-            }
-        
-        // Render State
-        Cull Back
-        ZTest LEqual
-        ZWrite On
-        ColorMask RG
-
-        
-
-        HLSLPROGRAM
-
-           #pragma vertex Vert
-   #pragma fragment Frag
-
-        #define _PASSMOTIONVECTOR 1
-
-        #if (defined(SHADER_API_GLES) || defined(SHADER_API_GLES3) || defined(SHADER_API_GLES30)) 
-            #pragma target 3.0
-#else
-            #pragma target 4.5
-#endif
-        #pragma multi_compile_instancing
-        #pragma multi_compile _ DOTS_INSTANCING_ON
-
-        #define SHADERPASS SHADERPASS_MOTION_VECTORS
-        #define RAYTRACING_SHADER_GRAPH_DEFAULT
-        #define VARYINGS_NEED_PASS
-        #define _PASSMOTIONVECTOR 1
-        
-        
-
-
-   #define _URP 1
-
-#define _UNLIT 1
-
-
-        #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
-        #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
-        #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
-        #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
-        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Input.hlsl"
-        #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
-        #include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
-        #include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRendering.hlsl"
-        #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
-        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderGraphFunctions.hlsl"
-        #include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
-         
-              #undef WorldNormalVector
-      #define WorldNormalVector(data, normal) mul(normal, data.TBNMatrix)
-      
-      #define UnityObjectToWorldNormal(normal) mul(GetObjectToWorldMatrix(), normal)
-
-      #define _WorldSpaceLightPos0 _MainLightPosition
-      
-      #define UNITY_DECLARE_TEX2D(name) TEXTURE2D(name); SAMPLER(sampler##name);
-      #define UNITY_DECLARE_TEX2D_NOSAMPLER(name) TEXTURE2D(name);
-      #define UNITY_DECLARE_TEX2DARRAY(name) TEXTURE2D_ARRAY(name); SAMPLER(sampler##name);
-      #define UNITY_DECLARE_TEX2DARRAY_NOSAMPLER(name) TEXTURE2D_ARRAY(name);
-
-      #define UNITY_SAMPLE_TEX2DARRAY(tex,coord)            SAMPLE_TEXTURE2D_ARRAY(tex, sampler##tex, coord.xy, coord.z)
-      #define UNITY_SAMPLE_TEX2DARRAY_LOD(tex,coord,lod)    SAMPLE_TEXTURE2D_ARRAY_LOD(tex, sampler##tex, coord.xy, coord.z, lod)
-      #define UNITY_SAMPLE_TEX2D(tex, coord)                SAMPLE_TEXTURE2D(tex, sampler##tex, coord)
-      #define UNITY_SAMPLE_TEX2D_SAMPLER(tex, samp, coord)  SAMPLE_TEXTURE2D(tex, sampler##samp, coord)
-
-      #define UNITY_SAMPLE_TEX2D_LOD(tex,coord, lod)   SAMPLE_TEXTURE2D_LOD(tex, sampler_##tex, coord, lod)
-      #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord, lod) SAMPLE_TEXTURE2D_LOD (tex, sampler##samplertex,coord, lod)
-     
-      #if defined(UNITY_COMPILER_HLSL)
-         #define UNITY_INITIALIZE_OUTPUT(type,name) name = (type)0;
-      #else
-         #define UNITY_INITIALIZE_OUTPUT(type,name)
-      #endif
-
-      #define sampler2D_float sampler2D
-      #define sampler2D_half sampler2D
-
-      
-
-      // data across stages, stripped like the above.
-      struct VertexToPixel
-      {
-         float4 pos : SV_POSITION;
-         float3 worldPos : TEXCOORD0;
-         float3 worldNormal : TEXCOORD1;
-         float4 worldTangent : TEXCOORD2;
-         // float4 texcoord0 : TEXCOORD3;
-         // float4 texcoord1 : TEXCOORD4;
-         // float4 texcoord2 : TEXCOORD5;
-
-         // #if %TEXCOORD3REQUIREKEY%
-         // float4 texcoord3 : TEXCOORD6;
-         // #endif
-
-         // #if %SCREENPOSREQUIREKEY%
-         // float4 screenPos : TEXCOORD7;
-         // #endif
-
-         // #if %VERTEXCOLORREQUIREKEY%
-         // half4 vertexColor : COLOR;
-         // #endif
-
-         #if defined(LIGHTMAP_ON)
-            float2 lightmapUV : TEXCOORD8;
-         #endif
-         #if defined(DYNAMICLIGHTMAP_ON)
-            float2 dynamicLightmapUV : TEXCOORD9;
-         #endif
-         #if !defined(LIGHTMAP_ON)
-            float4 probeOcclusion : TEXCOORD8;
-            float3 sh : TEXCOORD10;
-         #endif
-
-         #if defined(VARYINGS_NEED_FOG_AND_VERTEX_LIGHT)
-            float4 fogFactorAndVertexLight : TEXCOORD11;
-         #endif
-
-         #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
-           float4 shadowCoord : TEXCOORD12;
-         #endif
-
-         // #if %EXTRAV2F0REQUIREKEY%
-         // float4 extraV2F0 : TEXCOORD13;
-         // #endif
-
-         // #if %EXTRAV2F1REQUIREKEY%
-         // float4 extraV2F1 : TEXCOORD14;
-         // #endif
-
-         // #if %EXTRAV2F2REQUIREKEY%
-         // float4 extraV2F2 : TEXCOORD15;
-         // #endif
-
-         // #if %EXTRAV2F3REQUIREKEY%
-         // float4 extraV2F3 : TEXCOORD16;
-         // #endif
-
-         // #if %EXTRAV2F4REQUIREKEY%
-         // float4 extraV2F4 : TEXCOORD17;
-         // #endif
-
-         // #if %EXTRAV2F5REQUIREKEY%
-         // float4 extraV2F5 : TEXCOORD18;
-         // #endif
-
-         // #if %EXTRAV2F6REQUIREKEY%
-         // float4 extraV2F6 : TEXCOORD19;
-         // #endif
-
-         // #if %EXTRAV2F7REQUIREKEY%
-         // float4 extraV2F7 : TEXCOORD20;
-         // #endif
-
-         #if UNITY_ANY_INSTANCING_ENABLED
-         uint instanceID : CUSTOM_INSTANCE_ID;
-         #endif
-         #if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
-         uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
-         #endif
-         #if (defined(UNITY_STEREO_INSTANCING_ENABLED))
-         uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
-         #endif
-         #if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
-         FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
-         #endif
-
-         #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-            float4 previousPositionCS : TEXCOORD21; // Contain previous transform position (in case of skinning for example)
-            float4 positionCS : TEXCOORD22;
-         #endif
-      };
-
-        
-        
-            
-            // data describing the user output of a pixel
-            struct Surface
-            {
-               half3 Albedo;
-               half Height;
-               half3 Normal;
-               half Smoothness;
-               half3 Emission;
-               half Metallic;
-               half3 Specular;
-               half Occlusion;
-               half SpecularPower; // for simple lighting
-               half Alpha;
-               float outputDepth; // if written, SV_Depth semantic is used. ShaderData.clipPos.z is unused value
-               // HDRP Only
-               half SpecularOcclusion;
-               half SubsurfaceMask;
-               half Thickness;
-               half CoatMask;
-               half CoatSmoothness;
-               half Anisotropy;
-               half IridescenceMask;
-               half IridescenceThickness;
-               int DiffusionProfileHash;
-               float SpecularAAThreshold;
-               float SpecularAAScreenSpaceVariance;
-               // requires _OVERRIDE_BAKEDGI to be defined, but is mapped in all pipelines
-               float3 DiffuseGI;
-               float3 BackDiffuseGI;
-               float3 SpecularGI;
-               float ior;
-               float3 transmittanceColor;
-               float atDistance;
-               float transmittanceMask;
-               // requires _OVERRIDE_SHADOWMASK to be defines
-               float4 ShadowMask;
-
-               // for decals
-               float NormalAlpha;
-               float MAOSAlpha;
-
-
-            };
-
-            // Data the user declares in blackboard blocks
-            struct Blackboard
-            {
-                
-                float blackboardDummyData;
-            };
-
-            // data the user might need, this will grow to be big. But easy to strip
-            struct ShaderData
-            {
-               float4 clipPos; // SV_POSITION
-               float3 localSpacePosition;
-               float3 localSpaceNormal;
-               float3 localSpaceTangent;
-        
-               float3 worldSpacePosition;
-               float3 worldSpaceNormal;
-               float3 worldSpaceTangent;
-               float tangentSign;
-
-               float3 worldSpaceViewDir;
-               float3 tangentSpaceViewDir;
-
-               float4 texcoord0;
-               float4 texcoord1;
-               float4 texcoord2;
-               float4 texcoord3;
-
-               float2 screenUV;
-               float4 screenPos;
-
-               float4 vertexColor;
-               bool isFrontFace;
-
-               float4 extraV2F0;
-               float4 extraV2F1;
-               float4 extraV2F2;
-               float4 extraV2F3;
-               float4 extraV2F4;
-               float4 extraV2F5;
-               float4 extraV2F6;
-               float4 extraV2F7;
-
-               float3x3 TBNMatrix;
-               Blackboard blackboard;
-            };
-
-            struct VertexData
-            {
-               #if SHADER_TARGET > 30
-               // uint vertexID : SV_VertexID;
-               #endif
-               float4 vertex : POSITION;
-               float3 normal : NORMAL;
-               float4 tangent : TANGENT;
-               float4 texcoord0 : TEXCOORD0;
-
-               // optimize out mesh coords when not in use by user or lighting system
-               #if _URP && (_USINGTEXCOORD1 || _PASSMETA || _PASSFORWARD || _PASSGBUFFER)
-                  float4 texcoord1 : TEXCOORD1;
-               #endif
-
-               #if _URP && (_USINGTEXCOORD2 || _PASSMETA || ((_PASSFORWARD || _PASSGBUFFER) && defined(DYNAMICLIGHTMAP_ON)))
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-               #if _STANDARD && (_USINGTEXCOORD1 || (_PASSMETA || ((_PASSFORWARD || _PASSGBUFFER || _PASSFORWARDADD) && LIGHTMAP_ON)))
-                  float4 texcoord1 : TEXCOORD1;
-               #endif
-               #if _STANDARD && (_USINGTEXCOORD2 || (_PASSMETA || ((_PASSFORWARD || _PASSGBUFFER) && DYNAMICLIGHTMAP_ON)))
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-
-               #if _HDRP
-                  float4 texcoord1 : TEXCOORD1;
-                  float4 texcoord2 : TEXCOORD2;
-               #endif
-
-               // #if %TEXCOORD3REQUIREKEY%
-               // float4 texcoord3 : TEXCOORD3;
-               // #endif
-
-               // #if %VERTEXCOLORREQUIREKEY%
-               // float4 vertexColor : COLOR;
-               // #endif
-
-               #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-                  float3 previousPositionOS : TEXCOORD4; // Contain previous transform position (in case of skinning for example)
-                  #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                     float3 precomputedVelocity    : TEXCOORD5; // Add Precomputed Velocity (Alembic computes velocities on runtime side).
-                  #endif
-               #endif
-
-               UNITY_VERTEX_INPUT_INSTANCE_ID
-            };
-
-            struct TessVertex 
-            {
-               float4 vertex : INTERNALTESSPOS;
-               float3 normal : NORMAL;
-               float4 tangent : TANGENT;
-               float4 texcoord0 : TEXCOORD0;
-               float4 texcoord1 : TEXCOORD1;
-               float4 texcoord2 : TEXCOORD2;
-
-               // #if %TEXCOORD3REQUIREKEY%
-               // float4 texcoord3 : TEXCOORD3;
-               // #endif
-
-               // #if %VERTEXCOLORREQUIREKEY%
-               // float4 vertexColor : COLOR;
-               // #endif
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // float4 extraV2F0 : TEXCOORD5;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // float4 extraV2F1 : TEXCOORD6;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // float4 extraV2F2 : TEXCOORD7;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // float4 extraV2F3 : TEXCOORD8;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // float4 extraV2F4 : TEXCOORD9;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // float4 extraV2F5 : TEXCOORD10;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // float4 extraV2F6 : TEXCOORD11;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // float4 extraV2F7 : TEXCOORD12;
-               // #endif
-
-               #if _PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR))
-                  float3 previousPositionOS : TEXCOORD13; // Contain previous transform position (in case of skinning for example)
-                  #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                     float3 precomputedVelocity : TEXCOORD14;
-                  #endif
-               #endif
-
-               UNITY_VERTEX_INPUT_INSTANCE_ID
-               UNITY_VERTEX_OUTPUT_STEREO
-            };
-
-            struct ExtraV2F
-            {
-               float4 extraV2F0;
-               float4 extraV2F1;
-               float4 extraV2F2;
-               float4 extraV2F3;
-               float4 extraV2F4;
-               float4 extraV2F5;
-               float4 extraV2F6;
-               float4 extraV2F7;
-               Blackboard blackboard;
-               float4 time;
-            };
-
-
-            float3 WorldToTangentSpace(ShaderData d, float3 normal)
-            {
-               return mul(d.TBNMatrix, normal);
-            }
-
-            float3 TangentToWorldSpace(ShaderData d, float3 normal)
-            {
-               return mul(normal, d.TBNMatrix);
-            }
-
-            // in this case, make standard more like SRPs, because we can't fix
-            // unity_WorldToObject in HDRP, since it already does macro-fu there
-
-            #if _STANDARD
-               float3 TransformWorldToObject(float3 p) { return mul(unity_WorldToObject, float4(p, 1)); };
-               float3 TransformObjectToWorld(float3 p) { return mul(unity_ObjectToWorld, float4(p, 1)); };
-               float4 TransformWorldToObject(float4 p) { return mul(unity_WorldToObject, p); };
-               float4 TransformObjectToWorld(float4 p) { return mul(unity_ObjectToWorld, p); };
-               float4x4 GetWorldToObjectMatrix() { return unity_WorldToObject; }
-               float4x4 GetObjectToWorldMatrix() { return unity_ObjectToWorld; }
-               #if (defined(SHADER_API_D3D11) || defined(SHADER_API_XBOXONE) || defined(UNITY_COMPILER_HLSLCC) || defined(SHADER_API_PSSL) || (SHADER_TARGET_SURFACE_ANALYSIS && !SHADER_TARGET_SURFACE_ANALYSIS_MOJOSHADER))
-                 #define UNITY_SAMPLE_TEX2D_LOD(tex,coord, lod) tex.SampleLevel (sampler##tex,coord, lod)
-                 #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord, lod) tex.SampleLevel (sampler##samplertex,coord, lod)
-              #else
-                 #define UNITY_SAMPLE_TEX2D_LOD(tex,coord,lod) tex2D (tex,coord,0,lod)
-                 #define UNITY_SAMPLE_TEX2D_SAMPLER_LOD(tex,samplertex,coord,lod) tex2D (tex,coord,0,lod)
-              #endif
-
-               #undef GetWorldToObjectMatrix()
-
-               #define GetWorldToObjectMatrix()   unity_WorldToObject
-
-
-            #endif
-
-            float3 GetCameraWorldPosition()
-            {
-               #if _HDRP
-                  return GetCameraRelativePositionWS(_WorldSpaceCameraPos);
-               #else
-                  return _WorldSpaceCameraPos;
-               #endif
-            }
-
-            #if _GRABPASSUSED
-               #if _STANDARD
-                  TEXTURE2D(%GRABTEXTURE%);
-                  SAMPLER(sampler_%GRABTEXTURE%);
-               #endif
-
-               half3 GetSceneColor(float2 uv)
-               {
-                  #if _STANDARD
-                     return SAMPLE_TEXTURE2D(%GRABTEXTURE%, sampler_%GRABTEXTURE%, uv).rgb;
-                  #else
-                     return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv);
-                  #endif
-               }
-            #endif
-
-
-      
-            #if _STANDARD
-               UNITY_DECLARE_DEPTH_TEXTURE(_CameraDepthTexture);
-               float GetSceneDepth(float2 uv) { return SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv); }
-               float GetLinear01Depth(float2 uv) { return Linear01Depth(GetSceneDepth(uv)); }
-               float GetLinearEyeDepth(float2 uv) { return LinearEyeDepth(GetSceneDepth(uv)); } 
-            #else
-               float GetSceneDepth(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv); }
-               float GetLinear01Depth(float2 uv) { return Linear01Depth(GetSceneDepth(uv), _ZBufferParams); }
-               float GetLinearEyeDepth(float2 uv) { return LinearEyeDepth(GetSceneDepth(uv), _ZBufferParams); } 
-            #endif
-
-            float3 GetWorldPositionFromDepthBuffer(float2 uv, float3 worldSpaceViewDir)
-            {
-               float eye = GetLinearEyeDepth(uv);
-               float3 camView = mul((float3x3)GetObjectToWorldMatrix(), transpose(mul(GetWorldToObjectMatrix(), UNITY_MATRIX_I_V)) [2].xyz);
-
-               float dt = dot(worldSpaceViewDir, camView);
-               float3 div = worldSpaceViewDir/dt;
-               float3 wpos = (eye * div) + GetCameraWorldPosition();
-               return wpos;
-            }
-
-            #if _HDRP
-            float3 ObjectToWorldSpacePosition(float3 pos)
-            {
-               return GetAbsolutePositionWS(TransformObjectToWorld(pos));
-            }
-            #else
-            float3 ObjectToWorldSpacePosition(float3 pos)
-            {
-               return TransformObjectToWorld(pos);
-            }
-            #endif
-
-            #if _STANDARD
-               UNITY_DECLARE_SCREENSPACE_TEXTURE(_CameraDepthNormalsTexture);
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  float4 depthNorms = UNITY_SAMPLE_SCREENSPACE_TEXTURE(_CameraDepthNormalsTexture, uv);
-                  float3 norms = DecodeViewNormalStereo(depthNorms);
-                  norms = mul((float3x3)GetWorldToViewMatrix(), norms) * 0.5 + 0.5;
-                  return norms;
-               }
-            #elif _HDRP && !_DECALSHADER
-               
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  NormalData nd;
-                  DecodeFromNormalBuffer(_ScreenSize.xy * uv, nd);
-                  return nd.normalWS;
-               }
-            #elif _URP
-               #if (SHADER_LIBRARY_VERSION_MAJOR >= 10)
-                  #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareNormalsTexture.hlsl"
-               #endif
-
-               float3 GetSceneNormal(float2 uv, float3 worldSpaceViewDir)
-               {
-                  #if (SHADER_LIBRARY_VERSION_MAJOR >= 10)
-                     return SampleSceneNormals(uv);
-                  #else
-                     float3 wpos = GetWorldPositionFromDepthBuffer(uv, worldSpaceViewDir);
-                     return normalize(-cross(ddx(wpos), ddy(wpos))) * 0.5 + 0.5;
-                  #endif
-
-                }
-             #endif
-
-             #if _HDRP
-
-               half3 UnpackNormalmapRGorAG(half4 packednormal)
-               {
-                     // This do the trick
-                  packednormal.x *= packednormal.w;
-
-                  half3 normal;
-                  normal.xy = packednormal.xy * 2 - 1;
-                  normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
-                  return normal;
-               }
-               half3 UnpackNormal(half4 packednormal)
-               {
-                  #if defined(UNITY_NO_DXT5nm)
-                     return packednormal.xyz * 2 - 1;
-                  #else
-                     return UnpackNormalmapRGorAG(packednormal);
-                  #endif
-               }
-            #endif
-            #if _HDRP || _URP
-
-               half3 UnpackScaleNormal(half4 packednormal, half scale)
-               {
-                 #ifndef UNITY_NO_DXT5nm
-                   // Unpack normal as DXT5nm (1, y, 1, x) or BC5 (x, y, 0, 1)
-                   // Note neutral texture like "bump" is (0, 0, 1, 1) to work with both plain RGB normal and DXT5nm/BC5
-                   packednormal.x *= packednormal.w;
-                 #endif
-                   half3 normal;
-                   normal.xy = (packednormal.xy * 2 - 1) * scale;
-                   normal.z = sqrt(1 - saturate(dot(normal.xy, normal.xy)));
-                   return normal;
-               }	
-
-             #endif
-
-
-            void GetSun(out float3 lightDir, out float3 color)
-            {
-               lightDir = float3(0.5, 0.5, 0);
-               color = 1;
-               #if _HDRP
-                  if (_DirectionalLightCount > 0)
-                  {
-                     DirectionalLightData light = _DirectionalLightDatas[0];
-                     lightDir = -light.forward.xyz;
-                     color = light.color;
-                  }
-               #elif _STANDARD
-			         lightDir = normalize(_WorldSpaceLightPos0.xyz);
-                  color = _LightColor0.rgb;
-               #elif _URP
-	               Light light = GetMainLight();
-	               lightDir = light.direction;
-	               color = light.color;
-               #endif
-            }
-
-
-
-        CBUFFER_START(UnityPerMaterial)
-
-               
-
-
-
-        CBUFFER_END
-
-        
-
-        
-
-        
-
-
-
-        
-            void ChainSurfaceFunction(inout Surface l, inout ShaderData d)
-            {
-                 // Ext_SurfaceFunction0(l, d);
-                 // Ext_SurfaceFunction1(l, d);
-                 // Ext_SurfaceFunction2(l, d);
-                 // Ext_SurfaceFunction3(l, d);
-                 // Ext_SurfaceFunction4(l, d);
-                 // Ext_SurfaceFunction5(l, d);
-                 // Ext_SurfaceFunction6(l, d);
-                 // Ext_SurfaceFunction7(l, d);
-                 // Ext_SurfaceFunction8(l, d);
-                 // Ext_SurfaceFunction9(l, d);
-		           // Ext_SurfaceFunction10(l, d);
-                 // Ext_SurfaceFunction11(l, d);
-                 // Ext_SurfaceFunction12(l, d);
-                 // Ext_SurfaceFunction13(l, d);
-                 // Ext_SurfaceFunction14(l, d);
-                 // Ext_SurfaceFunction15(l, d);
-                 // Ext_SurfaceFunction16(l, d);
-                 // Ext_SurfaceFunction17(l, d);
-                 // Ext_SurfaceFunction18(l, d);
-		           // Ext_SurfaceFunction19(l, d);
-                 // Ext_SurfaceFunction20(l, d);
-                 // Ext_SurfaceFunction21(l, d);
-                 // Ext_SurfaceFunction22(l, d);
-                 // Ext_SurfaceFunction23(l, d);
-                 // Ext_SurfaceFunction24(l, d);
-                 // Ext_SurfaceFunction25(l, d);
-                 // Ext_SurfaceFunction26(l, d);
-                 // Ext_SurfaceFunction27(l, d);
-                 // Ext_SurfaceFunction28(l, d);
-		           // Ext_SurfaceFunction29(l, d);
-            }
-
-#if !_DECALSHADER
-
-            void ChainModifyVertex(inout VertexData v, inout VertexToPixel v2p, float4 time)
-            {
-                 ExtraV2F d;
-                 
-                 ZERO_INITIALIZE(ExtraV2F, d);
-                 ZERO_INITIALIZE(Blackboard, d.blackboard);
-                 // due to motion vectors in HDRP, we need to use the last
-                 // time in certain spots. So if you are going to use _Time to adjust vertices,
-                 // you need to use this time or motion vectors will break. 
-                 d.time = time;
-
-                 //  Ext_ModifyVertex0(v, d);
-                 // Ext_ModifyVertex1(v, d);
-                 // Ext_ModifyVertex2(v, d);
-                 // Ext_ModifyVertex3(v, d);
-                 // Ext_ModifyVertex4(v, d);
-                 // Ext_ModifyVertex5(v, d);
-                 // Ext_ModifyVertex6(v, d);
-                 // Ext_ModifyVertex7(v, d);
-                 // Ext_ModifyVertex8(v, d);
-                 // Ext_ModifyVertex9(v, d);
-                 // Ext_ModifyVertex10(v, d);
-                 // Ext_ModifyVertex11(v, d);
-                 // Ext_ModifyVertex12(v, d);
-                 // Ext_ModifyVertex13(v, d);
-                 // Ext_ModifyVertex14(v, d);
-                 // Ext_ModifyVertex15(v, d);
-                 // Ext_ModifyVertex16(v, d);
-                 // Ext_ModifyVertex17(v, d);
-                 // Ext_ModifyVertex18(v, d);
-                 // Ext_ModifyVertex19(v, d);
-                 // Ext_ModifyVertex20(v, d);
-                 // Ext_ModifyVertex21(v, d);
-                 // Ext_ModifyVertex22(v, d);
-                 // Ext_ModifyVertex23(v, d);
-                 // Ext_ModifyVertex24(v, d);
-                 // Ext_ModifyVertex25(v, d);
-                 // Ext_ModifyVertex26(v, d);
-                 // Ext_ModifyVertex27(v, d);
-                 // Ext_ModifyVertex28(v, d);
-                 // Ext_ModifyVertex29(v, d);
-
-
-                 // #if %EXTRAV2F0REQUIREKEY%
-                 // v2p.extraV2F0 = d.extraV2F0;
-                 // #endif
-
-                 // #if %EXTRAV2F1REQUIREKEY%
-                 // v2p.extraV2F1 = d.extraV2F1;
-                 // #endif
-
-                 // #if %EXTRAV2F2REQUIREKEY%
-                 // v2p.extraV2F2 = d.extraV2F2;
-                 // #endif
-
-                 // #if %EXTRAV2F3REQUIREKEY%
-                 // v2p.extraV2F3 = d.extraV2F3;
-                 // #endif
-
-                 // #if %EXTRAV2F4REQUIREKEY%
-                 // v2p.extraV2F4 = d.extraV2F4;
-                 // #endif
-
-                 // #if %EXTRAV2F5REQUIREKEY%
-                 // v2p.extraV2F5 = d.extraV2F5;
-                 // #endif
-
-                 // #if %EXTRAV2F6REQUIREKEY%
-                 // v2p.extraV2F6 = d.extraV2F6;
-                 // #endif
-
-                 // #if %EXTRAV2F7REQUIREKEY%
-                 // v2p.extraV2F7 = d.extraV2F7;
-                 // #endif
-            }
-
-            void ChainModifyTessellatedVertex(inout VertexData v, inout VertexToPixel v2p)
-            {
-               ExtraV2F d;
-               ZERO_INITIALIZE(ExtraV2F, d);
-               ZERO_INITIALIZE(Blackboard, d.blackboard);
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // d.extraV2F0 = v2p.extraV2F0;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // d.extraV2F1 = v2p.extraV2F1;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // d.extraV2F2 = v2p.extraV2F2;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // d.extraV2F3 = v2p.extraV2F3;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // d.extraV2F4 = v2p.extraV2F4;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // d.extraV2F5 = v2p.extraV2F5;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // d.extraV2F6 = v2p.extraV2F6;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // d.extraV2F7 = v2p.extraV2F7;
-               // #endif
-
-
-               // Ext_ModifyTessellatedVertex0(v, d);
-               // Ext_ModifyTessellatedVertex1(v, d);
-               // Ext_ModifyTessellatedVertex2(v, d);
-               // Ext_ModifyTessellatedVertex3(v, d);
-               // Ext_ModifyTessellatedVertex4(v, d);
-               // Ext_ModifyTessellatedVertex5(v, d);
-               // Ext_ModifyTessellatedVertex6(v, d);
-               // Ext_ModifyTessellatedVertex7(v, d);
-               // Ext_ModifyTessellatedVertex8(v, d);
-               // Ext_ModifyTessellatedVertex9(v, d);
-               // Ext_ModifyTessellatedVertex10(v, d);
-               // Ext_ModifyTessellatedVertex11(v, d);
-               // Ext_ModifyTessellatedVertex12(v, d);
-               // Ext_ModifyTessellatedVertex13(v, d);
-               // Ext_ModifyTessellatedVertex14(v, d);
-               // Ext_ModifyTessellatedVertex15(v, d);
-               // Ext_ModifyTessellatedVertex16(v, d);
-               // Ext_ModifyTessellatedVertex17(v, d);
-               // Ext_ModifyTessellatedVertex18(v, d);
-               // Ext_ModifyTessellatedVertex19(v, d);
-               // Ext_ModifyTessellatedVertex20(v, d);
-               // Ext_ModifyTessellatedVertex21(v, d);
-               // Ext_ModifyTessellatedVertex22(v, d);
-               // Ext_ModifyTessellatedVertex23(v, d);
-               // Ext_ModifyTessellatedVertex24(v, d);
-               // Ext_ModifyTessellatedVertex25(v, d);
-               // Ext_ModifyTessellatedVertex26(v, d);
-               // Ext_ModifyTessellatedVertex27(v, d);
-               // Ext_ModifyTessellatedVertex28(v, d);
-               // Ext_ModifyTessellatedVertex29(v, d);
-
-               // #if %EXTRAV2F0REQUIREKEY%
-               // v2p.extraV2F0 = d.extraV2F0;
-               // #endif
-
-               // #if %EXTRAV2F1REQUIREKEY%
-               // v2p.extraV2F1 = d.extraV2F1;
-               // #endif
-
-               // #if %EXTRAV2F2REQUIREKEY%
-               // v2p.extraV2F2 = d.extraV2F2;
-               // #endif
-
-               // #if %EXTRAV2F3REQUIREKEY%
-               // v2p.extraV2F3 = d.extraV2F3;
-               // #endif
-
-               // #if %EXTRAV2F4REQUIREKEY%
-               // v2p.extraV2F4 = d.extraV2F4;
-               // #endif
-
-               // #if %EXTRAV2F5REQUIREKEY%
-               // v2p.extraV2F5 = d.extraV2F5;
-               // #endif
-
-               // #if %EXTRAV2F6REQUIREKEY%
-               // v2p.extraV2F6 = d.extraV2F6;
-               // #endif
-
-               // #if %EXTRAV2F7REQUIREKEY%
-               // v2p.extraV2F7 = d.extraV2F7;
-               // #endif
-            }
-
-            void ChainFinalColorForward(inout Surface l, inout ShaderData d, inout half4 color)
-            {
-               //   Ext_FinalColorForward0(l, d, color);
-               //   Ext_FinalColorForward1(l, d, color);
-               //   Ext_FinalColorForward2(l, d, color);
-               //   Ext_FinalColorForward3(l, d, color);
-               //   Ext_FinalColorForward4(l, d, color);
-               //   Ext_FinalColorForward5(l, d, color);
-               //   Ext_FinalColorForward6(l, d, color);
-               //   Ext_FinalColorForward7(l, d, color);
-               //   Ext_FinalColorForward8(l, d, color);
-               //   Ext_FinalColorForward9(l, d, color);
-               //  Ext_FinalColorForward10(l, d, color);
-               //  Ext_FinalColorForward11(l, d, color);
-               //  Ext_FinalColorForward12(l, d, color);
-               //  Ext_FinalColorForward13(l, d, color);
-               //  Ext_FinalColorForward14(l, d, color);
-               //  Ext_FinalColorForward15(l, d, color);
-               //  Ext_FinalColorForward16(l, d, color);
-               //  Ext_FinalColorForward17(l, d, color);
-               //  Ext_FinalColorForward18(l, d, color);
-               //  Ext_FinalColorForward19(l, d, color);
-               //  Ext_FinalColorForward20(l, d, color);
-               //  Ext_FinalColorForward21(l, d, color);
-               //  Ext_FinalColorForward22(l, d, color);
-               //  Ext_FinalColorForward23(l, d, color);
-               //  Ext_FinalColorForward24(l, d, color);
-               //  Ext_FinalColorForward25(l, d, color);
-               //  Ext_FinalColorForward26(l, d, color);
-               //  Ext_FinalColorForward27(l, d, color);
-               //  Ext_FinalColorForward28(l, d, color);
-               //  Ext_FinalColorForward29(l, d, color);
-            }
-
-            void ChainFinalGBufferStandard(inout Surface s, inout ShaderData d, inout half4 GBuffer0, inout half4 GBuffer1, inout half4 GBuffer2, inout half4 outEmission, inout half4 outShadowMask)
-            {
-               //   Ext_FinalGBufferStandard0(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard1(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard2(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard3(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard4(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard5(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard6(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard7(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard8(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //   Ext_FinalGBufferStandard9(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard10(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard11(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard12(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard13(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard14(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard15(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard16(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard17(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard18(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard19(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard20(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard21(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard22(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard23(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard24(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard25(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard26(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard27(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard28(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-               //  Ext_FinalGBufferStandard29(s, d, GBuffer0, GBuffer1, GBuffer2, outEmission, outShadowMask);
-            }
-#endif
-
-
-        
-
-
-#if _DECALSHADER
-
-        ShaderData CreateShaderData(SurfaceDescriptionInputs IN)
-        {
-            ShaderData d = (ShaderData)0;
-            d.TBNMatrix = float3x3(IN.WorldSpaceTangent, IN.WorldSpaceBiTangent, IN.WorldSpaceNormal);
-            d.worldSpaceNormal = IN.WorldSpaceNormal;
-            d.worldSpaceTangent = IN.WorldSpaceTangent;
-
-            d.worldSpacePosition = IN.WorldSpacePosition;
-            d.texcoord0 = IN.uv0.xyxy;
-            d.screenPos = IN.ScreenPosition;
-
-            d.worldSpaceViewDir = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
-
-            d.tangentSpaceViewDir = mul(d.TBNMatrix, d.worldSpaceViewDir);
-
-            // these rarely get used, so we back transform them. Usually will be stripped.
-            #if _HDRP
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(GetCameraRelativePositionWS(d.worldSpacePosition), 1)).xyz;
-            #else
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(d.worldSpacePosition, 1)).xyz;
-            #endif
-            // d.localSpaceNormal = normalize(mul((float3x3)GetWorldToObjectMatrix(), d.worldSpaceNormal));
-            // d.localSpaceTangent = normalize(mul((float3x3)GetWorldToObjectMatrix(), d.worldSpaceTangent.xyz));
-
-            // #if %SCREENPOSREQUIREKEY%
-            // d.screenUV = (IN.ScreenPosition.xy / max(0.01, IN.ScreenPosition.w));
-            // #endif
-
-            return d;
-        }
-#else
-
-         ShaderData CreateShaderData(VertexToPixel i
-                  #if NEED_FACING
-                     , bool facing
-                  #endif
-         )
-         {
-            ShaderData d = (ShaderData)0;
-            d.clipPos = i.pos;
-            d.worldSpacePosition = i.worldPos;
-
-            d.worldSpaceNormal = normalize(i.worldNormal);
-            d.worldSpaceTangent.xyz = normalize(i.worldTangent.xyz);
-
-            d.tangentSign = i.worldTangent.w * unity_WorldTransformParams.w;
-            float3 bitangent = cross(d.worldSpaceTangent.xyz, d.worldSpaceNormal) * d.tangentSign;
-           
-            d.TBNMatrix = float3x3(d.worldSpaceTangent, -bitangent, d.worldSpaceNormal);
-            d.worldSpaceViewDir = normalize(_WorldSpaceCameraPos - i.worldPos);
-
-            d.tangentSpaceViewDir = mul(d.TBNMatrix, d.worldSpaceViewDir);
-            // d.texcoord0 = i.texcoord0;
-            // d.texcoord1 = i.texcoord1;
-            // d.texcoord2 = i.texcoord2;
-
-            // #if %TEXCOORD3REQUIREKEY%
-            // d.texcoord3 = i.texcoord3;
-            // #endif
-
-            // d.isFrontFace = facing;
-            // #if %VERTEXCOLORREQUIREKEY%
-            // d.vertexColor = i.vertexColor;
-            // #endif
-
-            // these rarely get used, so we back transform them. Usually will be stripped.
-            #if _HDRP
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(GetCameraRelativePositionWS(i.worldPos), 1)).xyz;
-            #else
-                // d.localSpacePosition = mul(GetWorldToObjectMatrix(), float4(i.worldPos, 1)).xyz;
-            #endif
-            // d.localSpaceNormal = normalize(mul((float3x3)GetWorldToObjectMatrix(), i.worldNormal));
-            // d.localSpaceTangent = normalize(mul((float3x3)GetWorldToObjectMatrix(), i.worldTangent.xyz));
-
-            // #if %SCREENPOSREQUIREKEY%
-            // d.screenPos = i.screenPos;
-            // d.screenUV = (i.screenPos.xy / i.screenPos.w);
-            // #endif
-
-
-            // #if %EXTRAV2F0REQUIREKEY%
-            // d.extraV2F0 = i.extraV2F0;
-            // #endif
-
-            // #if %EXTRAV2F1REQUIREKEY%
-            // d.extraV2F1 = i.extraV2F1;
-            // #endif
-
-            // #if %EXTRAV2F2REQUIREKEY%
-            // d.extraV2F2 = i.extraV2F2;
-            // #endif
-
-            // #if %EXTRAV2F3REQUIREKEY%
-            // d.extraV2F3 = i.extraV2F3;
-            // #endif
-
-            // #if %EXTRAV2F4REQUIREKEY%
-            // d.extraV2F4 = i.extraV2F4;
-            // #endif
-
-            // #if %EXTRAV2F5REQUIREKEY%
-            // d.extraV2F5 = i.extraV2F5;
-            // #endif
-
-            // #if %EXTRAV2F6REQUIREKEY%
-            // d.extraV2F6 = i.extraV2F6;
-            // #endif
-
-            // #if %EXTRAV2F7REQUIREKEY%
-            // d.extraV2F7 = i.extraV2F7;
-            // #endif
-
-            return d;
-         }
-
-#endif
-
-        
-         #if defined(_PASSSHADOW)
-            float3 _LightDirection;
-            float3 _LightPosition;
-         #endif
-
-         #if (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-
-            #define GetWorldToViewMatrix()     _ViewMatrix
-            #define UNITY_MATRIX_I_V   _InvViewMatrix
-            #define GetViewToHClipMatrix()     OptimizeProjectionMatrix(_ProjMatrix)
-            #define UNITY_MATRIX_I_P   _InvProjMatrix
-            #define GetWorldToHClipMatrix()    _ViewProjMatrix
-            #define UNITY_MATRIX_I_VP  _InvViewProjMatrix
-            #define UNITY_MATRIX_UNJITTERED_VP _NonJitteredViewProjMatrix
-            #define UNITY_MATRIX_PREV_VP _PrevViewProjMatrix
-            #define UNITY_MATRIX_PREV_I_VP _PrevInvViewProjMatrix
-
-            void MotionVectorPositionZBias(VertexToPixel input)
-            {
-                #if UNITY_REVERSED_Z
-                input.pos.z -= unity_MotionVectorsParams.z * input.pos.w;
-                #else
-                input.pos.z += unity_MotionVectorsParams.z * input.pos.w;
-                #endif
-            }
-
-        #endif
-
-         // vertex shader
-         VertexToPixel Vert (VertexData v)
-         {
-           VertexToPixel o = (VertexToPixel)0;
-
-           UNITY_SETUP_INSTANCE_ID(v);
-           UNITY_TRANSFER_INSTANCE_ID(v, o);
-           UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-
-            
-           #if _URP && (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-             VertexData previousMesh = v;
-           #endif
-           #if !_TESSELLATION_ON
-             ChainModifyVertex(v, o, _Time);
-           #endif
-
-           // o.texcoord0 = v.texcoord0;
-           // o.texcoord1 = v.texcoord1;
-           // o.texcoord2 = v.texcoord2;
-
-           // #if %TEXCOORD3REQUIREKEY%
-           // o.texcoord3 = v.texcoord3;
-           // #endif
-
-           // #if %VERTEXCOLORREQUIREKEY%
-           // o.vertexColor = v.vertexColor;
-           // #endif
-
-           // This return the camera relative position (if enable)
-           float3 positionWS = TransformObjectToWorld(v.vertex.xyz);
-           float3 normalWS = TransformObjectToWorldNormal(v.normal);
-           float4 tangentWS = float4(TransformObjectToWorldDir(v.tangent.xyz), v.tangent.w);
-           
-           VertexPositionInputs vertexInput = GetVertexPositionInputs(v.vertex.xyz);
-           o.worldPos = positionWS;
-           o.worldNormal = normalWS;
-           o.worldTangent = tangentWS;
-
-
-          // For some very odd reason, in 2021.2, we can't use Unity's defines, but have to use our own..
-          #if _PASSSHADOW
-              #if _CASTING_PUNCTUAL_LIGHT_SHADOW
-                 float3 lightDirectionWS = normalize(_LightPosition - o.worldPos);
-              #else
-                 float3 lightDirectionWS = _LightDirection;
-              #endif
-              // Define shadow pass specific clip position for Universal
-              o.pos = TransformWorldToHClip(ApplyShadowBias(o.worldPos, o.worldNormal, lightDirectionWS));
-              #if UNITY_REVERSED_Z
-                  o.pos.z = min(o.pos.z, UNITY_NEAR_CLIP_VALUE);
-              #else
-                  o.pos.z = max(o.pos.z, UNITY_NEAR_CLIP_VALUE);
-              #endif
-          #elif _PASSMETA
-              o.pos = MetaVertexPosition(float4(v.vertex.xyz, 0), v.texcoord1.xy, v.texcoord2.xy, unity_LightmapST, unity_DynamicLightmapST);
-          #else
-              o.pos = TransformWorldToHClip(o.worldPos);
-          #endif
-
-          // #if %SCREENPOSREQUIREKEY%
-          // o.screenPos = ComputeScreenPos(o.pos, _ProjectionParams.x);
-          // #endif
-
-          
-          #if _PASSFORWARD || _PASSGBUFFER
-              float2 uv1 = v.texcoord1.xy;
-              OUTPUT_LIGHTMAP_UV(uv1, unity_LightmapST, o.lightmapUV);
-              // o.texcoord1.xy = uv1;
-              OUTPUT_SH(o.worldNormal, o.sh);
-              
-              #if defined(DYNAMICLIGHTMAP_ON)
-                   o.dynamicLightmapUV.xy = v.texcoord2.xy * unity_DynamicLightmapST.xy + unity_DynamicLightmapST.zw;
-                   #if UNITY_VERSION >= 60000009
-                     OUTPUT_SH(o.worldNormal, o.sh);
-                   #endif
-              #elif (defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)) && UNITY_VERSION >= 60000009
-                   OUTPUT_SH4(vertexInput.positionWS, o.worldNormal.xyz, GetWorldSpaceNormalizeViewDir(vertexInput.positionWS), o.sh, o.probeOcclusion);
-              #endif
-          #endif
-
-          #ifdef VARYINGS_NEED_FOG_AND_VERTEX_LIGHT
-              half fogFactor = 0;
-              #if defined(_FOG_FRAGMENT)
-                fogFactor = ComputeFogFactor(o.pos.z);
-              #endif
-              #if _BAKEDLIT
-                 o.fogFactorAndVertexLight = half4(fogFactor, 0, 0, 0);
-              #else
-                 half3 vertexLight = VertexLighting(o.worldPos, o.worldNormal);
-                 o.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
-              #endif
-          #endif
-
-          #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
-             o.shadowCoord = GetShadowCoord(vertexInput);
-          #endif
-
-          #if _URP && (_PASSMOTIONVECTOR || ((_PASSFORWARD || _PASSUNLIT) && defined(_WRITE_TRANSPARENT_MOTION_VECTOR)))
-            #if !defined(TESSELLATION_ON)
-              MotionVectorPositionZBias(o);
-            #endif
-
-            o.previousPositionCS = float4(0.0, 0.0, 0.0, 1.0);
-            // Note: unity_MotionVectorsParams.y is 0 is forceNoMotion is enabled
-            bool forceNoMotion = unity_MotionVectorsParams.y == 0.0;
-
-            if (!forceNoMotion)
-            {
-              #if defined(HAVE_VFX_MODIFICATION)
-                float3 previousPositionOS = currentFrameMvData.vfxParticlePositionOS;
-                #if defined(VFX_FEATURE_MOTION_VECTORS_VERTS)
-                  const bool applyDeformation = false;
-                #else
-                  const bool applyDeformation = true;
-                #endif
-              #else
-                const bool hasDeformation = unity_MotionVectorsParams.x == 1; // Mesh has skinned deformation
-                float3 previousPositionOS = hasDeformation ? previousMesh.previousPositionOS : previousMesh.vertex.xyz;
-
-                #if defined(AUTOMATIC_TIME_BASED_MOTION_VECTORS) && defined(GRAPH_VERTEX_USES_TIME_PARAMETERS_INPUT)
-                  const bool applyDeformation = true;
-                #else
-                  const bool applyDeformation = hasDeformation;
-                #endif
-              #endif
-              // TODO
-              #if defined(FEATURES_GRAPH_VERTEX)
-                if (applyDeformation)
-                  previousPositionOS = GetLastFrameDeformedPosition(previousMesh, currentFrameMvData, previousPositionOS);
-                else
-                  previousPositionOS = previousMesh.positionOS;
-
-                #if defined(FEATURES_GRAPH_VERTEX_MOTION_VECTOR_OUTPUT)
-                  previousPositionOS -= previousMesh.precomputedVelocity;
-                #endif
-              #endif
-
-              #if defined(UNITY_DOTS_INSTANCING_ENABLED) && defined(DOTS_DEFORMED)
-                // Deformed vertices in DOTS are not cumulative with built-in Unity skinning/blend shapes
-                // Needs to be called after vertex modification has been applied otherwise it will be
-                // overwritten by Compute Deform node
-                ApplyPreviousFrameDeformedVertexPosition(previousMesh.vertexID, previousPositionOS);
-              #endif
-              #if defined (_ADD_PRECOMPUTED_VELOCITY)
-                previousPositionOS -= previousMesh.precomputedVelocity;
-              #endif
-              o.positionCS = mul(UNITY_MATRIX_UNJITTERED_VP, float4(positionWS, 1.0f));
-
-              #if defined(HAVE_VFX_MODIFICATION)
-                #if defined(VFX_FEATURE_MOTION_VECTORS_VERTS)
-                  #if defined(FEATURES_GRAPH_VERTEX_MOTION_VECTOR_OUTPUT) || defined(_ADD_PRECOMPUTED_VELOCITY)
-                    #error Unexpected fast path rendering VFX motion vector while there are vertex modification afterwards.
-                  #endif
-                  o.previousPositionCS = VFXGetPreviousClipPosition(previousMesh, currentFrameMvData.vfxElementAttributes, o.positionCS);
-                #else
-                  #if VFX_WORLD_SPACE
-                    //previousPositionOS is already in world space
-                    const float3 previousPositionWS = previousPositionOS;
-                  #else
-                    const float3 previousPositionWS = mul(UNITY_PREV_MATRIX_M, float4(previousPositionOS, 1.0f)).xyz;
-                  #endif
-                  o.previousPositionCS = mul(UNITY_MATRIX_PREV_VP, float4(previousPositionWS, 1.0f));
-                #endif
-              #else
-                o.previousPositionCS = mul(UNITY_MATRIX_PREV_VP, mul(UNITY_PREV_MATRIX_M, float4(previousPositionOS, 1)));
-              #endif
-            }
-          #endif
-
-          return o;
-         }
-
-
-        
-        
-        // Using parts of com.unity.render-pipelines.universal\Editor\ShaderGraph\Includes\MotionVectorPass.hlsl
-        //                com.unity.render-pipelines.universal\ShaderLibrary\MotionVectorsCommon.hlsl
-        //                com.unity.render-pipelines.universal\Editor\ShaderGraph\Includes\Varyings.hlsl
-
-        float2 CalcNdcMotionVectorFromCsPositions(float4 posCS, float4 prevPosCS)
-        {
-          // Note: unity_MotionVectorsParams.y is 0 is forceNoMotion is enabled
-          bool forceNoMotion = unity_MotionVectorsParams.y == 0.0;
-          if (forceNoMotion)
-            return float2(0.0, 0.0);
-
-          // Non-uniform raster needs to keep the posNDC values in float to avoid additional conversions
-          // since uv remap functions use floats
-          float2 posNDC = posCS.xy * rcp(posCS.w);
-          float2 prevPosNDC = prevPosCS.xy * rcp(prevPosCS.w);
-
-          float2 velocity;
-          #if defined(SUPPORTS_FOVEATED_RENDERING_NON_UNIFORM_RASTER)
-            UNITY_BRANCH if (_FOVEATED_RENDERING_NON_UNIFORM_RASTER)
-            {
-              // Convert velocity from NDC space (-1..1) to screen UV 0..1 space since FoveatedRendering remap needs that range.
-              float2 posUV = RemapFoveatedRenderingResolve(posNDC * 0.5 + 0.5);
-              float2 prevPosUV = RemapFoveatedRenderingPrevFrameLinearToNonUniform(prevPosNDC * 0.5 + 0.5);
-
-              // Calculate forward velocity
-              velocity = (posUV - prevPosUV);
-              #if UNITY_UV_STARTS_AT_TOP
-                velocity.y = -velocity.y;
-              #endif
-            }
-            else
-          #endif
-            {
-              // Calculate forward velocity
-              velocity = (posNDC.xy - prevPosNDC.xy);
-              #if UNITY_UV_STARTS_AT_TOP
-                velocity.y = -velocity.y;
-              #endif
-
-              // Convert velocity from NDC space (-1..1) to UV 0..1 space
-              // Note: It doesn't mean we don't have negative values, we store negative or positive offset in UV space.
-              // Note: ((posNDC * 0.5 + 0.5) - (prevPosNDC * 0.5 + 0.5)) = (velocity * 0.5)
-              velocity.xy *= 0.5;
-            }
-
-          return velocity;
-        }
-
-        float4 Frag(
-          VertexToPixel input) : SV_Target
-          {
-            UNITY_SETUP_INSTANCE_ID(input);
-
-            float4 motionVector = float4(CalcNdcMotionVectorFromCsPositions(input.positionCS, input.previousPositionCS), 0, 0);
-    
-            return motionVector;
-          }
-
-        ENDHLSL
-        }
-      
 Pass
 {
     Name "SceneDepth"
@@ -9280,9 +36,8 @@ Pass
 	Cull Off
 
     HLSLPROGRAM
-#define _URP 1
-
-		#if _HDRP
+#define _SSS_URP 1
+		#if _SSS_HDRP
 			#pragma vertex   Vert
 			#pragma fragment Frag
 			
@@ -9305,34 +60,6 @@ Pass
 				
 				return float4(posInput.linearDepth, 0, 0, 0);
 			}
-		/*
-		#elif _URP
-			#pragma vertex   Vert
-			#pragma fragment Frag
-			
-			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-			#include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
-			
-			TEXTURE2D_X_FLOAT(_CameraDepthTexture);
-			SAMPLER(sampler_CameraDepthTexture);
-			
-			float GetSceneDepth(float2 uv)
-			{
-				return SAMPLE_TEXTURE2D_X(_CameraDepthTexture, sampler_CameraDepthTexture, uv);
-			}
-			
-			float GetLinearEyeDepth(float2 uv)
-			{
-				return LinearEyeDepth(GetSceneDepth(uv), _ZBufferParams);
-			}
-			
-			float4 Frag(Varyings varyings) : SV_Target
-			{
-				float linearDepth = GetLinearEyeDepth(varyings.texcoord);
-				
-				return float4(linearDepth, 0, 0, 0);
-			}
-		*/
 		#else
 			#pragma vertex   Vert
 			#pragma fragment Frag
@@ -9405,10 +132,7818 @@ Pass
 }
 
 
-      
 
-   }
-   
-   
-   
+Pass
+{
+    Name "Universal Forward"
+    Tags
+    {
+        // LightMode: <None>
+    }
+
+// Render State
+Cull Back
+Blend One Zero
+ZTest LEqual
+ZWrite Off
+
+// Debug
+// <None>
+
+// --------------------------------------------------
+// Pass
+
+HLSLPROGRAM
+#define _SSS_PASS_UNIVERSAL_FORWARD 1
+
+#define _SSS_URP 1
+
+
+// Pragmas
+#pragma target 2.0
+#pragma multi_compile_instancing
+#pragma instancing_options renderinglayer
+#pragma vertex vert
+#pragma fragment frag
+
+// Keywords
+#pragma multi_compile _ LIGHTMAP_ON
+#pragma multi_compile _ DIRLIGHTMAP_COMBINED
+#pragma multi_compile _ USE_LEGACY_LIGHTMAPS
+#pragma multi_compile _ LIGHTMAP_BICUBIC_SAMPLING
+#pragma shader_feature _ _SAMPLE_GI
+#pragma multi_compile_fragment _ _DBUFFER_MRT1 _DBUFFER_MRT2 _DBUFFER_MRT3
+#pragma multi_compile_fragment _ DEBUG_DISPLAY
+#pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
+// GraphKeywords: <None>
+
+// Defines
+
+#define ATTRIBUTES_NEED_NORMAL
+#define ATTRIBUTES_NEED_TANGENT
+#define ATTRIBUTES_NEED_TEXCOORD0
+#define ATTRIBUTES_NEED_TEXCOORD1
+#define ATTRIBUTES_NEED_TEXCOORD2
+#define ATTRIBUTES_NEED_TEXCOORD3
+#define ATTRIBUTES_NEED_COLOR
+#define ATTRIBUTES_NEED_INSTANCEID
+#define FEATURES_GRAPH_VERTEX_NORMAL_OUTPUT
+#define FEATURES_GRAPH_VERTEX_TANGENT_OUTPUT
+#define VARYINGS_NEED_POSITION_WS
+#define VARYINGS_NEED_NORMAL_WS
+#define VARYINGS_NEED_TANGENT_WS
+#define VARYINGS_NEED_TEXCOORD0
+#define VARYINGS_NEED_TEXCOORD1
+#define VARYINGS_NEED_CULLFACE
+#define FEATURES_GRAPH_VERTEX
+/* WARNING: $splice Could not find named fragment 'PassInstancing' */
+#define SHADERPASS SHADERPASS_UNLIT
+#define _FOG_FRAGMENT 1
+
+
+// custom interpolator pre-include
+/* WARNING: $splice Could not find named fragment 'sgci_CustomInterpolatorPreInclude' */
+
+// Includes
+#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
+#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+#include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRendering.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Input.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderGraphFunctions.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DBuffer.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
+
+// --------------------------------------------------
+// Structs and Packing
+
+// custom interpolators pre packing
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPrePacking' */
+
+struct Attributes
+{
+ float3 positionOS : POSITION;
+ float3 normalOS : NORMAL;
+ float4 tangentOS : TANGENT;
+ float4 uv0 : TEXCOORD0;
+ float4 uv1 : TEXCOORD1;
+ float4 uv2 : TEXCOORD2;
+ float4 uv3 : TEXCOORD3;
+ float4 color : COLOR;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(ATTRIBUTES_NEED_INSTANCEID)
+ uint instanceID : INSTANCEID_SEMANTIC;
+#endif
+};
+struct Varyings
+{
+ float4 positionCS : SV_POSITION;
+ float3 positionWS;
+ float3 normalWS;
+ float4 tangentWS;
+ float4 texCoord0;
+ float4 texCoord1;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+ float4 extraV2F0;
+};
+struct SurfaceDescriptionInputs
+{
+ float3 WorldSpaceNormal;
+ float3 WorldSpaceTangent;
+ float3 WorldSpacePosition;
+ float4 uv0;
+ float4 uv1;
+ float FaceSign;
+ float4 extraV2F0;
+};
+struct VertexDescriptionInputs
+{
+ float3 ObjectSpaceNormal;
+ float3 ObjectSpaceTangent;
+ float3 ObjectSpacePosition;
+ float4 uv0;
+ float4 uv1;
+ float4 uv2;
+ float4 uv3;
+ float4 VertexColor;
+ uint InstanceID;
+};
+struct PackedVaryings
+{
+ float4 positionCS : SV_POSITION;
+ float4 tangentWS : INTERP0;
+ float4 texCoord0 : INTERP1;
+ float4 texCoord1 : INTERP2;
+ float4 extraV2F0 : INTERP3;
+ float3 positionWS : INTERP4;
+ float3 normalWS : INTERP5;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+};
+
+PackedVaryings PackVaryings (Varyings input)
+{
+PackedVaryings output;
+ZERO_INITIALIZE(PackedVaryings, output);
+output.positionCS = input.positionCS;
+output.tangentWS.xyzw = input.tangentWS;
+output.texCoord0.xyzw = input.texCoord0;
+output.texCoord1.xyzw = input.texCoord1;
+output.extraV2F0.xyzw = input.extraV2F0;
+output.positionWS.xyz = input.positionWS;
+output.normalWS.xyz = input.normalWS;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+Varyings UnpackVaryings (PackedVaryings input)
+{
+Varyings output;
+output.positionCS = input.positionCS;
+output.tangentWS = input.tangentWS.xyzw;
+output.texCoord0 = input.texCoord0.xyzw;
+output.texCoord1 = input.texCoord1.xyzw;
+output.extraV2F0 = input.extraV2F0.xyzw;
+output.positionWS = input.positionWS.xyz;
+output.normalWS = input.normalWS.xyz;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+
+// --------------------------------------------------
+// Graph
+
+// Graph Properties
+CBUFFER_START(UnityPerMaterial)
+
+
+
+UNITY_TEXTURE_STREAMING_DEBUG_VARS;
+CBUFFER_END
+
+
+// Object and Global properties
+
+// Graph Includes
+// UNITY_SHADER_NO_UPGRADE
+float3 SSS_HClipToScreen(float4 v)
+{
+	float3 uv = v.xyz / v.w;
+	#if UNITY_UV_STARTS_AT_TOP
+		uv.y = -uv.y;
+	#endif
+	uv.xy = uv.xy * 0.5 + 0.5;
+	return uv;
+}
+
+#if _SSS_HDRP
+	float3 SSS_WorldToAbsolute(float3 v) { return GetAbsolutePositionWS(v); }
+	float3 SSS_AbsoluteToWorld(float3 v) { return GetCameraRelativePositionWS(v); }
+#else
+	float3 SSS_WorldToAbsolute(float3 v) { return v; }
+	float3 SSS_AbsoluteToWorld(float3 v) { return v; }
+#endif
+
+float3 SSS_WorldToView(float3 v) { return TransformWorldToView(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToObject(float3 v) { return TransformWorldToObject(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToScreen(float3 v) { return SSS_HClipToScreen(TransformWorldToHClip(SSS_AbsoluteToWorld(v))); }
+float3 SSS_ObjectToScreen(float3 v) { return SSS_HClipToScreen(TransformObjectToHClip(v)); }
+float3 SSS_ObjectToWorld(float3 v) { return SSS_WorldToAbsolute(TransformObjectToWorld(v)); }
+float3 SSS_ObjectToView(float3 v) { return TransformWorldToView(TransformObjectToWorld(v)); }
+float3 SSS_ScreenToWorld(float3 v) { return SSS_WorldToAbsolute(ComputeWorldSpacePosition(v.xy, v.z, UNITY_MATRIX_I_VP)); }
+float3 SSS_ScreenToObject(float3 v) { return SSS_WorldToObject(SSS_ScreenToWorld(v)); }
+float3 SSS_ScreenToView(float3 v) { return SSS_WorldToView(SSS_ScreenToWorld(v)); }
+float3 SSS_ViewToWorld(float3 v) { return mul(UNITY_MATRIX_I_V, float4(v, 1.0)).xyz; }
+float3 SSS_ViewToObject(float3 v) { return TransformWorldToObject(SSS_ViewToWorld(v)); }
+float3 SSS_ViewToScreen(float3 v) { return SSS_HClipToScreen(TransformWViewToHClip(v)); }
+float3 SSS_ObjectToWorldDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformObjectToWorldDir(v);
+	#else
+		return TransformObjectToWorldDir(v, true);
+	#endif
+}
+float3 SSS_ObjectToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v));
+	#else
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v, false), true);
+	#endif
+}
+float3 SSS_WorldToObjectDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToObjectDir(v);
+	#else
+		return TransformWorldToObjectDir(v, true);
+	#endif
+}
+float3 SSS_WorldToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(v);
+	#else
+		return TransformWorldToViewDir(v, true);
+	#endif
+}
+float3 SSS_ViewToObjectDir(float3 v)
+{
+	#if _SSS_URP || _SSS_HDRP
+		return SSS_WorldToObjectDir(mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz);
+	#else
+		return SSS_WorldToObjectDir(mul((float3x3)UNITY_MATRIX_I_V, v));
+	#endif
+}
+float3 SSS_ViewToWorldDir(float3 v)
+{
+	return mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz;
+}
+
+#if _SSS_NO_DERIVATIVES
+	float3 SSS_GetSceneColor(float2 uv) { return float3(0.0, 0.0, 0.0); }
+	float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	float  SSS_GetSceneDepth(float2 uv) { return 0.0; }
+#else
+	#if _SSS_URP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#elif _SSS_HDRP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv)
+		{
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(_SURFACE_TYPE_TRANSPARENT) && defined(SHADERPASS) && (SHADERPASS != SHADERPASS_LIGHT_TRANSPORT) && (SHADERPASS != SHADERPASS_PATH_TRACING) && (SHADERPASS != SHADERPASS_RAYTRACING_VISIBILITY) && (SHADERPASS != SHADERPASS_RAYTRACING_FORWARD)
+			return SampleCameraColor(uv, 0);
+			#endif
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(CUSTOM_PASS_SAMPLING_HLSL) && defined(SHADERPASS) && (SHADERPASS == SHADERPASS_DRAWPROCEDURAL || SHADERPASS == SHADERPASS_BLIT)
+			return CustomPassSampleCameraColor(uv, 0);
+			#endif
+			return float3(0.0, 0.0, 0.0);
+		}
+	#else
+		#if defined(UNITY_DECLARE_OPAQUE_TEXTURE_INCLUDED)
+			float3 SSS_GetSceneColor(float2 uv) { return SampleSceneColor(uv); }
+		#else
+			sampler2D _CameraOpaqueTexture; float3 SSS_GetSceneColor(float2 uv) { return tex2D(_CameraOpaqueTexture, uv).xyz; }
+		#endif
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#endif
+
+	float SSS_GetSceneDepth(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv); }
+#endif
+
+float3 SSS_GetSceneWorldPosition(float2 screenUV, float sceneDepth)
+{
+	#if _SSS_BIRP
+		float4 clipPos  = float4(screenUV * 2.0f - 1.0f, 0.0f, 1.0f);
+		float4 viewPos  = mul(unity_CameraInvProjection, clipPos);
+		float3 worldDir = mul((float3x3)UNITY_MATRIX_I_V, viewPos.xyz);
+					
+		return _WorldSpaceCameraPos + worldDir * LinearEyeDepth(sceneDepth);
+	#else
+		float4 clipPos = float4(screenUV * 2.0 - 1.0, sceneDepth, 1.0);
+					
+		#if UNITY_UV_STARTS_AT_TOP
+			clipPos.y = -clipPos.y;
+		#endif
+					
+		float4 worldPos = mul(UNITY_MATRIX_I_VP, clipPos);
+					
+		worldPos.xyz /= worldPos.w;
+					
+		#if _SSS_HDRP
+			worldPos.xyz = GetAbsolutePositionWS(worldPos.xyz);
+		#endif
+					
+		return worldPos.xyz;
+	#endif
+}
+
+float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
+{
+	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
+}
+
+struct SSS_VertexData
+{
+	float  instanceID;
+	float3 position;
+	float3 normal;
+	float3 tangent;
+	float4 color;
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+	
+
+};
+
+struct SSS_FragmentData
+{
+	float3 localSpacePosition;
+	float3 localSpaceNormal;
+	float3 localSpaceTangent;
+	
+	float3 worldSpacePosition;
+	float3 worldSpaceNormal;
+	float3 worldSpaceTangent;
+	//float tangentSign;
+
+	float3 worldSpaceViewDir;
+	//float3 tangentSpaceViewDir;
+	
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	
+	float2 screenUV;
+	float4 screenPos;
+
+	float4 vertexColor;
+	bool isFrontFace;
+	
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+
+	float3x3 TBNMatrix;
+	
+
+};
+
+struct SSS_SurfaceData
+{
+	float3 Albedo;
+	float  Smoothness;
+	float3 Normal;
+	float3 Emission;
+	float  Occlusion;
+	float  Metallic;
+	float  Alpha;
+};
+
+
+
+
+
+
+
+
+
+void SSS_Vert(inout SSS_VertexData v)
+{
+}
+ 
+void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
+{
+}
+
+
+
+
+void Vert_float
+	(
+	float  iInstanceID,
+	float3 iPosition,
+	float3 iNormal,
+	float3 iTangent,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+
+	out float3 oPosition,
+	out float3 oNormal,
+	out float3 oTangent,
+	out float4 oExtraV2F0,
+	out float4 oExtraV2F1,
+	out float4 oExtraV2F2,
+	out float4 oExtraV2F3,
+	out float4 oExtraV2F4,
+	out float4 oExtraV2F5,
+	out float4 oExtraV2F6,
+	out float4 oExtraV2F7
+	)
+{
+	SSS_VertexData v = (SSS_VertexData)0;
+	
+	v.instanceID = iInstanceID;
+	v.position   = iPosition;
+	v.normal     = iNormal;
+	v.tangent    = iTangent;
+	v.color      = iColor;
+	v.texcoord0  = iTexcoord0;
+	v.texcoord1  = iTexcoord1;
+	v.texcoord2  = iTexcoord2;
+	v.texcoord3  = iTexcoord3;
+	v.extraV2F0  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F1  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F2  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F3  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F4  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F5  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F6  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F7  = float4(0.0, 0.0, 0.0, 0.0);
+	
+	SSS_Vert(v);
+	
+	oPosition  = v.position;
+	oNormal    = v.normal;
+	oTangent   = v.tangent;
+	oExtraV2F0 = v.extraV2F0;
+	oExtraV2F1 = v.extraV2F1;
+	oExtraV2F2 = v.extraV2F2;
+	oExtraV2F3 = v.extraV2F3;
+	oExtraV2F4 = v.extraV2F4;
+	oExtraV2F5 = v.extraV2F5;
+	oExtraV2F6 = v.extraV2F6;
+	oExtraV2F7 = v.extraV2F7;
+}
+
+void Frag_float
+	(
+	inout float3 iPosition,
+	inout float3 iNormal,
+	inout float3 iTangent,
+	bool   iIsFrontFace,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+	float4 iExtraV2F0,
+	float4 iExtraV2F1,
+	float4 iExtraV2F2,
+	float4 iExtraV2F3,
+	float4 iExtraV2F4,
+	float4 iExtraV2F5,
+	float4 iExtraV2F6,
+	float4 iExtraV2F7,
+
+	out float4x4 oExtra,
+	out float3   oAlbedo,
+	out float    oSmoothness,
+	out float3   oNormal,
+	out float3   oEmission,
+	out float    oOcclusion,
+	out float    oMetallic,
+	out float    oAlpha
+	)
+{
+	SSS_SurfaceData  s = (SSS_SurfaceData)0;
+	SSS_FragmentData d = (SSS_FragmentData)0;
+	
+	s.Albedo = 1.0;
+	s.Smoothness = 0.5;
+	s.Normal = float3(0.0, 0.0, 1.0);
+	s.Emission = float3(0.0, 0.0, 0.0);
+	s.Occlusion = 0.0;
+	s.Metallic = 0.0;
+	s.Alpha = 1.0;
+	
+	iPosition = SSS_WorldToAbsolute(iPosition);
+	
+	d.localSpacePosition = SSS_WorldToObject(iPosition);
+	d.localSpaceNormal   = normalize(SSS_WorldToObjectDir(iNormal));
+	d.localSpaceTangent  = normalize(SSS_WorldToObjectDir(iTangent));
+	
+	d.worldSpacePosition = iPosition;
+	d.worldSpaceNormal   = iNormal;
+	d.worldSpaceTangent  = iTangent;
+	//d.tangentSign;
+	
+	d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	//d.tangentSpaceViewDir;
+	
+	d.texcoord0 = iTexcoord0;
+	d.texcoord1 = iTexcoord1;
+	d.texcoord2 = iTexcoord2;
+	d.texcoord3 = iTexcoord3;
+	
+	d.screenPos = float4(SSS_WorldToScreen(iPosition), 1.0);
+	d.screenUV  = d.screenPos.xy;
+
+	d.vertexColor = iColor;
+	d.isFrontFace = iIsFrontFace;
+	
+	d.extraV2F0 = iExtraV2F0;
+	d.extraV2F1 = iExtraV2F1;
+	d.extraV2F2 = iExtraV2F2;
+	d.extraV2F3 = iExtraV2F3;
+	d.extraV2F4 = iExtraV2F4;
+	d.extraV2F5 = iExtraV2F5;
+	d.extraV2F6 = iExtraV2F6;
+	d.extraV2F7 = iExtraV2F7;
+
+	d.TBNMatrix = float3x3(d.worldSpaceTangent, normalize(cross(d.worldSpaceNormal, d.worldSpaceTangent)), d.worldSpaceNormal);
+	
+	SSS_Frag(s, d);
+	
+	iPosition = SSS_AbsoluteToWorld(d.worldSpacePosition); iNormal = d.worldSpaceNormal; iTangent = d.worldSpaceTangent; // Write back
+	
+	oExtra      = float4x4(d.extraV2F0, d.extraV2F1, d.extraV2F2, d.extraV2F3);
+	oAlbedo     = s.Albedo;
+	oSmoothness = s.Smoothness;
+	oNormal     = s.Normal;
+	oEmission   = s.Emission;
+	oOcclusion  = s.Occlusion;
+	oMetallic   = s.Metallic;
+	oAlpha      = s.Alpha;
+}
+
+
+
+
+// -- Property used by ScenePickingPass
+#ifdef SCENEPICKINGPASS
+float4 _SelectionID;
+#endif
+
+// -- Properties used by SceneSelectionPass
+#ifdef SCENESELECTIONPASS
+int _ObjectId;
+int _PassValue;
+#endif
+
+// Graph Functions
+// GraphFunctions: <None>
+
+// Custom interpolators pre vertex
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPreVertex' */
+
+// Graph Vertex
+struct VertexDescription
+{
+float3 Position;
+float3 Normal;
+float3 Tangent;
+float4 extraV2F0;
+};
+
+VertexDescription VertexDescriptionFunction(VertexDescriptionInputs IN)
+{
+VertexDescription description = (VertexDescription)0;
+float4 _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4 = IN.uv0;
+float4 _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4 = IN.uv1;
+float4 _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4 = IN.uv2;
+float4 _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4 = IN.uv3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4;
+Vert_float(IN.InstanceID, IN.ObjectSpacePosition, IN.ObjectSpaceNormal, IN.ObjectSpaceTangent, IN.VertexColor, _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4, _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4, _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4, _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4);
+description.Position = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+description.Normal = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3;
+description.Tangent = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3;
+description.extraV2F0 = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4;
+return description;
+}
+
+// Custom interpolators, pre surface
+#ifdef FEATURES_GRAPH_VERTEX
+Varyings CustomInterpolatorPassThroughFunc(inout Varyings output, VertexDescription input)
+{
+output.extraV2F0 = input.extraV2F0;
+return output;
+}
+#define CUSTOMINTERPOLATOR_VARYPASSTHROUGH_FUNC
+#endif
+
+// Graph Pixel
+struct SurfaceDescription
+{
+float3 BaseColor;
+};
+
+SurfaceDescription SurfaceDescriptionFunction(SurfaceDescriptionInputs IN)
+{
+SurfaceDescription surface = (SurfaceDescription)0;
+float _IsFrontFace_5b03f99e2e7841c3a7d2ae306590b576_Out_0_Boolean = max(0, IN.FaceSign.x);
+float4 _UV_c1e39353e82e434da821b9bdc4338e4b_Out_0_Vector4 = IN.uv0;
+float4 _UV_64d51b5974bc4ecf849e7307e6de2727_Out_0_Vector4 = IN.uv1;
+float4x4 _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oExtra_23_Matrix4;
+float3 _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlbedo_0_Vector3;
+float _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oSmoothness_5_Float;
+float3 _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oNormal_6_Vector3;
+float3 _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oEmission_7_Vector3;
+float _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oOcclusion_8_Float;
+float _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oMetallic_9_Float;
+float _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlpha_10_Float;
+Frag_float(IN.WorldSpacePosition, IN.WorldSpaceNormal, IN.WorldSpaceTangent, _IsFrontFace_5b03f99e2e7841c3a7d2ae306590b576_Out_0_Boolean, float4 (0, 0, 0, 0), _UV_c1e39353e82e434da821b9bdc4338e4b_Out_0_Vector4, _UV_64d51b5974bc4ecf849e7307e6de2727_Out_0_Vector4, float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), IN.extraV2F0, float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oExtra_23_Matrix4, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlbedo_0_Vector3, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oSmoothness_5_Float, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oNormal_6_Vector3, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oEmission_7_Vector3, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oOcclusion_8_Float, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oMetallic_9_Float, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlpha_10_Float);
+surface.BaseColor = _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlbedo_0_Vector3;
+return surface;
+}
+
+// --------------------------------------------------
+// Build Graph Inputs
+#ifdef HAVE_VFX_MODIFICATION
+#define VFX_SRP_ATTRIBUTES Attributes
+#define VFX_SRP_VARYINGS Varyings
+#define VFX_SRP_SURFACE_INPUTS SurfaceDescriptionInputs
+#endif
+VertexDescriptionInputs BuildVertexDescriptionInputs(Attributes input)
+{
+    VertexDescriptionInputs output;
+    ZERO_INITIALIZE(VertexDescriptionInputs, output);
+
+    output.ObjectSpaceNormal =                          input.normalOS;
+    output.ObjectSpaceTangent =                         input.tangentOS.xyz;
+    output.ObjectSpacePosition =                        input.positionOS;
+    output.uv0 =                                        input.uv0;
+    output.uv1 =                                        input.uv1;
+    output.uv2 =                                        input.uv2;
+    output.uv3 =                                        input.uv3;
+    output.VertexColor =                                input.color;
+#if UNITY_ANY_INSTANCING_ENABLED
+    output.InstanceID =                                 unity_InstanceID;
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+    output.InstanceID =                                 input.instanceID;
+#endif
+
+    return output;
+}
+SurfaceDescriptionInputs BuildSurfaceDescriptionInputs(Varyings input)
+{
+    SurfaceDescriptionInputs output;
+    ZERO_INITIALIZE(SurfaceDescriptionInputs, output);
+
+#ifdef HAVE_VFX_MODIFICATION
+#if VFX_USE_GRAPH_VALUES
+    uint instanceActiveIndex = asuint(UNITY_ACCESS_INSTANCED_PROP(PerInstance, _InstanceActiveIndex));
+    /* WARNING: $splice Could not find named fragment 'VFXLoadGraphValues' */
+#endif
+    /* WARNING: $splice Could not find named fragment 'VFXSetFragInputs' */
+
+#endif
+
+    output.extraV2F0 = input.extraV2F0;
+
+    // must use interpolated tangent, bitangent and normal before they are normalized in the pixel shader.
+    float3 unnormalizedNormalWS = input.normalWS;
+    const float renormFactor = 1.0 / length(unnormalizedNormalWS);
+
+
+    output.WorldSpaceNormal = renormFactor * input.normalWS.xyz;      // we want a unit length Normal Vector node in shader graph
+
+    // to pr               eserve mikktspace compliance we use same scale renormFactor as was used on the normal.
+    // This                is explained in section 2.2 in "surface gradient based bump mapping framework"
+    output.WorldSpaceTangent = renormFactor * input.tangentWS.xyz;
+
+    output.WorldSpacePosition = input.positionWS;
+
+    #if UNITY_UV_STARTS_AT_TOP
+    #else
+    #endif
+
+
+    output.uv0 = input.texCoord0;
+    output.uv1 = input.texCoord1;
+#if UNITY_ANY_INSTANCING_ENABLED
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN output.FaceSign =                    IS_FRONT_VFACE(input.cullFace, true, false);
+#else
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+#endif
+    BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+#undef BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+
+        return output;
+}
+
+// --------------------------------------------------
+// Main
+
+#include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/Varyings.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/UnlitPass.hlsl"
+
+// --------------------------------------------------
+// Visual Effect Vertex Invocations
+#ifdef HAVE_VFX_MODIFICATION
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/VisualEffectVertex.hlsl"
+#endif
+
+ENDHLSL
+}
+Pass
+{
+    Name "MotionVectors"
+    Tags
+    {
+        "LightMode" = "MotionVectors"
+    }
+
+// Render State
+Cull Back
+ZTest LEqual
+ZWrite On
+ColorMask RG
+
+// Debug
+// <None>
+
+// --------------------------------------------------
+// Pass
+
+HLSLPROGRAM
+#define _SSS_PASS_MOTIONVECTORS 1
+
+#define _SSS_URP 1
+
+
+// Pragmas
+#pragma target 3.5
+#pragma multi_compile_instancing
+#pragma vertex vert
+#pragma fragment frag
+
+// Keywords
+// PassKeywords: <None>
+// GraphKeywords: <None>
+
+// Defines
+
+#define ATTRIBUTES_NEED_NORMAL
+#define ATTRIBUTES_NEED_TANGENT
+#define ATTRIBUTES_NEED_TEXCOORD0
+#define ATTRIBUTES_NEED_TEXCOORD1
+#define ATTRIBUTES_NEED_TEXCOORD2
+#define ATTRIBUTES_NEED_TEXCOORD3
+#define ATTRIBUTES_NEED_COLOR
+#define ATTRIBUTES_NEED_INSTANCEID
+#define FEATURES_GRAPH_VERTEX
+/* WARNING: $splice Could not find named fragment 'PassInstancing' */
+#define SHADERPASS SHADERPASS_MOTION_VECTORS
+
+
+// custom interpolator pre-include
+/* WARNING: $splice Could not find named fragment 'sgci_CustomInterpolatorPreInclude' */
+
+// Includes
+#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+#include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRendering.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Input.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderGraphFunctions.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
+
+// --------------------------------------------------
+// Structs and Packing
+
+// custom interpolators pre packing
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPrePacking' */
+
+struct Attributes
+{
+ float3 positionOS : POSITION;
+ float3 normalOS : NORMAL;
+ float4 tangentOS : TANGENT;
+ float4 uv0 : TEXCOORD0;
+ float4 uv1 : TEXCOORD1;
+ float4 uv2 : TEXCOORD2;
+ float4 uv3 : TEXCOORD3;
+ float4 color : COLOR;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(ATTRIBUTES_NEED_INSTANCEID)
+ uint instanceID : INSTANCEID_SEMANTIC;
+#endif
+};
+struct Varyings
+{
+ float4 positionCS : SV_POSITION;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+};
+struct SurfaceDescriptionInputs
+{
+};
+struct VertexDescriptionInputs
+{
+ float3 ObjectSpaceNormal;
+ float3 ObjectSpaceTangent;
+ float3 ObjectSpacePosition;
+ float4 uv0;
+ float4 uv1;
+ float4 uv2;
+ float4 uv3;
+ float4 VertexColor;
+ uint InstanceID;
+};
+struct PackedVaryings
+{
+ float4 positionCS : SV_POSITION;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+};
+
+PackedVaryings PackVaryings (Varyings input)
+{
+PackedVaryings output;
+ZERO_INITIALIZE(PackedVaryings, output);
+output.positionCS = input.positionCS;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+Varyings UnpackVaryings (PackedVaryings input)
+{
+Varyings output;
+output.positionCS = input.positionCS;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+
+// --------------------------------------------------
+// Graph
+
+// Graph Properties
+CBUFFER_START(UnityPerMaterial)
+
+
+
+UNITY_TEXTURE_STREAMING_DEBUG_VARS;
+CBUFFER_END
+
+
+// Object and Global properties
+
+// Graph Includes
+// UNITY_SHADER_NO_UPGRADE
+float3 SSS_HClipToScreen(float4 v)
+{
+	float3 uv = v.xyz / v.w;
+	#if UNITY_UV_STARTS_AT_TOP
+		uv.y = -uv.y;
+	#endif
+	uv.xy = uv.xy * 0.5 + 0.5;
+	return uv;
+}
+
+#if _SSS_HDRP
+	float3 SSS_WorldToAbsolute(float3 v) { return GetAbsolutePositionWS(v); }
+	float3 SSS_AbsoluteToWorld(float3 v) { return GetCameraRelativePositionWS(v); }
+#else
+	float3 SSS_WorldToAbsolute(float3 v) { return v; }
+	float3 SSS_AbsoluteToWorld(float3 v) { return v; }
+#endif
+
+float3 SSS_WorldToView(float3 v) { return TransformWorldToView(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToObject(float3 v) { return TransformWorldToObject(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToScreen(float3 v) { return SSS_HClipToScreen(TransformWorldToHClip(SSS_AbsoluteToWorld(v))); }
+float3 SSS_ObjectToScreen(float3 v) { return SSS_HClipToScreen(TransformObjectToHClip(v)); }
+float3 SSS_ObjectToWorld(float3 v) { return SSS_WorldToAbsolute(TransformObjectToWorld(v)); }
+float3 SSS_ObjectToView(float3 v) { return TransformWorldToView(TransformObjectToWorld(v)); }
+float3 SSS_ScreenToWorld(float3 v) { return SSS_WorldToAbsolute(ComputeWorldSpacePosition(v.xy, v.z, UNITY_MATRIX_I_VP)); }
+float3 SSS_ScreenToObject(float3 v) { return SSS_WorldToObject(SSS_ScreenToWorld(v)); }
+float3 SSS_ScreenToView(float3 v) { return SSS_WorldToView(SSS_ScreenToWorld(v)); }
+float3 SSS_ViewToWorld(float3 v) { return mul(UNITY_MATRIX_I_V, float4(v, 1.0)).xyz; }
+float3 SSS_ViewToObject(float3 v) { return TransformWorldToObject(SSS_ViewToWorld(v)); }
+float3 SSS_ViewToScreen(float3 v) { return SSS_HClipToScreen(TransformWViewToHClip(v)); }
+float3 SSS_ObjectToWorldDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformObjectToWorldDir(v);
+	#else
+		return TransformObjectToWorldDir(v, true);
+	#endif
+}
+float3 SSS_ObjectToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v));
+	#else
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v, false), true);
+	#endif
+}
+float3 SSS_WorldToObjectDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToObjectDir(v);
+	#else
+		return TransformWorldToObjectDir(v, true);
+	#endif
+}
+float3 SSS_WorldToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(v);
+	#else
+		return TransformWorldToViewDir(v, true);
+	#endif
+}
+float3 SSS_ViewToObjectDir(float3 v)
+{
+	#if _SSS_URP || _SSS_HDRP
+		return SSS_WorldToObjectDir(mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz);
+	#else
+		return SSS_WorldToObjectDir(mul((float3x3)UNITY_MATRIX_I_V, v));
+	#endif
+}
+float3 SSS_ViewToWorldDir(float3 v)
+{
+	return mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz;
+}
+
+#if _SSS_NO_DERIVATIVES
+	float3 SSS_GetSceneColor(float2 uv) { return float3(0.0, 0.0, 0.0); }
+	float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	float  SSS_GetSceneDepth(float2 uv) { return 0.0; }
+#else
+	#if _SSS_URP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#elif _SSS_HDRP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv)
+		{
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(_SURFACE_TYPE_TRANSPARENT) && defined(SHADERPASS) && (SHADERPASS != SHADERPASS_LIGHT_TRANSPORT) && (SHADERPASS != SHADERPASS_PATH_TRACING) && (SHADERPASS != SHADERPASS_RAYTRACING_VISIBILITY) && (SHADERPASS != SHADERPASS_RAYTRACING_FORWARD)
+			return SampleCameraColor(uv, 0);
+			#endif
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(CUSTOM_PASS_SAMPLING_HLSL) && defined(SHADERPASS) && (SHADERPASS == SHADERPASS_DRAWPROCEDURAL || SHADERPASS == SHADERPASS_BLIT)
+			return CustomPassSampleCameraColor(uv, 0);
+			#endif
+			return float3(0.0, 0.0, 0.0);
+		}
+	#else
+		#if defined(UNITY_DECLARE_OPAQUE_TEXTURE_INCLUDED)
+			float3 SSS_GetSceneColor(float2 uv) { return SampleSceneColor(uv); }
+		#else
+			sampler2D _CameraOpaqueTexture; float3 SSS_GetSceneColor(float2 uv) { return tex2D(_CameraOpaqueTexture, uv).xyz; }
+		#endif
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#endif
+
+	float SSS_GetSceneDepth(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv); }
+#endif
+
+float3 SSS_GetSceneWorldPosition(float2 screenUV, float sceneDepth)
+{
+	#if _SSS_BIRP
+		float4 clipPos  = float4(screenUV * 2.0f - 1.0f, 0.0f, 1.0f);
+		float4 viewPos  = mul(unity_CameraInvProjection, clipPos);
+		float3 worldDir = mul((float3x3)UNITY_MATRIX_I_V, viewPos.xyz);
+					
+		return _WorldSpaceCameraPos + worldDir * LinearEyeDepth(sceneDepth);
+	#else
+		float4 clipPos = float4(screenUV * 2.0 - 1.0, sceneDepth, 1.0);
+					
+		#if UNITY_UV_STARTS_AT_TOP
+			clipPos.y = -clipPos.y;
+		#endif
+					
+		float4 worldPos = mul(UNITY_MATRIX_I_VP, clipPos);
+					
+		worldPos.xyz /= worldPos.w;
+					
+		#if _SSS_HDRP
+			worldPos.xyz = GetAbsolutePositionWS(worldPos.xyz);
+		#endif
+					
+		return worldPos.xyz;
+	#endif
+}
+
+float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
+{
+	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
+}
+
+struct SSS_VertexData
+{
+	float  instanceID;
+	float3 position;
+	float3 normal;
+	float3 tangent;
+	float4 color;
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+	
+
+};
+
+struct SSS_FragmentData
+{
+	float3 localSpacePosition;
+	float3 localSpaceNormal;
+	float3 localSpaceTangent;
+	
+	float3 worldSpacePosition;
+	float3 worldSpaceNormal;
+	float3 worldSpaceTangent;
+	//float tangentSign;
+
+	float3 worldSpaceViewDir;
+	//float3 tangentSpaceViewDir;
+	
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	
+	float2 screenUV;
+	float4 screenPos;
+
+	float4 vertexColor;
+	bool isFrontFace;
+	
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+
+	float3x3 TBNMatrix;
+	
+
+};
+
+struct SSS_SurfaceData
+{
+	float3 Albedo;
+	float  Smoothness;
+	float3 Normal;
+	float3 Emission;
+	float  Occlusion;
+	float  Metallic;
+	float  Alpha;
+};
+
+
+
+
+
+
+
+
+
+void SSS_Vert(inout SSS_VertexData v)
+{
+}
+ 
+void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
+{
+}
+
+
+
+
+void Vert_float
+	(
+	float  iInstanceID,
+	float3 iPosition,
+	float3 iNormal,
+	float3 iTangent,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+
+	out float3 oPosition,
+	out float3 oNormal,
+	out float3 oTangent,
+	out float4 oExtraV2F0,
+	out float4 oExtraV2F1,
+	out float4 oExtraV2F2,
+	out float4 oExtraV2F3,
+	out float4 oExtraV2F4,
+	out float4 oExtraV2F5,
+	out float4 oExtraV2F6,
+	out float4 oExtraV2F7
+	)
+{
+	SSS_VertexData v = (SSS_VertexData)0;
+	
+	v.instanceID = iInstanceID;
+	v.position   = iPosition;
+	v.normal     = iNormal;
+	v.tangent    = iTangent;
+	v.color      = iColor;
+	v.texcoord0  = iTexcoord0;
+	v.texcoord1  = iTexcoord1;
+	v.texcoord2  = iTexcoord2;
+	v.texcoord3  = iTexcoord3;
+	v.extraV2F0  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F1  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F2  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F3  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F4  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F5  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F6  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F7  = float4(0.0, 0.0, 0.0, 0.0);
+	
+	SSS_Vert(v);
+	
+	oPosition  = v.position;
+	oNormal    = v.normal;
+	oTangent   = v.tangent;
+	oExtraV2F0 = v.extraV2F0;
+	oExtraV2F1 = v.extraV2F1;
+	oExtraV2F2 = v.extraV2F2;
+	oExtraV2F3 = v.extraV2F3;
+	oExtraV2F4 = v.extraV2F4;
+	oExtraV2F5 = v.extraV2F5;
+	oExtraV2F6 = v.extraV2F6;
+	oExtraV2F7 = v.extraV2F7;
+}
+
+void Frag_float
+	(
+	inout float3 iPosition,
+	inout float3 iNormal,
+	inout float3 iTangent,
+	bool   iIsFrontFace,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+	float4 iExtraV2F0,
+	float4 iExtraV2F1,
+	float4 iExtraV2F2,
+	float4 iExtraV2F3,
+	float4 iExtraV2F4,
+	float4 iExtraV2F5,
+	float4 iExtraV2F6,
+	float4 iExtraV2F7,
+
+	out float4x4 oExtra,
+	out float3   oAlbedo,
+	out float    oSmoothness,
+	out float3   oNormal,
+	out float3   oEmission,
+	out float    oOcclusion,
+	out float    oMetallic,
+	out float    oAlpha
+	)
+{
+	SSS_SurfaceData  s = (SSS_SurfaceData)0;
+	SSS_FragmentData d = (SSS_FragmentData)0;
+	
+	s.Albedo = 1.0;
+	s.Smoothness = 0.5;
+	s.Normal = float3(0.0, 0.0, 1.0);
+	s.Emission = float3(0.0, 0.0, 0.0);
+	s.Occlusion = 0.0;
+	s.Metallic = 0.0;
+	s.Alpha = 1.0;
+	
+	iPosition = SSS_WorldToAbsolute(iPosition);
+	
+	d.localSpacePosition = SSS_WorldToObject(iPosition);
+	d.localSpaceNormal   = normalize(SSS_WorldToObjectDir(iNormal));
+	d.localSpaceTangent  = normalize(SSS_WorldToObjectDir(iTangent));
+	
+	d.worldSpacePosition = iPosition;
+	d.worldSpaceNormal   = iNormal;
+	d.worldSpaceTangent  = iTangent;
+	//d.tangentSign;
+	
+	d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	//d.tangentSpaceViewDir;
+	
+	d.texcoord0 = iTexcoord0;
+	d.texcoord1 = iTexcoord1;
+	d.texcoord2 = iTexcoord2;
+	d.texcoord3 = iTexcoord3;
+	
+	d.screenPos = float4(SSS_WorldToScreen(iPosition), 1.0);
+	d.screenUV  = d.screenPos.xy;
+
+	d.vertexColor = iColor;
+	d.isFrontFace = iIsFrontFace;
+	
+	d.extraV2F0 = iExtraV2F0;
+	d.extraV2F1 = iExtraV2F1;
+	d.extraV2F2 = iExtraV2F2;
+	d.extraV2F3 = iExtraV2F3;
+	d.extraV2F4 = iExtraV2F4;
+	d.extraV2F5 = iExtraV2F5;
+	d.extraV2F6 = iExtraV2F6;
+	d.extraV2F7 = iExtraV2F7;
+
+	d.TBNMatrix = float3x3(d.worldSpaceTangent, normalize(cross(d.worldSpaceNormal, d.worldSpaceTangent)), d.worldSpaceNormal);
+	
+	SSS_Frag(s, d);
+	
+	iPosition = SSS_AbsoluteToWorld(d.worldSpacePosition); iNormal = d.worldSpaceNormal; iTangent = d.worldSpaceTangent; // Write back
+	
+	oExtra      = float4x4(d.extraV2F0, d.extraV2F1, d.extraV2F2, d.extraV2F3);
+	oAlbedo     = s.Albedo;
+	oSmoothness = s.Smoothness;
+	oNormal     = s.Normal;
+	oEmission   = s.Emission;
+	oOcclusion  = s.Occlusion;
+	oMetallic   = s.Metallic;
+	oAlpha      = s.Alpha;
+}
+
+
+
+
+// -- Property used by ScenePickingPass
+#ifdef SCENEPICKINGPASS
+float4 _SelectionID;
+#endif
+
+// -- Properties used by SceneSelectionPass
+#ifdef SCENESELECTIONPASS
+int _ObjectId;
+int _PassValue;
+#endif
+
+// Graph Functions
+// GraphFunctions: <None>
+
+// Custom interpolators pre vertex
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPreVertex' */
+
+// Graph Vertex
+struct VertexDescription
+{
+float3 Position;
+};
+
+VertexDescription VertexDescriptionFunction(VertexDescriptionInputs IN)
+{
+VertexDescription description = (VertexDescription)0;
+float4 _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4 = IN.uv0;
+float4 _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4 = IN.uv1;
+float4 _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4 = IN.uv2;
+float4 _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4 = IN.uv3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4;
+Vert_float(IN.InstanceID, IN.ObjectSpacePosition, IN.ObjectSpaceNormal, IN.ObjectSpaceTangent, IN.VertexColor, _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4, _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4, _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4, _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4);
+description.Position = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+return description;
+}
+
+// Custom interpolators, pre surface
+#ifdef FEATURES_GRAPH_VERTEX
+Varyings CustomInterpolatorPassThroughFunc(inout Varyings output, VertexDescription input)
+{
+return output;
+}
+#define CUSTOMINTERPOLATOR_VARYPASSTHROUGH_FUNC
+#endif
+
+// Graph Pixel
+struct SurfaceDescription
+{
+};
+
+SurfaceDescription SurfaceDescriptionFunction(SurfaceDescriptionInputs IN)
+{
+SurfaceDescription surface = (SurfaceDescription)0;
+return surface;
+}
+
+// --------------------------------------------------
+// Build Graph Inputs
+#ifdef HAVE_VFX_MODIFICATION
+#define VFX_SRP_ATTRIBUTES Attributes
+#define VFX_SRP_VARYINGS Varyings
+#define VFX_SRP_SURFACE_INPUTS SurfaceDescriptionInputs
+#endif
+VertexDescriptionInputs BuildVertexDescriptionInputs(Attributes input)
+{
+    VertexDescriptionInputs output;
+    ZERO_INITIALIZE(VertexDescriptionInputs, output);
+
+    output.ObjectSpaceNormal =                          input.normalOS;
+    output.ObjectSpaceTangent =                         input.tangentOS.xyz;
+    output.ObjectSpacePosition =                        input.positionOS;
+    output.uv0 =                                        input.uv0;
+    output.uv1 =                                        input.uv1;
+    output.uv2 =                                        input.uv2;
+    output.uv3 =                                        input.uv3;
+    output.VertexColor =                                input.color;
+#if UNITY_ANY_INSTANCING_ENABLED
+    output.InstanceID =                                 unity_InstanceID;
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+    output.InstanceID =                                 input.instanceID;
+#endif
+
+    return output;
+}
+SurfaceDescriptionInputs BuildSurfaceDescriptionInputs(Varyings input)
+{
+    SurfaceDescriptionInputs output;
+    ZERO_INITIALIZE(SurfaceDescriptionInputs, output);
+
+#ifdef HAVE_VFX_MODIFICATION
+#if VFX_USE_GRAPH_VALUES
+    uint instanceActiveIndex = asuint(UNITY_ACCESS_INSTANCED_PROP(PerInstance, _InstanceActiveIndex));
+    /* WARNING: $splice Could not find named fragment 'VFXLoadGraphValues' */
+#endif
+    /* WARNING: $splice Could not find named fragment 'VFXSetFragInputs' */
+
+#endif
+
+    
+
+
+
+
+
+
+    #if UNITY_UV_STARTS_AT_TOP
+    #else
+    #endif
+
+
+#if UNITY_ANY_INSTANCING_ENABLED
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN output.FaceSign =                    IS_FRONT_VFACE(input.cullFace, true, false);
+#else
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+#endif
+#undef BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+
+        return output;
+}
+
+// --------------------------------------------------
+// Main
+
+#include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/Varyings.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/MotionVectorPass.hlsl"
+
+// --------------------------------------------------
+// Visual Effect Vertex Invocations
+#ifdef HAVE_VFX_MODIFICATION
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/VisualEffectVertex.hlsl"
+#endif
+
+ENDHLSL
+}
+Pass
+{
+    Name "DepthNormalsOnly"
+    Tags
+    {
+        "LightMode" = "DepthNormalsOnly"
+    }
+
+// Render State
+Cull Back
+ZTest LEqual
+ZWrite On
+
+// Debug
+// <None>
+
+// --------------------------------------------------
+// Pass
+
+HLSLPROGRAM
+#define _SSS_PASS_DEPTHNORMALSONLY 1
+
+#define _SSS_URP 1
+
+
+// Pragmas
+#pragma target 2.0
+#pragma multi_compile_instancing
+#pragma vertex vert
+#pragma fragment frag
+
+// Keywords
+#pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
+// GraphKeywords: <None>
+
+// Defines
+
+#define ATTRIBUTES_NEED_NORMAL
+#define ATTRIBUTES_NEED_TANGENT
+#define ATTRIBUTES_NEED_TEXCOORD0
+#define ATTRIBUTES_NEED_TEXCOORD1
+#define ATTRIBUTES_NEED_TEXCOORD2
+#define ATTRIBUTES_NEED_TEXCOORD3
+#define ATTRIBUTES_NEED_COLOR
+#define ATTRIBUTES_NEED_INSTANCEID
+#define FEATURES_GRAPH_VERTEX_NORMAL_OUTPUT
+#define FEATURES_GRAPH_VERTEX_TANGENT_OUTPUT
+#define VARYINGS_NEED_NORMAL_WS
+#define FEATURES_GRAPH_VERTEX
+/* WARNING: $splice Could not find named fragment 'PassInstancing' */
+#define SHADERPASS SHADERPASS_DEPTHNORMALSONLY
+
+
+// custom interpolator pre-include
+/* WARNING: $splice Could not find named fragment 'sgci_CustomInterpolatorPreInclude' */
+
+// Includes
+#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+#include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRendering.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Input.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderGraphFunctions.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
+
+// --------------------------------------------------
+// Structs and Packing
+
+// custom interpolators pre packing
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPrePacking' */
+
+struct Attributes
+{
+ float3 positionOS : POSITION;
+ float3 normalOS : NORMAL;
+ float4 tangentOS : TANGENT;
+ float4 uv0 : TEXCOORD0;
+ float4 uv1 : TEXCOORD1;
+ float4 uv2 : TEXCOORD2;
+ float4 uv3 : TEXCOORD3;
+ float4 color : COLOR;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(ATTRIBUTES_NEED_INSTANCEID)
+ uint instanceID : INSTANCEID_SEMANTIC;
+#endif
+};
+struct Varyings
+{
+ float4 positionCS : SV_POSITION;
+ float3 normalWS;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+};
+struct SurfaceDescriptionInputs
+{
+};
+struct VertexDescriptionInputs
+{
+ float3 ObjectSpaceNormal;
+ float3 ObjectSpaceTangent;
+ float3 ObjectSpacePosition;
+ float4 uv0;
+ float4 uv1;
+ float4 uv2;
+ float4 uv3;
+ float4 VertexColor;
+ uint InstanceID;
+};
+struct PackedVaryings
+{
+ float4 positionCS : SV_POSITION;
+ float3 normalWS : INTERP0;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+};
+
+PackedVaryings PackVaryings (Varyings input)
+{
+PackedVaryings output;
+ZERO_INITIALIZE(PackedVaryings, output);
+output.positionCS = input.positionCS;
+output.normalWS.xyz = input.normalWS;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+Varyings UnpackVaryings (PackedVaryings input)
+{
+Varyings output;
+output.positionCS = input.positionCS;
+output.normalWS = input.normalWS.xyz;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+
+// --------------------------------------------------
+// Graph
+
+// Graph Properties
+CBUFFER_START(UnityPerMaterial)
+
+
+
+UNITY_TEXTURE_STREAMING_DEBUG_VARS;
+CBUFFER_END
+
+
+// Object and Global properties
+
+// Graph Includes
+// UNITY_SHADER_NO_UPGRADE
+float3 SSS_HClipToScreen(float4 v)
+{
+	float3 uv = v.xyz / v.w;
+	#if UNITY_UV_STARTS_AT_TOP
+		uv.y = -uv.y;
+	#endif
+	uv.xy = uv.xy * 0.5 + 0.5;
+	return uv;
+}
+
+#if _SSS_HDRP
+	float3 SSS_WorldToAbsolute(float3 v) { return GetAbsolutePositionWS(v); }
+	float3 SSS_AbsoluteToWorld(float3 v) { return GetCameraRelativePositionWS(v); }
+#else
+	float3 SSS_WorldToAbsolute(float3 v) { return v; }
+	float3 SSS_AbsoluteToWorld(float3 v) { return v; }
+#endif
+
+float3 SSS_WorldToView(float3 v) { return TransformWorldToView(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToObject(float3 v) { return TransformWorldToObject(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToScreen(float3 v) { return SSS_HClipToScreen(TransformWorldToHClip(SSS_AbsoluteToWorld(v))); }
+float3 SSS_ObjectToScreen(float3 v) { return SSS_HClipToScreen(TransformObjectToHClip(v)); }
+float3 SSS_ObjectToWorld(float3 v) { return SSS_WorldToAbsolute(TransformObjectToWorld(v)); }
+float3 SSS_ObjectToView(float3 v) { return TransformWorldToView(TransformObjectToWorld(v)); }
+float3 SSS_ScreenToWorld(float3 v) { return SSS_WorldToAbsolute(ComputeWorldSpacePosition(v.xy, v.z, UNITY_MATRIX_I_VP)); }
+float3 SSS_ScreenToObject(float3 v) { return SSS_WorldToObject(SSS_ScreenToWorld(v)); }
+float3 SSS_ScreenToView(float3 v) { return SSS_WorldToView(SSS_ScreenToWorld(v)); }
+float3 SSS_ViewToWorld(float3 v) { return mul(UNITY_MATRIX_I_V, float4(v, 1.0)).xyz; }
+float3 SSS_ViewToObject(float3 v) { return TransformWorldToObject(SSS_ViewToWorld(v)); }
+float3 SSS_ViewToScreen(float3 v) { return SSS_HClipToScreen(TransformWViewToHClip(v)); }
+float3 SSS_ObjectToWorldDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformObjectToWorldDir(v);
+	#else
+		return TransformObjectToWorldDir(v, true);
+	#endif
+}
+float3 SSS_ObjectToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v));
+	#else
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v, false), true);
+	#endif
+}
+float3 SSS_WorldToObjectDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToObjectDir(v);
+	#else
+		return TransformWorldToObjectDir(v, true);
+	#endif
+}
+float3 SSS_WorldToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(v);
+	#else
+		return TransformWorldToViewDir(v, true);
+	#endif
+}
+float3 SSS_ViewToObjectDir(float3 v)
+{
+	#if _SSS_URP || _SSS_HDRP
+		return SSS_WorldToObjectDir(mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz);
+	#else
+		return SSS_WorldToObjectDir(mul((float3x3)UNITY_MATRIX_I_V, v));
+	#endif
+}
+float3 SSS_ViewToWorldDir(float3 v)
+{
+	return mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz;
+}
+
+#if _SSS_NO_DERIVATIVES
+	float3 SSS_GetSceneColor(float2 uv) { return float3(0.0, 0.0, 0.0); }
+	float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	float  SSS_GetSceneDepth(float2 uv) { return 0.0; }
+#else
+	#if _SSS_URP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#elif _SSS_HDRP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv)
+		{
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(_SURFACE_TYPE_TRANSPARENT) && defined(SHADERPASS) && (SHADERPASS != SHADERPASS_LIGHT_TRANSPORT) && (SHADERPASS != SHADERPASS_PATH_TRACING) && (SHADERPASS != SHADERPASS_RAYTRACING_VISIBILITY) && (SHADERPASS != SHADERPASS_RAYTRACING_FORWARD)
+			return SampleCameraColor(uv, 0);
+			#endif
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(CUSTOM_PASS_SAMPLING_HLSL) && defined(SHADERPASS) && (SHADERPASS == SHADERPASS_DRAWPROCEDURAL || SHADERPASS == SHADERPASS_BLIT)
+			return CustomPassSampleCameraColor(uv, 0);
+			#endif
+			return float3(0.0, 0.0, 0.0);
+		}
+	#else
+		#if defined(UNITY_DECLARE_OPAQUE_TEXTURE_INCLUDED)
+			float3 SSS_GetSceneColor(float2 uv) { return SampleSceneColor(uv); }
+		#else
+			sampler2D _CameraOpaqueTexture; float3 SSS_GetSceneColor(float2 uv) { return tex2D(_CameraOpaqueTexture, uv).xyz; }
+		#endif
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#endif
+
+	float SSS_GetSceneDepth(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv); }
+#endif
+
+float3 SSS_GetSceneWorldPosition(float2 screenUV, float sceneDepth)
+{
+	#if _SSS_BIRP
+		float4 clipPos  = float4(screenUV * 2.0f - 1.0f, 0.0f, 1.0f);
+		float4 viewPos  = mul(unity_CameraInvProjection, clipPos);
+		float3 worldDir = mul((float3x3)UNITY_MATRIX_I_V, viewPos.xyz);
+					
+		return _WorldSpaceCameraPos + worldDir * LinearEyeDepth(sceneDepth);
+	#else
+		float4 clipPos = float4(screenUV * 2.0 - 1.0, sceneDepth, 1.0);
+					
+		#if UNITY_UV_STARTS_AT_TOP
+			clipPos.y = -clipPos.y;
+		#endif
+					
+		float4 worldPos = mul(UNITY_MATRIX_I_VP, clipPos);
+					
+		worldPos.xyz /= worldPos.w;
+					
+		#if _SSS_HDRP
+			worldPos.xyz = GetAbsolutePositionWS(worldPos.xyz);
+		#endif
+					
+		return worldPos.xyz;
+	#endif
+}
+
+float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
+{
+	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
+}
+
+struct SSS_VertexData
+{
+	float  instanceID;
+	float3 position;
+	float3 normal;
+	float3 tangent;
+	float4 color;
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+	
+
+};
+
+struct SSS_FragmentData
+{
+	float3 localSpacePosition;
+	float3 localSpaceNormal;
+	float3 localSpaceTangent;
+	
+	float3 worldSpacePosition;
+	float3 worldSpaceNormal;
+	float3 worldSpaceTangent;
+	//float tangentSign;
+
+	float3 worldSpaceViewDir;
+	//float3 tangentSpaceViewDir;
+	
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	
+	float2 screenUV;
+	float4 screenPos;
+
+	float4 vertexColor;
+	bool isFrontFace;
+	
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+
+	float3x3 TBNMatrix;
+	
+
+};
+
+struct SSS_SurfaceData
+{
+	float3 Albedo;
+	float  Smoothness;
+	float3 Normal;
+	float3 Emission;
+	float  Occlusion;
+	float  Metallic;
+	float  Alpha;
+};
+
+
+
+
+
+
+
+
+
+void SSS_Vert(inout SSS_VertexData v)
+{
+}
+ 
+void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
+{
+}
+
+
+
+
+void Vert_float
+	(
+	float  iInstanceID,
+	float3 iPosition,
+	float3 iNormal,
+	float3 iTangent,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+
+	out float3 oPosition,
+	out float3 oNormal,
+	out float3 oTangent,
+	out float4 oExtraV2F0,
+	out float4 oExtraV2F1,
+	out float4 oExtraV2F2,
+	out float4 oExtraV2F3,
+	out float4 oExtraV2F4,
+	out float4 oExtraV2F5,
+	out float4 oExtraV2F6,
+	out float4 oExtraV2F7
+	)
+{
+	SSS_VertexData v = (SSS_VertexData)0;
+	
+	v.instanceID = iInstanceID;
+	v.position   = iPosition;
+	v.normal     = iNormal;
+	v.tangent    = iTangent;
+	v.color      = iColor;
+	v.texcoord0  = iTexcoord0;
+	v.texcoord1  = iTexcoord1;
+	v.texcoord2  = iTexcoord2;
+	v.texcoord3  = iTexcoord3;
+	v.extraV2F0  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F1  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F2  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F3  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F4  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F5  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F6  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F7  = float4(0.0, 0.0, 0.0, 0.0);
+	
+	SSS_Vert(v);
+	
+	oPosition  = v.position;
+	oNormal    = v.normal;
+	oTangent   = v.tangent;
+	oExtraV2F0 = v.extraV2F0;
+	oExtraV2F1 = v.extraV2F1;
+	oExtraV2F2 = v.extraV2F2;
+	oExtraV2F3 = v.extraV2F3;
+	oExtraV2F4 = v.extraV2F4;
+	oExtraV2F5 = v.extraV2F5;
+	oExtraV2F6 = v.extraV2F6;
+	oExtraV2F7 = v.extraV2F7;
+}
+
+void Frag_float
+	(
+	inout float3 iPosition,
+	inout float3 iNormal,
+	inout float3 iTangent,
+	bool   iIsFrontFace,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+	float4 iExtraV2F0,
+	float4 iExtraV2F1,
+	float4 iExtraV2F2,
+	float4 iExtraV2F3,
+	float4 iExtraV2F4,
+	float4 iExtraV2F5,
+	float4 iExtraV2F6,
+	float4 iExtraV2F7,
+
+	out float4x4 oExtra,
+	out float3   oAlbedo,
+	out float    oSmoothness,
+	out float3   oNormal,
+	out float3   oEmission,
+	out float    oOcclusion,
+	out float    oMetallic,
+	out float    oAlpha
+	)
+{
+	SSS_SurfaceData  s = (SSS_SurfaceData)0;
+	SSS_FragmentData d = (SSS_FragmentData)0;
+	
+	s.Albedo = 1.0;
+	s.Smoothness = 0.5;
+	s.Normal = float3(0.0, 0.0, 1.0);
+	s.Emission = float3(0.0, 0.0, 0.0);
+	s.Occlusion = 0.0;
+	s.Metallic = 0.0;
+	s.Alpha = 1.0;
+	
+	iPosition = SSS_WorldToAbsolute(iPosition);
+	
+	d.localSpacePosition = SSS_WorldToObject(iPosition);
+	d.localSpaceNormal   = normalize(SSS_WorldToObjectDir(iNormal));
+	d.localSpaceTangent  = normalize(SSS_WorldToObjectDir(iTangent));
+	
+	d.worldSpacePosition = iPosition;
+	d.worldSpaceNormal   = iNormal;
+	d.worldSpaceTangent  = iTangent;
+	//d.tangentSign;
+	
+	d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	//d.tangentSpaceViewDir;
+	
+	d.texcoord0 = iTexcoord0;
+	d.texcoord1 = iTexcoord1;
+	d.texcoord2 = iTexcoord2;
+	d.texcoord3 = iTexcoord3;
+	
+	d.screenPos = float4(SSS_WorldToScreen(iPosition), 1.0);
+	d.screenUV  = d.screenPos.xy;
+
+	d.vertexColor = iColor;
+	d.isFrontFace = iIsFrontFace;
+	
+	d.extraV2F0 = iExtraV2F0;
+	d.extraV2F1 = iExtraV2F1;
+	d.extraV2F2 = iExtraV2F2;
+	d.extraV2F3 = iExtraV2F3;
+	d.extraV2F4 = iExtraV2F4;
+	d.extraV2F5 = iExtraV2F5;
+	d.extraV2F6 = iExtraV2F6;
+	d.extraV2F7 = iExtraV2F7;
+
+	d.TBNMatrix = float3x3(d.worldSpaceTangent, normalize(cross(d.worldSpaceNormal, d.worldSpaceTangent)), d.worldSpaceNormal);
+	
+	SSS_Frag(s, d);
+	
+	iPosition = SSS_AbsoluteToWorld(d.worldSpacePosition); iNormal = d.worldSpaceNormal; iTangent = d.worldSpaceTangent; // Write back
+	
+	oExtra      = float4x4(d.extraV2F0, d.extraV2F1, d.extraV2F2, d.extraV2F3);
+	oAlbedo     = s.Albedo;
+	oSmoothness = s.Smoothness;
+	oNormal     = s.Normal;
+	oEmission   = s.Emission;
+	oOcclusion  = s.Occlusion;
+	oMetallic   = s.Metallic;
+	oAlpha      = s.Alpha;
+}
+
+
+
+
+// -- Property used by ScenePickingPass
+#ifdef SCENEPICKINGPASS
+float4 _SelectionID;
+#endif
+
+// -- Properties used by SceneSelectionPass
+#ifdef SCENESELECTIONPASS
+int _ObjectId;
+int _PassValue;
+#endif
+
+// Graph Functions
+// GraphFunctions: <None>
+
+// Custom interpolators pre vertex
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPreVertex' */
+
+// Graph Vertex
+struct VertexDescription
+{
+float3 Position;
+float3 Normal;
+float3 Tangent;
+};
+
+VertexDescription VertexDescriptionFunction(VertexDescriptionInputs IN)
+{
+VertexDescription description = (VertexDescription)0;
+float4 _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4 = IN.uv0;
+float4 _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4 = IN.uv1;
+float4 _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4 = IN.uv2;
+float4 _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4 = IN.uv3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4;
+Vert_float(IN.InstanceID, IN.ObjectSpacePosition, IN.ObjectSpaceNormal, IN.ObjectSpaceTangent, IN.VertexColor, _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4, _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4, _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4, _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4);
+description.Position = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+description.Normal = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3;
+description.Tangent = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3;
+return description;
+}
+
+// Custom interpolators, pre surface
+#ifdef FEATURES_GRAPH_VERTEX
+Varyings CustomInterpolatorPassThroughFunc(inout Varyings output, VertexDescription input)
+{
+return output;
+}
+#define CUSTOMINTERPOLATOR_VARYPASSTHROUGH_FUNC
+#endif
+
+// Graph Pixel
+struct SurfaceDescription
+{
+};
+
+SurfaceDescription SurfaceDescriptionFunction(SurfaceDescriptionInputs IN)
+{
+SurfaceDescription surface = (SurfaceDescription)0;
+return surface;
+}
+
+// --------------------------------------------------
+// Build Graph Inputs
+#ifdef HAVE_VFX_MODIFICATION
+#define VFX_SRP_ATTRIBUTES Attributes
+#define VFX_SRP_VARYINGS Varyings
+#define VFX_SRP_SURFACE_INPUTS SurfaceDescriptionInputs
+#endif
+VertexDescriptionInputs BuildVertexDescriptionInputs(Attributes input)
+{
+    VertexDescriptionInputs output;
+    ZERO_INITIALIZE(VertexDescriptionInputs, output);
+
+    output.ObjectSpaceNormal =                          input.normalOS;
+    output.ObjectSpaceTangent =                         input.tangentOS.xyz;
+    output.ObjectSpacePosition =                        input.positionOS;
+    output.uv0 =                                        input.uv0;
+    output.uv1 =                                        input.uv1;
+    output.uv2 =                                        input.uv2;
+    output.uv3 =                                        input.uv3;
+    output.VertexColor =                                input.color;
+#if UNITY_ANY_INSTANCING_ENABLED
+    output.InstanceID =                                 unity_InstanceID;
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+    output.InstanceID =                                 input.instanceID;
+#endif
+
+    return output;
+}
+SurfaceDescriptionInputs BuildSurfaceDescriptionInputs(Varyings input)
+{
+    SurfaceDescriptionInputs output;
+    ZERO_INITIALIZE(SurfaceDescriptionInputs, output);
+
+#ifdef HAVE_VFX_MODIFICATION
+#if VFX_USE_GRAPH_VALUES
+    uint instanceActiveIndex = asuint(UNITY_ACCESS_INSTANCED_PROP(PerInstance, _InstanceActiveIndex));
+    /* WARNING: $splice Could not find named fragment 'VFXLoadGraphValues' */
+#endif
+    /* WARNING: $splice Could not find named fragment 'VFXSetFragInputs' */
+
+#endif
+
+    
+
+
+
+
+
+
+    #if UNITY_UV_STARTS_AT_TOP
+    #else
+    #endif
+
+
+#if UNITY_ANY_INSTANCING_ENABLED
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN output.FaceSign =                    IS_FRONT_VFACE(input.cullFace, true, false);
+#else
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+#endif
+#undef BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+
+        return output;
+}
+
+// --------------------------------------------------
+// Main
+
+#include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/Varyings.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/DepthNormalsOnlyPass.hlsl"
+
+// --------------------------------------------------
+// Visual Effect Vertex Invocations
+#ifdef HAVE_VFX_MODIFICATION
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/VisualEffectVertex.hlsl"
+#endif
+
+ENDHLSL
+}
+Pass
+{
+    Name "GBuffer"
+    Tags
+    {
+        "LightMode" = "UniversalGBuffer"
+    }
+
+// Render State
+Cull Back
+Blend One Zero
+ZTest LEqual
+ZWrite Off
+
+// Debug
+// <None>
+
+// --------------------------------------------------
+// Pass
+
+HLSLPROGRAM
+#define _SSS_PASS_GBUFFER 1
+
+#define _SSS_URP 1
+
+
+// Pragmas
+#pragma target 4.5
+#pragma exclude_renderers gles3 glcore
+#pragma multi_compile_instancing
+#pragma instancing_options renderinglayer
+#pragma vertex vert
+#pragma fragment frag
+
+// Keywords
+#pragma multi_compile_fragment _ _DBUFFER_MRT1 _DBUFFER_MRT2 _DBUFFER_MRT3
+#pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
+#pragma multi_compile_fragment _ _RENDER_PASS_ENABLED
+#pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
+#pragma multi_compile _ SHADOWS_SHADOWMASK
+// GraphKeywords: <None>
+
+// Defines
+
+#define ATTRIBUTES_NEED_NORMAL
+#define ATTRIBUTES_NEED_TANGENT
+#define ATTRIBUTES_NEED_TEXCOORD0
+#define ATTRIBUTES_NEED_TEXCOORD1
+#define ATTRIBUTES_NEED_TEXCOORD2
+#define ATTRIBUTES_NEED_TEXCOORD3
+#define ATTRIBUTES_NEED_COLOR
+#define ATTRIBUTES_NEED_INSTANCEID
+#define FEATURES_GRAPH_VERTEX_NORMAL_OUTPUT
+#define FEATURES_GRAPH_VERTEX_TANGENT_OUTPUT
+#define VARYINGS_NEED_POSITION_WS
+#define VARYINGS_NEED_NORMAL_WS
+#define VARYINGS_NEED_TANGENT_WS
+#define VARYINGS_NEED_TEXCOORD0
+#define VARYINGS_NEED_TEXCOORD1
+#define VARYINGS_NEED_CULLFACE
+#define FEATURES_GRAPH_VERTEX
+/* WARNING: $splice Could not find named fragment 'PassInstancing' */
+#define SHADERPASS SHADERPASS_GBUFFER
+
+
+// custom interpolator pre-include
+/* WARNING: $splice Could not find named fragment 'sgci_CustomInterpolatorPreInclude' */
+
+// Includes
+#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+#include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRendering.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Input.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderGraphFunctions.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DBuffer.hlsl"
+#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
+
+// --------------------------------------------------
+// Structs and Packing
+
+// custom interpolators pre packing
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPrePacking' */
+
+struct Attributes
+{
+ float3 positionOS : POSITION;
+ float3 normalOS : NORMAL;
+ float4 tangentOS : TANGENT;
+ float4 uv0 : TEXCOORD0;
+ float4 uv1 : TEXCOORD1;
+ float4 uv2 : TEXCOORD2;
+ float4 uv3 : TEXCOORD3;
+ float4 color : COLOR;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(ATTRIBUTES_NEED_INSTANCEID)
+ uint instanceID : INSTANCEID_SEMANTIC;
+#endif
+};
+struct Varyings
+{
+ float4 positionCS : SV_POSITION;
+ float3 positionWS;
+ float3 normalWS;
+ float4 tangentWS;
+ float4 texCoord0;
+ float4 texCoord1;
+#if !defined(LIGHTMAP_ON)
+ float3 sh;
+#endif
+#if defined(USE_APV_PROBE_OCCLUSION)
+ float4 probeOcclusion;
+#endif
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+ float4 extraV2F0;
+};
+struct SurfaceDescriptionInputs
+{
+ float3 WorldSpaceNormal;
+ float3 WorldSpaceTangent;
+ float3 WorldSpacePosition;
+ float4 uv0;
+ float4 uv1;
+ float FaceSign;
+ float4 extraV2F0;
+};
+struct VertexDescriptionInputs
+{
+ float3 ObjectSpaceNormal;
+ float3 ObjectSpaceTangent;
+ float3 ObjectSpacePosition;
+ float4 uv0;
+ float4 uv1;
+ float4 uv2;
+ float4 uv3;
+ float4 VertexColor;
+ uint InstanceID;
+};
+struct PackedVaryings
+{
+ float4 positionCS : SV_POSITION;
+#if !defined(LIGHTMAP_ON)
+ float3 sh : INTERP0;
+#endif
+#if defined(USE_APV_PROBE_OCCLUSION)
+ float4 probeOcclusion : INTERP1;
+#endif
+ float4 tangentWS : INTERP2;
+ float4 texCoord0 : INTERP3;
+ float4 texCoord1 : INTERP4;
+ float4 extraV2F0 : INTERP5;
+ float3 positionWS : INTERP6;
+ float3 normalWS : INTERP7;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+};
+
+PackedVaryings PackVaryings (Varyings input)
+{
+PackedVaryings output;
+ZERO_INITIALIZE(PackedVaryings, output);
+output.positionCS = input.positionCS;
+#if !defined(LIGHTMAP_ON)
+output.sh = input.sh;
+#endif
+#if defined(USE_APV_PROBE_OCCLUSION)
+output.probeOcclusion = input.probeOcclusion;
+#endif
+output.tangentWS.xyzw = input.tangentWS;
+output.texCoord0.xyzw = input.texCoord0;
+output.texCoord1.xyzw = input.texCoord1;
+output.extraV2F0.xyzw = input.extraV2F0;
+output.positionWS.xyz = input.positionWS;
+output.normalWS.xyz = input.normalWS;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+Varyings UnpackVaryings (PackedVaryings input)
+{
+Varyings output;
+output.positionCS = input.positionCS;
+#if !defined(LIGHTMAP_ON)
+output.sh = input.sh;
+#endif
+#if defined(USE_APV_PROBE_OCCLUSION)
+output.probeOcclusion = input.probeOcclusion;
+#endif
+output.tangentWS = input.tangentWS.xyzw;
+output.texCoord0 = input.texCoord0.xyzw;
+output.texCoord1 = input.texCoord1.xyzw;
+output.extraV2F0 = input.extraV2F0.xyzw;
+output.positionWS = input.positionWS.xyz;
+output.normalWS = input.normalWS.xyz;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+
+// --------------------------------------------------
+// Graph
+
+// Graph Properties
+CBUFFER_START(UnityPerMaterial)
+
+
+
+UNITY_TEXTURE_STREAMING_DEBUG_VARS;
+CBUFFER_END
+
+
+// Object and Global properties
+
+// Graph Includes
+// UNITY_SHADER_NO_UPGRADE
+float3 SSS_HClipToScreen(float4 v)
+{
+	float3 uv = v.xyz / v.w;
+	#if UNITY_UV_STARTS_AT_TOP
+		uv.y = -uv.y;
+	#endif
+	uv.xy = uv.xy * 0.5 + 0.5;
+	return uv;
+}
+
+#if _SSS_HDRP
+	float3 SSS_WorldToAbsolute(float3 v) { return GetAbsolutePositionWS(v); }
+	float3 SSS_AbsoluteToWorld(float3 v) { return GetCameraRelativePositionWS(v); }
+#else
+	float3 SSS_WorldToAbsolute(float3 v) { return v; }
+	float3 SSS_AbsoluteToWorld(float3 v) { return v; }
+#endif
+
+float3 SSS_WorldToView(float3 v) { return TransformWorldToView(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToObject(float3 v) { return TransformWorldToObject(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToScreen(float3 v) { return SSS_HClipToScreen(TransformWorldToHClip(SSS_AbsoluteToWorld(v))); }
+float3 SSS_ObjectToScreen(float3 v) { return SSS_HClipToScreen(TransformObjectToHClip(v)); }
+float3 SSS_ObjectToWorld(float3 v) { return SSS_WorldToAbsolute(TransformObjectToWorld(v)); }
+float3 SSS_ObjectToView(float3 v) { return TransformWorldToView(TransformObjectToWorld(v)); }
+float3 SSS_ScreenToWorld(float3 v) { return SSS_WorldToAbsolute(ComputeWorldSpacePosition(v.xy, v.z, UNITY_MATRIX_I_VP)); }
+float3 SSS_ScreenToObject(float3 v) { return SSS_WorldToObject(SSS_ScreenToWorld(v)); }
+float3 SSS_ScreenToView(float3 v) { return SSS_WorldToView(SSS_ScreenToWorld(v)); }
+float3 SSS_ViewToWorld(float3 v) { return mul(UNITY_MATRIX_I_V, float4(v, 1.0)).xyz; }
+float3 SSS_ViewToObject(float3 v) { return TransformWorldToObject(SSS_ViewToWorld(v)); }
+float3 SSS_ViewToScreen(float3 v) { return SSS_HClipToScreen(TransformWViewToHClip(v)); }
+float3 SSS_ObjectToWorldDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformObjectToWorldDir(v);
+	#else
+		return TransformObjectToWorldDir(v, true);
+	#endif
+}
+float3 SSS_ObjectToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v));
+	#else
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v, false), true);
+	#endif
+}
+float3 SSS_WorldToObjectDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToObjectDir(v);
+	#else
+		return TransformWorldToObjectDir(v, true);
+	#endif
+}
+float3 SSS_WorldToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(v);
+	#else
+		return TransformWorldToViewDir(v, true);
+	#endif
+}
+float3 SSS_ViewToObjectDir(float3 v)
+{
+	#if _SSS_URP || _SSS_HDRP
+		return SSS_WorldToObjectDir(mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz);
+	#else
+		return SSS_WorldToObjectDir(mul((float3x3)UNITY_MATRIX_I_V, v));
+	#endif
+}
+float3 SSS_ViewToWorldDir(float3 v)
+{
+	return mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz;
+}
+
+#if _SSS_NO_DERIVATIVES
+	float3 SSS_GetSceneColor(float2 uv) { return float3(0.0, 0.0, 0.0); }
+	float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	float  SSS_GetSceneDepth(float2 uv) { return 0.0; }
+#else
+	#if _SSS_URP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#elif _SSS_HDRP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv)
+		{
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(_SURFACE_TYPE_TRANSPARENT) && defined(SHADERPASS) && (SHADERPASS != SHADERPASS_LIGHT_TRANSPORT) && (SHADERPASS != SHADERPASS_PATH_TRACING) && (SHADERPASS != SHADERPASS_RAYTRACING_VISIBILITY) && (SHADERPASS != SHADERPASS_RAYTRACING_FORWARD)
+			return SampleCameraColor(uv, 0);
+			#endif
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(CUSTOM_PASS_SAMPLING_HLSL) && defined(SHADERPASS) && (SHADERPASS == SHADERPASS_DRAWPROCEDURAL || SHADERPASS == SHADERPASS_BLIT)
+			return CustomPassSampleCameraColor(uv, 0);
+			#endif
+			return float3(0.0, 0.0, 0.0);
+		}
+	#else
+		#if defined(UNITY_DECLARE_OPAQUE_TEXTURE_INCLUDED)
+			float3 SSS_GetSceneColor(float2 uv) { return SampleSceneColor(uv); }
+		#else
+			sampler2D _CameraOpaqueTexture; float3 SSS_GetSceneColor(float2 uv) { return tex2D(_CameraOpaqueTexture, uv).xyz; }
+		#endif
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#endif
+
+	float SSS_GetSceneDepth(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv); }
+#endif
+
+float3 SSS_GetSceneWorldPosition(float2 screenUV, float sceneDepth)
+{
+	#if _SSS_BIRP
+		float4 clipPos  = float4(screenUV * 2.0f - 1.0f, 0.0f, 1.0f);
+		float4 viewPos  = mul(unity_CameraInvProjection, clipPos);
+		float3 worldDir = mul((float3x3)UNITY_MATRIX_I_V, viewPos.xyz);
+					
+		return _WorldSpaceCameraPos + worldDir * LinearEyeDepth(sceneDepth);
+	#else
+		float4 clipPos = float4(screenUV * 2.0 - 1.0, sceneDepth, 1.0);
+					
+		#if UNITY_UV_STARTS_AT_TOP
+			clipPos.y = -clipPos.y;
+		#endif
+					
+		float4 worldPos = mul(UNITY_MATRIX_I_VP, clipPos);
+					
+		worldPos.xyz /= worldPos.w;
+					
+		#if _SSS_HDRP
+			worldPos.xyz = GetAbsolutePositionWS(worldPos.xyz);
+		#endif
+					
+		return worldPos.xyz;
+	#endif
+}
+
+float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
+{
+	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
+}
+
+struct SSS_VertexData
+{
+	float  instanceID;
+	float3 position;
+	float3 normal;
+	float3 tangent;
+	float4 color;
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+	
+
+};
+
+struct SSS_FragmentData
+{
+	float3 localSpacePosition;
+	float3 localSpaceNormal;
+	float3 localSpaceTangent;
+	
+	float3 worldSpacePosition;
+	float3 worldSpaceNormal;
+	float3 worldSpaceTangent;
+	//float tangentSign;
+
+	float3 worldSpaceViewDir;
+	//float3 tangentSpaceViewDir;
+	
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	
+	float2 screenUV;
+	float4 screenPos;
+
+	float4 vertexColor;
+	bool isFrontFace;
+	
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+
+	float3x3 TBNMatrix;
+	
+
+};
+
+struct SSS_SurfaceData
+{
+	float3 Albedo;
+	float  Smoothness;
+	float3 Normal;
+	float3 Emission;
+	float  Occlusion;
+	float  Metallic;
+	float  Alpha;
+};
+
+
+
+
+
+
+
+
+
+void SSS_Vert(inout SSS_VertexData v)
+{
+}
+ 
+void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
+{
+}
+
+
+
+
+void Vert_float
+	(
+	float  iInstanceID,
+	float3 iPosition,
+	float3 iNormal,
+	float3 iTangent,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+
+	out float3 oPosition,
+	out float3 oNormal,
+	out float3 oTangent,
+	out float4 oExtraV2F0,
+	out float4 oExtraV2F1,
+	out float4 oExtraV2F2,
+	out float4 oExtraV2F3,
+	out float4 oExtraV2F4,
+	out float4 oExtraV2F5,
+	out float4 oExtraV2F6,
+	out float4 oExtraV2F7
+	)
+{
+	SSS_VertexData v = (SSS_VertexData)0;
+	
+	v.instanceID = iInstanceID;
+	v.position   = iPosition;
+	v.normal     = iNormal;
+	v.tangent    = iTangent;
+	v.color      = iColor;
+	v.texcoord0  = iTexcoord0;
+	v.texcoord1  = iTexcoord1;
+	v.texcoord2  = iTexcoord2;
+	v.texcoord3  = iTexcoord3;
+	v.extraV2F0  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F1  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F2  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F3  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F4  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F5  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F6  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F7  = float4(0.0, 0.0, 0.0, 0.0);
+	
+	SSS_Vert(v);
+	
+	oPosition  = v.position;
+	oNormal    = v.normal;
+	oTangent   = v.tangent;
+	oExtraV2F0 = v.extraV2F0;
+	oExtraV2F1 = v.extraV2F1;
+	oExtraV2F2 = v.extraV2F2;
+	oExtraV2F3 = v.extraV2F3;
+	oExtraV2F4 = v.extraV2F4;
+	oExtraV2F5 = v.extraV2F5;
+	oExtraV2F6 = v.extraV2F6;
+	oExtraV2F7 = v.extraV2F7;
+}
+
+void Frag_float
+	(
+	inout float3 iPosition,
+	inout float3 iNormal,
+	inout float3 iTangent,
+	bool   iIsFrontFace,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+	float4 iExtraV2F0,
+	float4 iExtraV2F1,
+	float4 iExtraV2F2,
+	float4 iExtraV2F3,
+	float4 iExtraV2F4,
+	float4 iExtraV2F5,
+	float4 iExtraV2F6,
+	float4 iExtraV2F7,
+
+	out float4x4 oExtra,
+	out float3   oAlbedo,
+	out float    oSmoothness,
+	out float3   oNormal,
+	out float3   oEmission,
+	out float    oOcclusion,
+	out float    oMetallic,
+	out float    oAlpha
+	)
+{
+	SSS_SurfaceData  s = (SSS_SurfaceData)0;
+	SSS_FragmentData d = (SSS_FragmentData)0;
+	
+	s.Albedo = 1.0;
+	s.Smoothness = 0.5;
+	s.Normal = float3(0.0, 0.0, 1.0);
+	s.Emission = float3(0.0, 0.0, 0.0);
+	s.Occlusion = 0.0;
+	s.Metallic = 0.0;
+	s.Alpha = 1.0;
+	
+	iPosition = SSS_WorldToAbsolute(iPosition);
+	
+	d.localSpacePosition = SSS_WorldToObject(iPosition);
+	d.localSpaceNormal   = normalize(SSS_WorldToObjectDir(iNormal));
+	d.localSpaceTangent  = normalize(SSS_WorldToObjectDir(iTangent));
+	
+	d.worldSpacePosition = iPosition;
+	d.worldSpaceNormal   = iNormal;
+	d.worldSpaceTangent  = iTangent;
+	//d.tangentSign;
+	
+	d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	//d.tangentSpaceViewDir;
+	
+	d.texcoord0 = iTexcoord0;
+	d.texcoord1 = iTexcoord1;
+	d.texcoord2 = iTexcoord2;
+	d.texcoord3 = iTexcoord3;
+	
+	d.screenPos = float4(SSS_WorldToScreen(iPosition), 1.0);
+	d.screenUV  = d.screenPos.xy;
+
+	d.vertexColor = iColor;
+	d.isFrontFace = iIsFrontFace;
+	
+	d.extraV2F0 = iExtraV2F0;
+	d.extraV2F1 = iExtraV2F1;
+	d.extraV2F2 = iExtraV2F2;
+	d.extraV2F3 = iExtraV2F3;
+	d.extraV2F4 = iExtraV2F4;
+	d.extraV2F5 = iExtraV2F5;
+	d.extraV2F6 = iExtraV2F6;
+	d.extraV2F7 = iExtraV2F7;
+
+	d.TBNMatrix = float3x3(d.worldSpaceTangent, normalize(cross(d.worldSpaceNormal, d.worldSpaceTangent)), d.worldSpaceNormal);
+	
+	SSS_Frag(s, d);
+	
+	iPosition = SSS_AbsoluteToWorld(d.worldSpacePosition); iNormal = d.worldSpaceNormal; iTangent = d.worldSpaceTangent; // Write back
+	
+	oExtra      = float4x4(d.extraV2F0, d.extraV2F1, d.extraV2F2, d.extraV2F3);
+	oAlbedo     = s.Albedo;
+	oSmoothness = s.Smoothness;
+	oNormal     = s.Normal;
+	oEmission   = s.Emission;
+	oOcclusion  = s.Occlusion;
+	oMetallic   = s.Metallic;
+	oAlpha      = s.Alpha;
+}
+
+
+
+
+// -- Property used by ScenePickingPass
+#ifdef SCENEPICKINGPASS
+float4 _SelectionID;
+#endif
+
+// -- Properties used by SceneSelectionPass
+#ifdef SCENESELECTIONPASS
+int _ObjectId;
+int _PassValue;
+#endif
+
+// Graph Functions
+// GraphFunctions: <None>
+
+// Custom interpolators pre vertex
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPreVertex' */
+
+// Graph Vertex
+struct VertexDescription
+{
+float3 Position;
+float3 Normal;
+float3 Tangent;
+float4 extraV2F0;
+};
+
+VertexDescription VertexDescriptionFunction(VertexDescriptionInputs IN)
+{
+VertexDescription description = (VertexDescription)0;
+float4 _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4 = IN.uv0;
+float4 _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4 = IN.uv1;
+float4 _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4 = IN.uv2;
+float4 _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4 = IN.uv3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4;
+Vert_float(IN.InstanceID, IN.ObjectSpacePosition, IN.ObjectSpaceNormal, IN.ObjectSpaceTangent, IN.VertexColor, _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4, _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4, _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4, _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4);
+description.Position = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+description.Normal = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3;
+description.Tangent = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3;
+description.extraV2F0 = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4;
+return description;
+}
+
+// Custom interpolators, pre surface
+#ifdef FEATURES_GRAPH_VERTEX
+Varyings CustomInterpolatorPassThroughFunc(inout Varyings output, VertexDescription input)
+{
+output.extraV2F0 = input.extraV2F0;
+return output;
+}
+#define CUSTOMINTERPOLATOR_VARYPASSTHROUGH_FUNC
+#endif
+
+// Graph Pixel
+struct SurfaceDescription
+{
+float3 BaseColor;
+};
+
+SurfaceDescription SurfaceDescriptionFunction(SurfaceDescriptionInputs IN)
+{
+SurfaceDescription surface = (SurfaceDescription)0;
+float _IsFrontFace_5b03f99e2e7841c3a7d2ae306590b576_Out_0_Boolean = max(0, IN.FaceSign.x);
+float4 _UV_c1e39353e82e434da821b9bdc4338e4b_Out_0_Vector4 = IN.uv0;
+float4 _UV_64d51b5974bc4ecf849e7307e6de2727_Out_0_Vector4 = IN.uv1;
+float4x4 _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oExtra_23_Matrix4;
+float3 _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlbedo_0_Vector3;
+float _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oSmoothness_5_Float;
+float3 _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oNormal_6_Vector3;
+float3 _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oEmission_7_Vector3;
+float _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oOcclusion_8_Float;
+float _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oMetallic_9_Float;
+float _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlpha_10_Float;
+Frag_float(IN.WorldSpacePosition, IN.WorldSpaceNormal, IN.WorldSpaceTangent, _IsFrontFace_5b03f99e2e7841c3a7d2ae306590b576_Out_0_Boolean, float4 (0, 0, 0, 0), _UV_c1e39353e82e434da821b9bdc4338e4b_Out_0_Vector4, _UV_64d51b5974bc4ecf849e7307e6de2727_Out_0_Vector4, float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), IN.extraV2F0, float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oExtra_23_Matrix4, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlbedo_0_Vector3, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oSmoothness_5_Float, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oNormal_6_Vector3, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oEmission_7_Vector3, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oOcclusion_8_Float, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oMetallic_9_Float, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlpha_10_Float);
+surface.BaseColor = _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlbedo_0_Vector3;
+return surface;
+}
+
+// --------------------------------------------------
+// Build Graph Inputs
+#ifdef HAVE_VFX_MODIFICATION
+#define VFX_SRP_ATTRIBUTES Attributes
+#define VFX_SRP_VARYINGS Varyings
+#define VFX_SRP_SURFACE_INPUTS SurfaceDescriptionInputs
+#endif
+VertexDescriptionInputs BuildVertexDescriptionInputs(Attributes input)
+{
+    VertexDescriptionInputs output;
+    ZERO_INITIALIZE(VertexDescriptionInputs, output);
+
+    output.ObjectSpaceNormal =                          input.normalOS;
+    output.ObjectSpaceTangent =                         input.tangentOS.xyz;
+    output.ObjectSpacePosition =                        input.positionOS;
+    output.uv0 =                                        input.uv0;
+    output.uv1 =                                        input.uv1;
+    output.uv2 =                                        input.uv2;
+    output.uv3 =                                        input.uv3;
+    output.VertexColor =                                input.color;
+#if UNITY_ANY_INSTANCING_ENABLED
+    output.InstanceID =                                 unity_InstanceID;
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+    output.InstanceID =                                 input.instanceID;
+#endif
+
+    return output;
+}
+SurfaceDescriptionInputs BuildSurfaceDescriptionInputs(Varyings input)
+{
+    SurfaceDescriptionInputs output;
+    ZERO_INITIALIZE(SurfaceDescriptionInputs, output);
+
+#ifdef HAVE_VFX_MODIFICATION
+#if VFX_USE_GRAPH_VALUES
+    uint instanceActiveIndex = asuint(UNITY_ACCESS_INSTANCED_PROP(PerInstance, _InstanceActiveIndex));
+    /* WARNING: $splice Could not find named fragment 'VFXLoadGraphValues' */
+#endif
+    /* WARNING: $splice Could not find named fragment 'VFXSetFragInputs' */
+
+#endif
+
+    output.extraV2F0 = input.extraV2F0;
+
+    // must use interpolated tangent, bitangent and normal before they are normalized in the pixel shader.
+    float3 unnormalizedNormalWS = input.normalWS;
+    const float renormFactor = 1.0 / length(unnormalizedNormalWS);
+
+
+    output.WorldSpaceNormal = renormFactor * input.normalWS.xyz;      // we want a unit length Normal Vector node in shader graph
+
+    // to pr               eserve mikktspace compliance we use same scale renormFactor as was used on the normal.
+    // This                is explained in section 2.2 in "surface gradient based bump mapping framework"
+    output.WorldSpaceTangent = renormFactor * input.tangentWS.xyz;
+
+    output.WorldSpacePosition = input.positionWS;
+
+    #if UNITY_UV_STARTS_AT_TOP
+    #else
+    #endif
+
+
+    output.uv0 = input.texCoord0;
+    output.uv1 = input.texCoord1;
+#if UNITY_ANY_INSTANCING_ENABLED
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN output.FaceSign =                    IS_FRONT_VFACE(input.cullFace, true, false);
+#else
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+#endif
+    BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+#undef BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+
+        return output;
+}
+
+// --------------------------------------------------
+// Main
+
+#include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/Varyings.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/UnlitGBufferPass.hlsl"
+
+// --------------------------------------------------
+// Visual Effect Vertex Invocations
+#ifdef HAVE_VFX_MODIFICATION
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/VisualEffectVertex.hlsl"
+#endif
+
+ENDHLSL
+}
+Pass
+{
+    Name "SceneSelectionPass"
+    Tags
+    {
+        "LightMode" = "SceneSelectionPass"
+    }
+
+// Render State
+Cull Off
+
+// Debug
+// <None>
+
+// --------------------------------------------------
+// Pass
+
+HLSLPROGRAM
+#define _SSS_PASS_SCENESELECTIONPASS 1
+
+#define _SSS_URP 1
+
+
+// Pragmas
+#pragma target 2.0
+#pragma vertex vert
+#pragma fragment frag
+
+// Keywords
+// PassKeywords: <None>
+// GraphKeywords: <None>
+
+// Defines
+
+#define ATTRIBUTES_NEED_NORMAL
+#define ATTRIBUTES_NEED_TANGENT
+#define ATTRIBUTES_NEED_TEXCOORD0
+#define ATTRIBUTES_NEED_TEXCOORD1
+#define ATTRIBUTES_NEED_TEXCOORD2
+#define ATTRIBUTES_NEED_TEXCOORD3
+#define ATTRIBUTES_NEED_COLOR
+#define ATTRIBUTES_NEED_INSTANCEID
+#define FEATURES_GRAPH_VERTEX_NORMAL_OUTPUT
+#define FEATURES_GRAPH_VERTEX_TANGENT_OUTPUT
+#define FEATURES_GRAPH_VERTEX
+/* WARNING: $splice Could not find named fragment 'PassInstancing' */
+#define SHADERPASS SHADERPASS_DEPTHONLY
+#define SCENESELECTIONPASS 1
+#define ALPHA_CLIP_THRESHOLD 1
+
+
+// custom interpolator pre-include
+/* WARNING: $splice Could not find named fragment 'sgci_CustomInterpolatorPreInclude' */
+
+// Includes
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+#include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRendering.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Input.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderGraphFunctions.hlsl"
+#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
+
+// --------------------------------------------------
+// Structs and Packing
+
+// custom interpolators pre packing
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPrePacking' */
+
+struct Attributes
+{
+ float3 positionOS : POSITION;
+ float3 normalOS : NORMAL;
+ float4 tangentOS : TANGENT;
+ float4 uv0 : TEXCOORD0;
+ float4 uv1 : TEXCOORD1;
+ float4 uv2 : TEXCOORD2;
+ float4 uv3 : TEXCOORD3;
+ float4 color : COLOR;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(ATTRIBUTES_NEED_INSTANCEID)
+ uint instanceID : INSTANCEID_SEMANTIC;
+#endif
+};
+struct Varyings
+{
+ float4 positionCS : SV_POSITION;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+};
+struct SurfaceDescriptionInputs
+{
+};
+struct VertexDescriptionInputs
+{
+ float3 ObjectSpaceNormal;
+ float3 ObjectSpaceTangent;
+ float3 ObjectSpacePosition;
+ float4 uv0;
+ float4 uv1;
+ float4 uv2;
+ float4 uv3;
+ float4 VertexColor;
+ uint InstanceID;
+};
+struct PackedVaryings
+{
+ float4 positionCS : SV_POSITION;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+};
+
+PackedVaryings PackVaryings (Varyings input)
+{
+PackedVaryings output;
+ZERO_INITIALIZE(PackedVaryings, output);
+output.positionCS = input.positionCS;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+Varyings UnpackVaryings (PackedVaryings input)
+{
+Varyings output;
+output.positionCS = input.positionCS;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+
+// --------------------------------------------------
+// Graph
+
+// Graph Properties
+CBUFFER_START(UnityPerMaterial)
+
+
+
+UNITY_TEXTURE_STREAMING_DEBUG_VARS;
+CBUFFER_END
+
+
+// Object and Global properties
+
+// Graph Includes
+// UNITY_SHADER_NO_UPGRADE
+float3 SSS_HClipToScreen(float4 v)
+{
+	float3 uv = v.xyz / v.w;
+	#if UNITY_UV_STARTS_AT_TOP
+		uv.y = -uv.y;
+	#endif
+	uv.xy = uv.xy * 0.5 + 0.5;
+	return uv;
+}
+
+#if _SSS_HDRP
+	float3 SSS_WorldToAbsolute(float3 v) { return GetAbsolutePositionWS(v); }
+	float3 SSS_AbsoluteToWorld(float3 v) { return GetCameraRelativePositionWS(v); }
+#else
+	float3 SSS_WorldToAbsolute(float3 v) { return v; }
+	float3 SSS_AbsoluteToWorld(float3 v) { return v; }
+#endif
+
+float3 SSS_WorldToView(float3 v) { return TransformWorldToView(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToObject(float3 v) { return TransformWorldToObject(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToScreen(float3 v) { return SSS_HClipToScreen(TransformWorldToHClip(SSS_AbsoluteToWorld(v))); }
+float3 SSS_ObjectToScreen(float3 v) { return SSS_HClipToScreen(TransformObjectToHClip(v)); }
+float3 SSS_ObjectToWorld(float3 v) { return SSS_WorldToAbsolute(TransformObjectToWorld(v)); }
+float3 SSS_ObjectToView(float3 v) { return TransformWorldToView(TransformObjectToWorld(v)); }
+float3 SSS_ScreenToWorld(float3 v) { return SSS_WorldToAbsolute(ComputeWorldSpacePosition(v.xy, v.z, UNITY_MATRIX_I_VP)); }
+float3 SSS_ScreenToObject(float3 v) { return SSS_WorldToObject(SSS_ScreenToWorld(v)); }
+float3 SSS_ScreenToView(float3 v) { return SSS_WorldToView(SSS_ScreenToWorld(v)); }
+float3 SSS_ViewToWorld(float3 v) { return mul(UNITY_MATRIX_I_V, float4(v, 1.0)).xyz; }
+float3 SSS_ViewToObject(float3 v) { return TransformWorldToObject(SSS_ViewToWorld(v)); }
+float3 SSS_ViewToScreen(float3 v) { return SSS_HClipToScreen(TransformWViewToHClip(v)); }
+float3 SSS_ObjectToWorldDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformObjectToWorldDir(v);
+	#else
+		return TransformObjectToWorldDir(v, true);
+	#endif
+}
+float3 SSS_ObjectToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v));
+	#else
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v, false), true);
+	#endif
+}
+float3 SSS_WorldToObjectDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToObjectDir(v);
+	#else
+		return TransformWorldToObjectDir(v, true);
+	#endif
+}
+float3 SSS_WorldToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(v);
+	#else
+		return TransformWorldToViewDir(v, true);
+	#endif
+}
+float3 SSS_ViewToObjectDir(float3 v)
+{
+	#if _SSS_URP || _SSS_HDRP
+		return SSS_WorldToObjectDir(mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz);
+	#else
+		return SSS_WorldToObjectDir(mul((float3x3)UNITY_MATRIX_I_V, v));
+	#endif
+}
+float3 SSS_ViewToWorldDir(float3 v)
+{
+	return mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz;
+}
+
+#if _SSS_NO_DERIVATIVES
+	float3 SSS_GetSceneColor(float2 uv) { return float3(0.0, 0.0, 0.0); }
+	float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	float  SSS_GetSceneDepth(float2 uv) { return 0.0; }
+#else
+	#if _SSS_URP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#elif _SSS_HDRP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv)
+		{
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(_SURFACE_TYPE_TRANSPARENT) && defined(SHADERPASS) && (SHADERPASS != SHADERPASS_LIGHT_TRANSPORT) && (SHADERPASS != SHADERPASS_PATH_TRACING) && (SHADERPASS != SHADERPASS_RAYTRACING_VISIBILITY) && (SHADERPASS != SHADERPASS_RAYTRACING_FORWARD)
+			return SampleCameraColor(uv, 0);
+			#endif
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(CUSTOM_PASS_SAMPLING_HLSL) && defined(SHADERPASS) && (SHADERPASS == SHADERPASS_DRAWPROCEDURAL || SHADERPASS == SHADERPASS_BLIT)
+			return CustomPassSampleCameraColor(uv, 0);
+			#endif
+			return float3(0.0, 0.0, 0.0);
+		}
+	#else
+		#if defined(UNITY_DECLARE_OPAQUE_TEXTURE_INCLUDED)
+			float3 SSS_GetSceneColor(float2 uv) { return SampleSceneColor(uv); }
+		#else
+			sampler2D _CameraOpaqueTexture; float3 SSS_GetSceneColor(float2 uv) { return tex2D(_CameraOpaqueTexture, uv).xyz; }
+		#endif
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#endif
+
+	float SSS_GetSceneDepth(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv); }
+#endif
+
+float3 SSS_GetSceneWorldPosition(float2 screenUV, float sceneDepth)
+{
+	#if _SSS_BIRP
+		float4 clipPos  = float4(screenUV * 2.0f - 1.0f, 0.0f, 1.0f);
+		float4 viewPos  = mul(unity_CameraInvProjection, clipPos);
+		float3 worldDir = mul((float3x3)UNITY_MATRIX_I_V, viewPos.xyz);
+					
+		return _WorldSpaceCameraPos + worldDir * LinearEyeDepth(sceneDepth);
+	#else
+		float4 clipPos = float4(screenUV * 2.0 - 1.0, sceneDepth, 1.0);
+					
+		#if UNITY_UV_STARTS_AT_TOP
+			clipPos.y = -clipPos.y;
+		#endif
+					
+		float4 worldPos = mul(UNITY_MATRIX_I_VP, clipPos);
+					
+		worldPos.xyz /= worldPos.w;
+					
+		#if _SSS_HDRP
+			worldPos.xyz = GetAbsolutePositionWS(worldPos.xyz);
+		#endif
+					
+		return worldPos.xyz;
+	#endif
+}
+
+float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
+{
+	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
+}
+
+struct SSS_VertexData
+{
+	float  instanceID;
+	float3 position;
+	float3 normal;
+	float3 tangent;
+	float4 color;
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+	
+
+};
+
+struct SSS_FragmentData
+{
+	float3 localSpacePosition;
+	float3 localSpaceNormal;
+	float3 localSpaceTangent;
+	
+	float3 worldSpacePosition;
+	float3 worldSpaceNormal;
+	float3 worldSpaceTangent;
+	//float tangentSign;
+
+	float3 worldSpaceViewDir;
+	//float3 tangentSpaceViewDir;
+	
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	
+	float2 screenUV;
+	float4 screenPos;
+
+	float4 vertexColor;
+	bool isFrontFace;
+	
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+
+	float3x3 TBNMatrix;
+	
+
+};
+
+struct SSS_SurfaceData
+{
+	float3 Albedo;
+	float  Smoothness;
+	float3 Normal;
+	float3 Emission;
+	float  Occlusion;
+	float  Metallic;
+	float  Alpha;
+};
+
+
+
+
+
+
+
+
+
+void SSS_Vert(inout SSS_VertexData v)
+{
+}
+ 
+void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
+{
+}
+
+
+
+
+void Vert_float
+	(
+	float  iInstanceID,
+	float3 iPosition,
+	float3 iNormal,
+	float3 iTangent,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+
+	out float3 oPosition,
+	out float3 oNormal,
+	out float3 oTangent,
+	out float4 oExtraV2F0,
+	out float4 oExtraV2F1,
+	out float4 oExtraV2F2,
+	out float4 oExtraV2F3,
+	out float4 oExtraV2F4,
+	out float4 oExtraV2F5,
+	out float4 oExtraV2F6,
+	out float4 oExtraV2F7
+	)
+{
+	SSS_VertexData v = (SSS_VertexData)0;
+	
+	v.instanceID = iInstanceID;
+	v.position   = iPosition;
+	v.normal     = iNormal;
+	v.tangent    = iTangent;
+	v.color      = iColor;
+	v.texcoord0  = iTexcoord0;
+	v.texcoord1  = iTexcoord1;
+	v.texcoord2  = iTexcoord2;
+	v.texcoord3  = iTexcoord3;
+	v.extraV2F0  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F1  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F2  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F3  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F4  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F5  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F6  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F7  = float4(0.0, 0.0, 0.0, 0.0);
+	
+	SSS_Vert(v);
+	
+	oPosition  = v.position;
+	oNormal    = v.normal;
+	oTangent   = v.tangent;
+	oExtraV2F0 = v.extraV2F0;
+	oExtraV2F1 = v.extraV2F1;
+	oExtraV2F2 = v.extraV2F2;
+	oExtraV2F3 = v.extraV2F3;
+	oExtraV2F4 = v.extraV2F4;
+	oExtraV2F5 = v.extraV2F5;
+	oExtraV2F6 = v.extraV2F6;
+	oExtraV2F7 = v.extraV2F7;
+}
+
+void Frag_float
+	(
+	inout float3 iPosition,
+	inout float3 iNormal,
+	inout float3 iTangent,
+	bool   iIsFrontFace,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+	float4 iExtraV2F0,
+	float4 iExtraV2F1,
+	float4 iExtraV2F2,
+	float4 iExtraV2F3,
+	float4 iExtraV2F4,
+	float4 iExtraV2F5,
+	float4 iExtraV2F6,
+	float4 iExtraV2F7,
+
+	out float4x4 oExtra,
+	out float3   oAlbedo,
+	out float    oSmoothness,
+	out float3   oNormal,
+	out float3   oEmission,
+	out float    oOcclusion,
+	out float    oMetallic,
+	out float    oAlpha
+	)
+{
+	SSS_SurfaceData  s = (SSS_SurfaceData)0;
+	SSS_FragmentData d = (SSS_FragmentData)0;
+	
+	s.Albedo = 1.0;
+	s.Smoothness = 0.5;
+	s.Normal = float3(0.0, 0.0, 1.0);
+	s.Emission = float3(0.0, 0.0, 0.0);
+	s.Occlusion = 0.0;
+	s.Metallic = 0.0;
+	s.Alpha = 1.0;
+	
+	iPosition = SSS_WorldToAbsolute(iPosition);
+	
+	d.localSpacePosition = SSS_WorldToObject(iPosition);
+	d.localSpaceNormal   = normalize(SSS_WorldToObjectDir(iNormal));
+	d.localSpaceTangent  = normalize(SSS_WorldToObjectDir(iTangent));
+	
+	d.worldSpacePosition = iPosition;
+	d.worldSpaceNormal   = iNormal;
+	d.worldSpaceTangent  = iTangent;
+	//d.tangentSign;
+	
+	d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	//d.tangentSpaceViewDir;
+	
+	d.texcoord0 = iTexcoord0;
+	d.texcoord1 = iTexcoord1;
+	d.texcoord2 = iTexcoord2;
+	d.texcoord3 = iTexcoord3;
+	
+	d.screenPos = float4(SSS_WorldToScreen(iPosition), 1.0);
+	d.screenUV  = d.screenPos.xy;
+
+	d.vertexColor = iColor;
+	d.isFrontFace = iIsFrontFace;
+	
+	d.extraV2F0 = iExtraV2F0;
+	d.extraV2F1 = iExtraV2F1;
+	d.extraV2F2 = iExtraV2F2;
+	d.extraV2F3 = iExtraV2F3;
+	d.extraV2F4 = iExtraV2F4;
+	d.extraV2F5 = iExtraV2F5;
+	d.extraV2F6 = iExtraV2F6;
+	d.extraV2F7 = iExtraV2F7;
+
+	d.TBNMatrix = float3x3(d.worldSpaceTangent, normalize(cross(d.worldSpaceNormal, d.worldSpaceTangent)), d.worldSpaceNormal);
+	
+	SSS_Frag(s, d);
+	
+	iPosition = SSS_AbsoluteToWorld(d.worldSpacePosition); iNormal = d.worldSpaceNormal; iTangent = d.worldSpaceTangent; // Write back
+	
+	oExtra      = float4x4(d.extraV2F0, d.extraV2F1, d.extraV2F2, d.extraV2F3);
+	oAlbedo     = s.Albedo;
+	oSmoothness = s.Smoothness;
+	oNormal     = s.Normal;
+	oEmission   = s.Emission;
+	oOcclusion  = s.Occlusion;
+	oMetallic   = s.Metallic;
+	oAlpha      = s.Alpha;
+}
+
+
+
+
+// -- Property used by ScenePickingPass
+#ifdef SCENEPICKINGPASS
+float4 _SelectionID;
+#endif
+
+// -- Properties used by SceneSelectionPass
+#ifdef SCENESELECTIONPASS
+int _ObjectId;
+int _PassValue;
+#endif
+
+// Graph Functions
+// GraphFunctions: <None>
+
+// Custom interpolators pre vertex
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPreVertex' */
+
+// Graph Vertex
+struct VertexDescription
+{
+float3 Position;
+float3 Normal;
+float3 Tangent;
+};
+
+VertexDescription VertexDescriptionFunction(VertexDescriptionInputs IN)
+{
+VertexDescription description = (VertexDescription)0;
+float4 _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4 = IN.uv0;
+float4 _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4 = IN.uv1;
+float4 _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4 = IN.uv2;
+float4 _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4 = IN.uv3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4;
+Vert_float(IN.InstanceID, IN.ObjectSpacePosition, IN.ObjectSpaceNormal, IN.ObjectSpaceTangent, IN.VertexColor, _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4, _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4, _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4, _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4);
+description.Position = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+description.Normal = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3;
+description.Tangent = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3;
+return description;
+}
+
+// Custom interpolators, pre surface
+#ifdef FEATURES_GRAPH_VERTEX
+Varyings CustomInterpolatorPassThroughFunc(inout Varyings output, VertexDescription input)
+{
+return output;
+}
+#define CUSTOMINTERPOLATOR_VARYPASSTHROUGH_FUNC
+#endif
+
+// Graph Pixel
+struct SurfaceDescription
+{
+};
+
+SurfaceDescription SurfaceDescriptionFunction(SurfaceDescriptionInputs IN)
+{
+SurfaceDescription surface = (SurfaceDescription)0;
+return surface;
+}
+
+// --------------------------------------------------
+// Build Graph Inputs
+#ifdef HAVE_VFX_MODIFICATION
+#define VFX_SRP_ATTRIBUTES Attributes
+#define VFX_SRP_VARYINGS Varyings
+#define VFX_SRP_SURFACE_INPUTS SurfaceDescriptionInputs
+#endif
+VertexDescriptionInputs BuildVertexDescriptionInputs(Attributes input)
+{
+    VertexDescriptionInputs output;
+    ZERO_INITIALIZE(VertexDescriptionInputs, output);
+
+    output.ObjectSpaceNormal =                          input.normalOS;
+    output.ObjectSpaceTangent =                         input.tangentOS.xyz;
+    output.ObjectSpacePosition =                        input.positionOS;
+    output.uv0 =                                        input.uv0;
+    output.uv1 =                                        input.uv1;
+    output.uv2 =                                        input.uv2;
+    output.uv3 =                                        input.uv3;
+    output.VertexColor =                                input.color;
+#if UNITY_ANY_INSTANCING_ENABLED
+    output.InstanceID =                                 unity_InstanceID;
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+    output.InstanceID =                                 input.instanceID;
+#endif
+
+    return output;
+}
+SurfaceDescriptionInputs BuildSurfaceDescriptionInputs(Varyings input)
+{
+    SurfaceDescriptionInputs output;
+    ZERO_INITIALIZE(SurfaceDescriptionInputs, output);
+
+#ifdef HAVE_VFX_MODIFICATION
+#if VFX_USE_GRAPH_VALUES
+    uint instanceActiveIndex = asuint(UNITY_ACCESS_INSTANCED_PROP(PerInstance, _InstanceActiveIndex));
+    /* WARNING: $splice Could not find named fragment 'VFXLoadGraphValues' */
+#endif
+    /* WARNING: $splice Could not find named fragment 'VFXSetFragInputs' */
+
+#endif
+
+    
+
+
+
+
+
+
+    #if UNITY_UV_STARTS_AT_TOP
+    #else
+    #endif
+
+
+#if UNITY_ANY_INSTANCING_ENABLED
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN output.FaceSign =                    IS_FRONT_VFACE(input.cullFace, true, false);
+#else
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+#endif
+#undef BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+
+        return output;
+}
+
+// --------------------------------------------------
+// Main
+
+#include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/Varyings.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/SelectionPickingPass.hlsl"
+
+// --------------------------------------------------
+// Visual Effect Vertex Invocations
+#ifdef HAVE_VFX_MODIFICATION
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/VisualEffectVertex.hlsl"
+#endif
+
+ENDHLSL
+}
+Pass
+{
+    Name "ScenePickingPass"
+    Tags
+    {
+        "LightMode" = "Picking"
+    }
+
+// Render State
+Cull Back
+
+// Debug
+// <None>
+
+// --------------------------------------------------
+// Pass
+
+HLSLPROGRAM
+#define _SSS_PASS_SCENEPICKINGPASS 1
+
+#define _SSS_URP 1
+
+
+// Pragmas
+#pragma target 2.0
+#pragma vertex vert
+#pragma fragment frag
+
+// Keywords
+// PassKeywords: <None>
+// GraphKeywords: <None>
+
+// Defines
+
+#define ATTRIBUTES_NEED_NORMAL
+#define ATTRIBUTES_NEED_TANGENT
+#define ATTRIBUTES_NEED_TEXCOORD0
+#define ATTRIBUTES_NEED_TEXCOORD1
+#define ATTRIBUTES_NEED_TEXCOORD2
+#define ATTRIBUTES_NEED_TEXCOORD3
+#define ATTRIBUTES_NEED_COLOR
+#define ATTRIBUTES_NEED_INSTANCEID
+#define FEATURES_GRAPH_VERTEX_NORMAL_OUTPUT
+#define FEATURES_GRAPH_VERTEX_TANGENT_OUTPUT
+#define VARYINGS_NEED_POSITION_WS
+#define VARYINGS_NEED_NORMAL_WS
+#define VARYINGS_NEED_TANGENT_WS
+#define VARYINGS_NEED_TEXCOORD0
+#define VARYINGS_NEED_TEXCOORD1
+#define VARYINGS_NEED_CULLFACE
+#define FEATURES_GRAPH_VERTEX
+/* WARNING: $splice Could not find named fragment 'PassInstancing' */
+#define SHADERPASS SHADERPASS_DEPTHONLY
+#define SCENEPICKINGPASS 1
+#define ALPHA_CLIP_THRESHOLD 1
+
+
+// custom interpolator pre-include
+/* WARNING: $splice Could not find named fragment 'sgci_CustomInterpolatorPreInclude' */
+
+// Includes
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+#include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRendering.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Input.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ShaderGraphFunctions.hlsl"
+#include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
+
+// --------------------------------------------------
+// Structs and Packing
+
+// custom interpolators pre packing
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPrePacking' */
+
+struct Attributes
+{
+ float3 positionOS : POSITION;
+ float3 normalOS : NORMAL;
+ float4 tangentOS : TANGENT;
+ float4 uv0 : TEXCOORD0;
+ float4 uv1 : TEXCOORD1;
+ float4 uv2 : TEXCOORD2;
+ float4 uv3 : TEXCOORD3;
+ float4 color : COLOR;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(ATTRIBUTES_NEED_INSTANCEID)
+ uint instanceID : INSTANCEID_SEMANTIC;
+#endif
+};
+struct Varyings
+{
+ float4 positionCS : SV_POSITION;
+ float3 positionWS;
+ float3 normalWS;
+ float4 tangentWS;
+ float4 texCoord0;
+ float4 texCoord1;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+ float4 extraV2F0;
+};
+struct SurfaceDescriptionInputs
+{
+ float3 WorldSpaceNormal;
+ float3 WorldSpaceTangent;
+ float3 WorldSpacePosition;
+ float4 uv0;
+ float4 uv1;
+ float FaceSign;
+ float4 extraV2F0;
+};
+struct VertexDescriptionInputs
+{
+ float3 ObjectSpaceNormal;
+ float3 ObjectSpaceTangent;
+ float3 ObjectSpacePosition;
+ float4 uv0;
+ float4 uv1;
+ float4 uv2;
+ float4 uv3;
+ float4 VertexColor;
+ uint InstanceID;
+};
+struct PackedVaryings
+{
+ float4 positionCS : SV_POSITION;
+ float4 tangentWS : INTERP0;
+ float4 texCoord0 : INTERP1;
+ float4 texCoord1 : INTERP2;
+ float4 extraV2F0 : INTERP3;
+ float3 positionWS : INTERP4;
+ float3 normalWS : INTERP5;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+};
+
+PackedVaryings PackVaryings (Varyings input)
+{
+PackedVaryings output;
+ZERO_INITIALIZE(PackedVaryings, output);
+output.positionCS = input.positionCS;
+output.tangentWS.xyzw = input.tangentWS;
+output.texCoord0.xyzw = input.texCoord0;
+output.texCoord1.xyzw = input.texCoord1;
+output.extraV2F0.xyzw = input.extraV2F0;
+output.positionWS.xyz = input.positionWS;
+output.normalWS.xyz = input.normalWS;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+Varyings UnpackVaryings (PackedVaryings input)
+{
+Varyings output;
+output.positionCS = input.positionCS;
+output.tangentWS = input.tangentWS.xyzw;
+output.texCoord0 = input.texCoord0.xyzw;
+output.texCoord1 = input.texCoord1.xyzw;
+output.extraV2F0 = input.extraV2F0.xyzw;
+output.positionWS = input.positionWS.xyz;
+output.normalWS = input.normalWS.xyz;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+
+// --------------------------------------------------
+// Graph
+
+// Graph Properties
+CBUFFER_START(UnityPerMaterial)
+
+
+
+UNITY_TEXTURE_STREAMING_DEBUG_VARS;
+CBUFFER_END
+
+
+// Object and Global properties
+
+// Graph Includes
+// UNITY_SHADER_NO_UPGRADE
+float3 SSS_HClipToScreen(float4 v)
+{
+	float3 uv = v.xyz / v.w;
+	#if UNITY_UV_STARTS_AT_TOP
+		uv.y = -uv.y;
+	#endif
+	uv.xy = uv.xy * 0.5 + 0.5;
+	return uv;
+}
+
+#if _SSS_HDRP
+	float3 SSS_WorldToAbsolute(float3 v) { return GetAbsolutePositionWS(v); }
+	float3 SSS_AbsoluteToWorld(float3 v) { return GetCameraRelativePositionWS(v); }
+#else
+	float3 SSS_WorldToAbsolute(float3 v) { return v; }
+	float3 SSS_AbsoluteToWorld(float3 v) { return v; }
+#endif
+
+float3 SSS_WorldToView(float3 v) { return TransformWorldToView(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToObject(float3 v) { return TransformWorldToObject(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToScreen(float3 v) { return SSS_HClipToScreen(TransformWorldToHClip(SSS_AbsoluteToWorld(v))); }
+float3 SSS_ObjectToScreen(float3 v) { return SSS_HClipToScreen(TransformObjectToHClip(v)); }
+float3 SSS_ObjectToWorld(float3 v) { return SSS_WorldToAbsolute(TransformObjectToWorld(v)); }
+float3 SSS_ObjectToView(float3 v) { return TransformWorldToView(TransformObjectToWorld(v)); }
+float3 SSS_ScreenToWorld(float3 v) { return SSS_WorldToAbsolute(ComputeWorldSpacePosition(v.xy, v.z, UNITY_MATRIX_I_VP)); }
+float3 SSS_ScreenToObject(float3 v) { return SSS_WorldToObject(SSS_ScreenToWorld(v)); }
+float3 SSS_ScreenToView(float3 v) { return SSS_WorldToView(SSS_ScreenToWorld(v)); }
+float3 SSS_ViewToWorld(float3 v) { return mul(UNITY_MATRIX_I_V, float4(v, 1.0)).xyz; }
+float3 SSS_ViewToObject(float3 v) { return TransformWorldToObject(SSS_ViewToWorld(v)); }
+float3 SSS_ViewToScreen(float3 v) { return SSS_HClipToScreen(TransformWViewToHClip(v)); }
+float3 SSS_ObjectToWorldDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformObjectToWorldDir(v);
+	#else
+		return TransformObjectToWorldDir(v, true);
+	#endif
+}
+float3 SSS_ObjectToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v));
+	#else
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v, false), true);
+	#endif
+}
+float3 SSS_WorldToObjectDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToObjectDir(v);
+	#else
+		return TransformWorldToObjectDir(v, true);
+	#endif
+}
+float3 SSS_WorldToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(v);
+	#else
+		return TransformWorldToViewDir(v, true);
+	#endif
+}
+float3 SSS_ViewToObjectDir(float3 v)
+{
+	#if _SSS_URP || _SSS_HDRP
+		return SSS_WorldToObjectDir(mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz);
+	#else
+		return SSS_WorldToObjectDir(mul((float3x3)UNITY_MATRIX_I_V, v));
+	#endif
+}
+float3 SSS_ViewToWorldDir(float3 v)
+{
+	return mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz;
+}
+
+#if _SSS_NO_DERIVATIVES
+	float3 SSS_GetSceneColor(float2 uv) { return float3(0.0, 0.0, 0.0); }
+	float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	float  SSS_GetSceneDepth(float2 uv) { return 0.0; }
+#else
+	#if _SSS_URP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#elif _SSS_HDRP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv)
+		{
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(_SURFACE_TYPE_TRANSPARENT) && defined(SHADERPASS) && (SHADERPASS != SHADERPASS_LIGHT_TRANSPORT) && (SHADERPASS != SHADERPASS_PATH_TRACING) && (SHADERPASS != SHADERPASS_RAYTRACING_VISIBILITY) && (SHADERPASS != SHADERPASS_RAYTRACING_FORWARD)
+			return SampleCameraColor(uv, 0);
+			#endif
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(CUSTOM_PASS_SAMPLING_HLSL) && defined(SHADERPASS) && (SHADERPASS == SHADERPASS_DRAWPROCEDURAL || SHADERPASS == SHADERPASS_BLIT)
+			return CustomPassSampleCameraColor(uv, 0);
+			#endif
+			return float3(0.0, 0.0, 0.0);
+		}
+	#else
+		#if defined(UNITY_DECLARE_OPAQUE_TEXTURE_INCLUDED)
+			float3 SSS_GetSceneColor(float2 uv) { return SampleSceneColor(uv); }
+		#else
+			sampler2D _CameraOpaqueTexture; float3 SSS_GetSceneColor(float2 uv) { return tex2D(_CameraOpaqueTexture, uv).xyz; }
+		#endif
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#endif
+
+	float SSS_GetSceneDepth(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv); }
+#endif
+
+float3 SSS_GetSceneWorldPosition(float2 screenUV, float sceneDepth)
+{
+	#if _SSS_BIRP
+		float4 clipPos  = float4(screenUV * 2.0f - 1.0f, 0.0f, 1.0f);
+		float4 viewPos  = mul(unity_CameraInvProjection, clipPos);
+		float3 worldDir = mul((float3x3)UNITY_MATRIX_I_V, viewPos.xyz);
+					
+		return _WorldSpaceCameraPos + worldDir * LinearEyeDepth(sceneDepth);
+	#else
+		float4 clipPos = float4(screenUV * 2.0 - 1.0, sceneDepth, 1.0);
+					
+		#if UNITY_UV_STARTS_AT_TOP
+			clipPos.y = -clipPos.y;
+		#endif
+					
+		float4 worldPos = mul(UNITY_MATRIX_I_VP, clipPos);
+					
+		worldPos.xyz /= worldPos.w;
+					
+		#if _SSS_HDRP
+			worldPos.xyz = GetAbsolutePositionWS(worldPos.xyz);
+		#endif
+					
+		return worldPos.xyz;
+	#endif
+}
+
+float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
+{
+	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
+}
+
+struct SSS_VertexData
+{
+	float  instanceID;
+	float3 position;
+	float3 normal;
+	float3 tangent;
+	float4 color;
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+	
+
+};
+
+struct SSS_FragmentData
+{
+	float3 localSpacePosition;
+	float3 localSpaceNormal;
+	float3 localSpaceTangent;
+	
+	float3 worldSpacePosition;
+	float3 worldSpaceNormal;
+	float3 worldSpaceTangent;
+	//float tangentSign;
+
+	float3 worldSpaceViewDir;
+	//float3 tangentSpaceViewDir;
+	
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	
+	float2 screenUV;
+	float4 screenPos;
+
+	float4 vertexColor;
+	bool isFrontFace;
+	
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+
+	float3x3 TBNMatrix;
+	
+
+};
+
+struct SSS_SurfaceData
+{
+	float3 Albedo;
+	float  Smoothness;
+	float3 Normal;
+	float3 Emission;
+	float  Occlusion;
+	float  Metallic;
+	float  Alpha;
+};
+
+
+
+
+
+
+
+
+
+void SSS_Vert(inout SSS_VertexData v)
+{
+}
+ 
+void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
+{
+}
+
+
+
+
+void Vert_float
+	(
+	float  iInstanceID,
+	float3 iPosition,
+	float3 iNormal,
+	float3 iTangent,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+
+	out float3 oPosition,
+	out float3 oNormal,
+	out float3 oTangent,
+	out float4 oExtraV2F0,
+	out float4 oExtraV2F1,
+	out float4 oExtraV2F2,
+	out float4 oExtraV2F3,
+	out float4 oExtraV2F4,
+	out float4 oExtraV2F5,
+	out float4 oExtraV2F6,
+	out float4 oExtraV2F7
+	)
+{
+	SSS_VertexData v = (SSS_VertexData)0;
+	
+	v.instanceID = iInstanceID;
+	v.position   = iPosition;
+	v.normal     = iNormal;
+	v.tangent    = iTangent;
+	v.color      = iColor;
+	v.texcoord0  = iTexcoord0;
+	v.texcoord1  = iTexcoord1;
+	v.texcoord2  = iTexcoord2;
+	v.texcoord3  = iTexcoord3;
+	v.extraV2F0  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F1  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F2  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F3  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F4  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F5  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F6  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F7  = float4(0.0, 0.0, 0.0, 0.0);
+	
+	SSS_Vert(v);
+	
+	oPosition  = v.position;
+	oNormal    = v.normal;
+	oTangent   = v.tangent;
+	oExtraV2F0 = v.extraV2F0;
+	oExtraV2F1 = v.extraV2F1;
+	oExtraV2F2 = v.extraV2F2;
+	oExtraV2F3 = v.extraV2F3;
+	oExtraV2F4 = v.extraV2F4;
+	oExtraV2F5 = v.extraV2F5;
+	oExtraV2F6 = v.extraV2F6;
+	oExtraV2F7 = v.extraV2F7;
+}
+
+void Frag_float
+	(
+	inout float3 iPosition,
+	inout float3 iNormal,
+	inout float3 iTangent,
+	bool   iIsFrontFace,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+	float4 iExtraV2F0,
+	float4 iExtraV2F1,
+	float4 iExtraV2F2,
+	float4 iExtraV2F3,
+	float4 iExtraV2F4,
+	float4 iExtraV2F5,
+	float4 iExtraV2F6,
+	float4 iExtraV2F7,
+
+	out float4x4 oExtra,
+	out float3   oAlbedo,
+	out float    oSmoothness,
+	out float3   oNormal,
+	out float3   oEmission,
+	out float    oOcclusion,
+	out float    oMetallic,
+	out float    oAlpha
+	)
+{
+	SSS_SurfaceData  s = (SSS_SurfaceData)0;
+	SSS_FragmentData d = (SSS_FragmentData)0;
+	
+	s.Albedo = 1.0;
+	s.Smoothness = 0.5;
+	s.Normal = float3(0.0, 0.0, 1.0);
+	s.Emission = float3(0.0, 0.0, 0.0);
+	s.Occlusion = 0.0;
+	s.Metallic = 0.0;
+	s.Alpha = 1.0;
+	
+	iPosition = SSS_WorldToAbsolute(iPosition);
+	
+	d.localSpacePosition = SSS_WorldToObject(iPosition);
+	d.localSpaceNormal   = normalize(SSS_WorldToObjectDir(iNormal));
+	d.localSpaceTangent  = normalize(SSS_WorldToObjectDir(iTangent));
+	
+	d.worldSpacePosition = iPosition;
+	d.worldSpaceNormal   = iNormal;
+	d.worldSpaceTangent  = iTangent;
+	//d.tangentSign;
+	
+	d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	//d.tangentSpaceViewDir;
+	
+	d.texcoord0 = iTexcoord0;
+	d.texcoord1 = iTexcoord1;
+	d.texcoord2 = iTexcoord2;
+	d.texcoord3 = iTexcoord3;
+	
+	d.screenPos = float4(SSS_WorldToScreen(iPosition), 1.0);
+	d.screenUV  = d.screenPos.xy;
+
+	d.vertexColor = iColor;
+	d.isFrontFace = iIsFrontFace;
+	
+	d.extraV2F0 = iExtraV2F0;
+	d.extraV2F1 = iExtraV2F1;
+	d.extraV2F2 = iExtraV2F2;
+	d.extraV2F3 = iExtraV2F3;
+	d.extraV2F4 = iExtraV2F4;
+	d.extraV2F5 = iExtraV2F5;
+	d.extraV2F6 = iExtraV2F6;
+	d.extraV2F7 = iExtraV2F7;
+
+	d.TBNMatrix = float3x3(d.worldSpaceTangent, normalize(cross(d.worldSpaceNormal, d.worldSpaceTangent)), d.worldSpaceNormal);
+	
+	SSS_Frag(s, d);
+	
+	iPosition = SSS_AbsoluteToWorld(d.worldSpacePosition); iNormal = d.worldSpaceNormal; iTangent = d.worldSpaceTangent; // Write back
+	
+	oExtra      = float4x4(d.extraV2F0, d.extraV2F1, d.extraV2F2, d.extraV2F3);
+	oAlbedo     = s.Albedo;
+	oSmoothness = s.Smoothness;
+	oNormal     = s.Normal;
+	oEmission   = s.Emission;
+	oOcclusion  = s.Occlusion;
+	oMetallic   = s.Metallic;
+	oAlpha      = s.Alpha;
+}
+
+
+
+
+// -- Property used by ScenePickingPass
+#ifdef SCENEPICKINGPASS
+float4 _SelectionID;
+#endif
+
+// -- Properties used by SceneSelectionPass
+#ifdef SCENESELECTIONPASS
+int _ObjectId;
+int _PassValue;
+#endif
+
+// Graph Functions
+// GraphFunctions: <None>
+
+// Custom interpolators pre vertex
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPreVertex' */
+
+// Graph Vertex
+struct VertexDescription
+{
+float3 Position;
+float3 Normal;
+float3 Tangent;
+float4 extraV2F0;
+};
+
+VertexDescription VertexDescriptionFunction(VertexDescriptionInputs IN)
+{
+VertexDescription description = (VertexDescription)0;
+float4 _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4 = IN.uv0;
+float4 _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4 = IN.uv1;
+float4 _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4 = IN.uv2;
+float4 _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4 = IN.uv3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4;
+Vert_float(IN.InstanceID, IN.ObjectSpacePosition, IN.ObjectSpaceNormal, IN.ObjectSpaceTangent, IN.VertexColor, _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4, _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4, _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4, _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4);
+description.Position = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+description.Normal = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3;
+description.Tangent = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3;
+description.extraV2F0 = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4;
+return description;
+}
+
+// Custom interpolators, pre surface
+#ifdef FEATURES_GRAPH_VERTEX
+Varyings CustomInterpolatorPassThroughFunc(inout Varyings output, VertexDescription input)
+{
+output.extraV2F0 = input.extraV2F0;
+return output;
+}
+#define CUSTOMINTERPOLATOR_VARYPASSTHROUGH_FUNC
+#endif
+
+// Graph Pixel
+struct SurfaceDescription
+{
+float3 BaseColor;
+};
+
+SurfaceDescription SurfaceDescriptionFunction(SurfaceDescriptionInputs IN)
+{
+SurfaceDescription surface = (SurfaceDescription)0;
+float _IsFrontFace_5b03f99e2e7841c3a7d2ae306590b576_Out_0_Boolean = max(0, IN.FaceSign.x);
+float4 _UV_c1e39353e82e434da821b9bdc4338e4b_Out_0_Vector4 = IN.uv0;
+float4 _UV_64d51b5974bc4ecf849e7307e6de2727_Out_0_Vector4 = IN.uv1;
+float4x4 _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oExtra_23_Matrix4;
+float3 _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlbedo_0_Vector3;
+float _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oSmoothness_5_Float;
+float3 _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oNormal_6_Vector3;
+float3 _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oEmission_7_Vector3;
+float _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oOcclusion_8_Float;
+float _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oMetallic_9_Float;
+float _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlpha_10_Float;
+Frag_float(IN.WorldSpacePosition, IN.WorldSpaceNormal, IN.WorldSpaceTangent, _IsFrontFace_5b03f99e2e7841c3a7d2ae306590b576_Out_0_Boolean, float4 (0, 0, 0, 0), _UV_c1e39353e82e434da821b9bdc4338e4b_Out_0_Vector4, _UV_64d51b5974bc4ecf849e7307e6de2727_Out_0_Vector4, float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), IN.extraV2F0, float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oExtra_23_Matrix4, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlbedo_0_Vector3, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oSmoothness_5_Float, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oNormal_6_Vector3, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oEmission_7_Vector3, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oOcclusion_8_Float, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oMetallic_9_Float, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlpha_10_Float);
+surface.BaseColor = _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlbedo_0_Vector3;
+return surface;
+}
+
+// --------------------------------------------------
+// Build Graph Inputs
+#ifdef HAVE_VFX_MODIFICATION
+#define VFX_SRP_ATTRIBUTES Attributes
+#define VFX_SRP_VARYINGS Varyings
+#define VFX_SRP_SURFACE_INPUTS SurfaceDescriptionInputs
+#endif
+VertexDescriptionInputs BuildVertexDescriptionInputs(Attributes input)
+{
+    VertexDescriptionInputs output;
+    ZERO_INITIALIZE(VertexDescriptionInputs, output);
+
+    output.ObjectSpaceNormal =                          input.normalOS;
+    output.ObjectSpaceTangent =                         input.tangentOS.xyz;
+    output.ObjectSpacePosition =                        input.positionOS;
+    output.uv0 =                                        input.uv0;
+    output.uv1 =                                        input.uv1;
+    output.uv2 =                                        input.uv2;
+    output.uv3 =                                        input.uv3;
+    output.VertexColor =                                input.color;
+#if UNITY_ANY_INSTANCING_ENABLED
+    output.InstanceID =                                 unity_InstanceID;
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+    output.InstanceID =                                 input.instanceID;
+#endif
+
+    return output;
+}
+SurfaceDescriptionInputs BuildSurfaceDescriptionInputs(Varyings input)
+{
+    SurfaceDescriptionInputs output;
+    ZERO_INITIALIZE(SurfaceDescriptionInputs, output);
+
+#ifdef HAVE_VFX_MODIFICATION
+#if VFX_USE_GRAPH_VALUES
+    uint instanceActiveIndex = asuint(UNITY_ACCESS_INSTANCED_PROP(PerInstance, _InstanceActiveIndex));
+    /* WARNING: $splice Could not find named fragment 'VFXLoadGraphValues' */
+#endif
+    /* WARNING: $splice Could not find named fragment 'VFXSetFragInputs' */
+
+#endif
+
+    output.extraV2F0 = input.extraV2F0;
+
+    // must use interpolated tangent, bitangent and normal before they are normalized in the pixel shader.
+    float3 unnormalizedNormalWS = input.normalWS;
+    const float renormFactor = 1.0 / length(unnormalizedNormalWS);
+
+
+    output.WorldSpaceNormal = renormFactor * input.normalWS.xyz;      // we want a unit length Normal Vector node in shader graph
+
+    // to pr               eserve mikktspace compliance we use same scale renormFactor as was used on the normal.
+    // This                is explained in section 2.2 in "surface gradient based bump mapping framework"
+    output.WorldSpaceTangent = renormFactor * input.tangentWS.xyz;
+
+    output.WorldSpacePosition = input.positionWS;
+
+    #if UNITY_UV_STARTS_AT_TOP
+    #else
+    #endif
+
+
+    output.uv0 = input.texCoord0;
+    output.uv1 = input.texCoord1;
+#if UNITY_ANY_INSTANCING_ENABLED
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN output.FaceSign =                    IS_FRONT_VFACE(input.cullFace, true, false);
+#else
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+#endif
+    BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+#undef BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+
+        return output;
+}
+
+// --------------------------------------------------
+// Main
+
+#include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/Varyings.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/Includes/SelectionPickingPass.hlsl"
+
+// --------------------------------------------------
+// Visual Effect Vertex Invocations
+#ifdef HAVE_VFX_MODIFICATION
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/VisualEffectVertex.hlsl"
+#endif
+
+ENDHLSL
+}
+}
+SubShader
+{
+Tags
+{
+// RenderPipeline: <None>
+"RenderType"="Opaque"
+"BuiltInMaterialType" = "Unlit"
+"Queue"="Geometry"
+// DisableBatching: <None>
+"ShaderGraphShader"="true"
+"ShaderGraphTargetId"="BuiltInUnlitSubTarget"
+}
+Pass
+{
+    Name "Pass"
+    Tags
+    {
+        "LightMode" = "ForwardBase"
+    }
+
+// Render State
+Cull Back
+Blend One Zero
+ZTest LEqual
+ZWrite Off
+
+// Debug
+// <None>
+
+// --------------------------------------------------
+// Pass
+
+HLSLPROGRAM
+#define _SSS_PASS_PASS 1
+
+#define _SSS_BIRP 1
+
+
+// Pragmas
+#pragma target 3.0
+#pragma multi_compile_instancing
+#pragma multi_compile_fog
+#pragma multi_compile_fwdbase
+#pragma vertex vert
+#pragma fragment frag
+
+// Keywords
+// PassKeywords: <None>
+// GraphKeywords: <None>
+
+// Defines
+#define ATTRIBUTES_NEED_NORMAL
+#define ATTRIBUTES_NEED_TANGENT
+#define ATTRIBUTES_NEED_TEXCOORD0
+#define ATTRIBUTES_NEED_TEXCOORD1
+#define ATTRIBUTES_NEED_TEXCOORD2
+#define ATTRIBUTES_NEED_TEXCOORD3
+#define ATTRIBUTES_NEED_COLOR
+#define ATTRIBUTES_NEED_INSTANCEID
+#define VARYINGS_NEED_POSITION_WS
+#define VARYINGS_NEED_NORMAL_WS
+#define VARYINGS_NEED_TANGENT_WS
+#define VARYINGS_NEED_TEXCOORD0
+#define VARYINGS_NEED_TEXCOORD1
+#define VARYINGS_NEED_CULLFACE
+#define FEATURES_GRAPH_VERTEX
+/* WARNING: $splice Could not find named fragment 'PassInstancing' */
+#define SHADERPASS SHADERPASS_UNLIT
+#define BUILTIN_TARGET_API 1
+#ifdef _BUILTIN_SURFACE_TYPE_TRANSPARENT
+#define _SURFACE_TYPE_TRANSPARENT _BUILTIN_SURFACE_TYPE_TRANSPARENT
+#endif
+#ifdef _BUILTIN_ALPHATEST_ON
+#define _ALPHATEST_ON _BUILTIN_ALPHATEST_ON
+#endif
+#ifdef _BUILTIN_AlphaClip
+#define _AlphaClip _BUILTIN_AlphaClip
+#endif
+#ifdef _BUILTIN_ALPHAPREMULTIPLY_ON
+#define _ALPHAPREMULTIPLY_ON _BUILTIN_ALPHAPREMULTIPLY_ON
+#endif
+
+
+// custom interpolator pre-include
+/* WARNING: $splice Could not find named fragment 'sgci_CustomInterpolatorPreInclude' */
+
+// Includes
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/ShaderLibrary/Shim/Shims.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/ShaderLibrary/Core.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/ShaderLibrary/Lighting.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/Editor/ShaderGraph/Includes/LegacySurfaceVertex.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/ShaderLibrary/ShaderGraphFunctions.hlsl"
+
+// --------------------------------------------------
+// Structs and Packing
+
+// custom interpolators pre packing
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPrePacking' */
+
+struct Attributes
+{
+ float3 positionOS : POSITION;
+ float3 normalOS : NORMAL;
+ float4 tangentOS : TANGENT;
+ float4 uv0 : TEXCOORD0;
+ float4 uv1 : TEXCOORD1;
+ float4 uv2 : TEXCOORD2;
+ float4 uv3 : TEXCOORD3;
+ float4 color : COLOR;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(ATTRIBUTES_NEED_INSTANCEID)
+ uint instanceID : INSTANCEID_SEMANTIC;
+#endif
+};
+struct Varyings
+{
+ float4 positionCS : SV_POSITION;
+ float3 positionWS;
+ float3 normalWS;
+ float4 tangentWS;
+ float4 texCoord0;
+ float4 texCoord1;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+ float4 extraV2F0;
+};
+struct SurfaceDescriptionInputs
+{
+ float3 WorldSpaceNormal;
+ float3 WorldSpaceTangent;
+ float3 WorldSpacePosition;
+ float4 uv0;
+ float4 uv1;
+ float FaceSign;
+ float4 extraV2F0;
+};
+struct VertexDescriptionInputs
+{
+ float3 ObjectSpaceNormal;
+ float3 ObjectSpaceTangent;
+ float3 ObjectSpacePosition;
+ float4 uv0;
+ float4 uv1;
+ float4 uv2;
+ float4 uv3;
+ float4 VertexColor;
+ uint InstanceID;
+};
+struct PackedVaryings
+{
+ float4 positionCS : SV_POSITION;
+ float4 tangentWS : INTERP0;
+ float4 texCoord0 : INTERP1;
+ float4 texCoord1 : INTERP2;
+ float4 extraV2F0 : INTERP3;
+ float3 positionWS : INTERP4;
+ float3 normalWS : INTERP5;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+};
+
+PackedVaryings PackVaryings (Varyings input)
+{
+PackedVaryings output;
+ZERO_INITIALIZE(PackedVaryings, output);
+output.positionCS = input.positionCS;
+output.tangentWS.xyzw = input.tangentWS;
+output.texCoord0.xyzw = input.texCoord0;
+output.texCoord1.xyzw = input.texCoord1;
+output.extraV2F0.xyzw = input.extraV2F0;
+output.positionWS.xyz = input.positionWS;
+output.normalWS.xyz = input.normalWS;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+Varyings UnpackVaryings (PackedVaryings input)
+{
+Varyings output;
+output.positionCS = input.positionCS;
+output.tangentWS = input.tangentWS.xyzw;
+output.texCoord0 = input.texCoord0.xyzw;
+output.texCoord1 = input.texCoord1.xyzw;
+output.extraV2F0 = input.extraV2F0.xyzw;
+output.positionWS = input.positionWS.xyz;
+output.normalWS = input.normalWS.xyz;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+
+// --------------------------------------------------
+// Graph
+
+// Graph Properties
+CBUFFER_START(UnityPerMaterial)
+
+
+
+CBUFFER_END
+
+
+// Object and Global properties
+
+// -- Property used by ScenePickingPass
+#ifdef SCENEPICKINGPASS
+float4 _SelectionID;
+#endif
+
+// -- Properties used by SceneSelectionPass
+#ifdef SCENESELECTIONPASS
+int _ObjectId;
+int _PassValue;
+#endif
+
+// Graph Includes
+// UNITY_SHADER_NO_UPGRADE
+float3 SSS_HClipToScreen(float4 v)
+{
+	float3 uv = v.xyz / v.w;
+	#if UNITY_UV_STARTS_AT_TOP
+		uv.y = -uv.y;
+	#endif
+	uv.xy = uv.xy * 0.5 + 0.5;
+	return uv;
+}
+
+#if _SSS_HDRP
+	float3 SSS_WorldToAbsolute(float3 v) { return GetAbsolutePositionWS(v); }
+	float3 SSS_AbsoluteToWorld(float3 v) { return GetCameraRelativePositionWS(v); }
+#else
+	float3 SSS_WorldToAbsolute(float3 v) { return v; }
+	float3 SSS_AbsoluteToWorld(float3 v) { return v; }
+#endif
+
+float3 SSS_WorldToView(float3 v) { return TransformWorldToView(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToObject(float3 v) { return TransformWorldToObject(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToScreen(float3 v) { return SSS_HClipToScreen(TransformWorldToHClip(SSS_AbsoluteToWorld(v))); }
+float3 SSS_ObjectToScreen(float3 v) { return SSS_HClipToScreen(TransformObjectToHClip(v)); }
+float3 SSS_ObjectToWorld(float3 v) { return SSS_WorldToAbsolute(TransformObjectToWorld(v)); }
+float3 SSS_ObjectToView(float3 v) { return TransformWorldToView(TransformObjectToWorld(v)); }
+float3 SSS_ScreenToWorld(float3 v) { return SSS_WorldToAbsolute(ComputeWorldSpacePosition(v.xy, v.z, UNITY_MATRIX_I_VP)); }
+float3 SSS_ScreenToObject(float3 v) { return SSS_WorldToObject(SSS_ScreenToWorld(v)); }
+float3 SSS_ScreenToView(float3 v) { return SSS_WorldToView(SSS_ScreenToWorld(v)); }
+float3 SSS_ViewToWorld(float3 v) { return mul(UNITY_MATRIX_I_V, float4(v, 1.0)).xyz; }
+float3 SSS_ViewToObject(float3 v) { return TransformWorldToObject(SSS_ViewToWorld(v)); }
+float3 SSS_ViewToScreen(float3 v) { return SSS_HClipToScreen(TransformWViewToHClip(v)); }
+float3 SSS_ObjectToWorldDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformObjectToWorldDir(v);
+	#else
+		return TransformObjectToWorldDir(v, true);
+	#endif
+}
+float3 SSS_ObjectToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v));
+	#else
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v, false), true);
+	#endif
+}
+float3 SSS_WorldToObjectDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToObjectDir(v);
+	#else
+		return TransformWorldToObjectDir(v, true);
+	#endif
+}
+float3 SSS_WorldToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(v);
+	#else
+		return TransformWorldToViewDir(v, true);
+	#endif
+}
+float3 SSS_ViewToObjectDir(float3 v)
+{
+	#if _SSS_URP || _SSS_HDRP
+		return SSS_WorldToObjectDir(mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz);
+	#else
+		return SSS_WorldToObjectDir(mul((float3x3)UNITY_MATRIX_I_V, v));
+	#endif
+}
+float3 SSS_ViewToWorldDir(float3 v)
+{
+	return mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz;
+}
+
+#if _SSS_NO_DERIVATIVES
+	float3 SSS_GetSceneColor(float2 uv) { return float3(0.0, 0.0, 0.0); }
+	float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	float  SSS_GetSceneDepth(float2 uv) { return 0.0; }
+#else
+	#if _SSS_URP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#elif _SSS_HDRP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv)
+		{
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(_SURFACE_TYPE_TRANSPARENT) && defined(SHADERPASS) && (SHADERPASS != SHADERPASS_LIGHT_TRANSPORT) && (SHADERPASS != SHADERPASS_PATH_TRACING) && (SHADERPASS != SHADERPASS_RAYTRACING_VISIBILITY) && (SHADERPASS != SHADERPASS_RAYTRACING_FORWARD)
+			return SampleCameraColor(uv, 0);
+			#endif
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(CUSTOM_PASS_SAMPLING_HLSL) && defined(SHADERPASS) && (SHADERPASS == SHADERPASS_DRAWPROCEDURAL || SHADERPASS == SHADERPASS_BLIT)
+			return CustomPassSampleCameraColor(uv, 0);
+			#endif
+			return float3(0.0, 0.0, 0.0);
+		}
+	#else
+		#if defined(UNITY_DECLARE_OPAQUE_TEXTURE_INCLUDED)
+			float3 SSS_GetSceneColor(float2 uv) { return SampleSceneColor(uv); }
+		#else
+			sampler2D _CameraOpaqueTexture; float3 SSS_GetSceneColor(float2 uv) { return tex2D(_CameraOpaqueTexture, uv).xyz; }
+		#endif
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#endif
+
+	float SSS_GetSceneDepth(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv); }
+#endif
+
+float3 SSS_GetSceneWorldPosition(float2 screenUV, float sceneDepth)
+{
+	#if _SSS_BIRP
+		float4 clipPos  = float4(screenUV * 2.0f - 1.0f, 0.0f, 1.0f);
+		float4 viewPos  = mul(unity_CameraInvProjection, clipPos);
+		float3 worldDir = mul((float3x3)UNITY_MATRIX_I_V, viewPos.xyz);
+					
+		return _WorldSpaceCameraPos + worldDir * LinearEyeDepth(sceneDepth);
+	#else
+		float4 clipPos = float4(screenUV * 2.0 - 1.0, sceneDepth, 1.0);
+					
+		#if UNITY_UV_STARTS_AT_TOP
+			clipPos.y = -clipPos.y;
+		#endif
+					
+		float4 worldPos = mul(UNITY_MATRIX_I_VP, clipPos);
+					
+		worldPos.xyz /= worldPos.w;
+					
+		#if _SSS_HDRP
+			worldPos.xyz = GetAbsolutePositionWS(worldPos.xyz);
+		#endif
+					
+		return worldPos.xyz;
+	#endif
+}
+
+float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
+{
+	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
+}
+
+struct SSS_VertexData
+{
+	float  instanceID;
+	float3 position;
+	float3 normal;
+	float3 tangent;
+	float4 color;
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+	
+
+};
+
+struct SSS_FragmentData
+{
+	float3 localSpacePosition;
+	float3 localSpaceNormal;
+	float3 localSpaceTangent;
+	
+	float3 worldSpacePosition;
+	float3 worldSpaceNormal;
+	float3 worldSpaceTangent;
+	//float tangentSign;
+
+	float3 worldSpaceViewDir;
+	//float3 tangentSpaceViewDir;
+	
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	
+	float2 screenUV;
+	float4 screenPos;
+
+	float4 vertexColor;
+	bool isFrontFace;
+	
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+
+	float3x3 TBNMatrix;
+	
+
+};
+
+struct SSS_SurfaceData
+{
+	float3 Albedo;
+	float  Smoothness;
+	float3 Normal;
+	float3 Emission;
+	float  Occlusion;
+	float  Metallic;
+	float  Alpha;
+};
+
+
+
+
+
+
+
+
+
+void SSS_Vert(inout SSS_VertexData v)
+{
+}
+ 
+void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
+{
+}
+
+
+
+
+void Vert_float
+	(
+	float  iInstanceID,
+	float3 iPosition,
+	float3 iNormal,
+	float3 iTangent,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+
+	out float3 oPosition,
+	out float3 oNormal,
+	out float3 oTangent,
+	out float4 oExtraV2F0,
+	out float4 oExtraV2F1,
+	out float4 oExtraV2F2,
+	out float4 oExtraV2F3,
+	out float4 oExtraV2F4,
+	out float4 oExtraV2F5,
+	out float4 oExtraV2F6,
+	out float4 oExtraV2F7
+	)
+{
+	SSS_VertexData v = (SSS_VertexData)0;
+	
+	v.instanceID = iInstanceID;
+	v.position   = iPosition;
+	v.normal     = iNormal;
+	v.tangent    = iTangent;
+	v.color      = iColor;
+	v.texcoord0  = iTexcoord0;
+	v.texcoord1  = iTexcoord1;
+	v.texcoord2  = iTexcoord2;
+	v.texcoord3  = iTexcoord3;
+	v.extraV2F0  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F1  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F2  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F3  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F4  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F5  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F6  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F7  = float4(0.0, 0.0, 0.0, 0.0);
+	
+	SSS_Vert(v);
+	
+	oPosition  = v.position;
+	oNormal    = v.normal;
+	oTangent   = v.tangent;
+	oExtraV2F0 = v.extraV2F0;
+	oExtraV2F1 = v.extraV2F1;
+	oExtraV2F2 = v.extraV2F2;
+	oExtraV2F3 = v.extraV2F3;
+	oExtraV2F4 = v.extraV2F4;
+	oExtraV2F5 = v.extraV2F5;
+	oExtraV2F6 = v.extraV2F6;
+	oExtraV2F7 = v.extraV2F7;
+}
+
+void Frag_float
+	(
+	inout float3 iPosition,
+	inout float3 iNormal,
+	inout float3 iTangent,
+	bool   iIsFrontFace,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+	float4 iExtraV2F0,
+	float4 iExtraV2F1,
+	float4 iExtraV2F2,
+	float4 iExtraV2F3,
+	float4 iExtraV2F4,
+	float4 iExtraV2F5,
+	float4 iExtraV2F6,
+	float4 iExtraV2F7,
+
+	out float4x4 oExtra,
+	out float3   oAlbedo,
+	out float    oSmoothness,
+	out float3   oNormal,
+	out float3   oEmission,
+	out float    oOcclusion,
+	out float    oMetallic,
+	out float    oAlpha
+	)
+{
+	SSS_SurfaceData  s = (SSS_SurfaceData)0;
+	SSS_FragmentData d = (SSS_FragmentData)0;
+	
+	s.Albedo = 1.0;
+	s.Smoothness = 0.5;
+	s.Normal = float3(0.0, 0.0, 1.0);
+	s.Emission = float3(0.0, 0.0, 0.0);
+	s.Occlusion = 0.0;
+	s.Metallic = 0.0;
+	s.Alpha = 1.0;
+	
+	iPosition = SSS_WorldToAbsolute(iPosition);
+	
+	d.localSpacePosition = SSS_WorldToObject(iPosition);
+	d.localSpaceNormal   = normalize(SSS_WorldToObjectDir(iNormal));
+	d.localSpaceTangent  = normalize(SSS_WorldToObjectDir(iTangent));
+	
+	d.worldSpacePosition = iPosition;
+	d.worldSpaceNormal   = iNormal;
+	d.worldSpaceTangent  = iTangent;
+	//d.tangentSign;
+	
+	d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	//d.tangentSpaceViewDir;
+	
+	d.texcoord0 = iTexcoord0;
+	d.texcoord1 = iTexcoord1;
+	d.texcoord2 = iTexcoord2;
+	d.texcoord3 = iTexcoord3;
+	
+	d.screenPos = float4(SSS_WorldToScreen(iPosition), 1.0);
+	d.screenUV  = d.screenPos.xy;
+
+	d.vertexColor = iColor;
+	d.isFrontFace = iIsFrontFace;
+	
+	d.extraV2F0 = iExtraV2F0;
+	d.extraV2F1 = iExtraV2F1;
+	d.extraV2F2 = iExtraV2F2;
+	d.extraV2F3 = iExtraV2F3;
+	d.extraV2F4 = iExtraV2F4;
+	d.extraV2F5 = iExtraV2F5;
+	d.extraV2F6 = iExtraV2F6;
+	d.extraV2F7 = iExtraV2F7;
+
+	d.TBNMatrix = float3x3(d.worldSpaceTangent, normalize(cross(d.worldSpaceNormal, d.worldSpaceTangent)), d.worldSpaceNormal);
+	
+	SSS_Frag(s, d);
+	
+	iPosition = SSS_AbsoluteToWorld(d.worldSpacePosition); iNormal = d.worldSpaceNormal; iTangent = d.worldSpaceTangent; // Write back
+	
+	oExtra      = float4x4(d.extraV2F0, d.extraV2F1, d.extraV2F2, d.extraV2F3);
+	oAlbedo     = s.Albedo;
+	oSmoothness = s.Smoothness;
+	oNormal     = s.Normal;
+	oEmission   = s.Emission;
+	oOcclusion  = s.Occlusion;
+	oMetallic   = s.Metallic;
+	oAlpha      = s.Alpha;
+}
+
+
+
+
+// Graph Functions
+// GraphFunctions: <None>
+
+// Custom interpolators pre vertex
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPreVertex' */
+
+// Graph Vertex
+struct VertexDescription
+{
+float3 Position;
+float3 Normal;
+float3 Tangent;
+float4 extraV2F0;
+};
+
+VertexDescription VertexDescriptionFunction(VertexDescriptionInputs IN)
+{
+VertexDescription description = (VertexDescription)0;
+float4 _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4 = IN.uv0;
+float4 _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4 = IN.uv1;
+float4 _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4 = IN.uv2;
+float4 _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4 = IN.uv3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4;
+Vert_float(IN.InstanceID, IN.ObjectSpacePosition, IN.ObjectSpaceNormal, IN.ObjectSpaceTangent, IN.VertexColor, _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4, _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4, _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4, _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4);
+description.Position = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+description.Normal = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3;
+description.Tangent = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3;
+description.extraV2F0 = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4;
+return description;
+}
+
+// Custom interpolators, pre surface
+#ifdef FEATURES_GRAPH_VERTEX
+Varyings CustomInterpolatorPassThroughFunc(inout Varyings output, VertexDescription input)
+{
+output.extraV2F0 = input.extraV2F0;
+return output;
+}
+#define CUSTOMINTERPOLATOR_VARYPASSTHROUGH_FUNC
+#endif
+
+// Graph Pixel
+struct SurfaceDescription
+{
+float3 BaseColor;
+};
+
+SurfaceDescription SurfaceDescriptionFunction(SurfaceDescriptionInputs IN)
+{
+SurfaceDescription surface = (SurfaceDescription)0;
+float _IsFrontFace_5b03f99e2e7841c3a7d2ae306590b576_Out_0_Boolean = max(0, IN.FaceSign.x);
+float4 _UV_c1e39353e82e434da821b9bdc4338e4b_Out_0_Vector4 = IN.uv0;
+float4 _UV_64d51b5974bc4ecf849e7307e6de2727_Out_0_Vector4 = IN.uv1;
+float4x4 _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oExtra_23_Matrix4;
+float3 _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlbedo_0_Vector3;
+float _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oSmoothness_5_Float;
+float3 _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oNormal_6_Vector3;
+float3 _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oEmission_7_Vector3;
+float _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oOcclusion_8_Float;
+float _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oMetallic_9_Float;
+float _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlpha_10_Float;
+Frag_float(IN.WorldSpacePosition, IN.WorldSpaceNormal, IN.WorldSpaceTangent, _IsFrontFace_5b03f99e2e7841c3a7d2ae306590b576_Out_0_Boolean, float4 (0, 0, 0, 0), _UV_c1e39353e82e434da821b9bdc4338e4b_Out_0_Vector4, _UV_64d51b5974bc4ecf849e7307e6de2727_Out_0_Vector4, float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), IN.extraV2F0, float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), float4 (0, 0, 0, 0), _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oExtra_23_Matrix4, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlbedo_0_Vector3, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oSmoothness_5_Float, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oNormal_6_Vector3, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oEmission_7_Vector3, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oOcclusion_8_Float, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oMetallic_9_Float, _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlpha_10_Float);
+surface.BaseColor = _FragCustomFunction_a9f9336e3bc541cd8ae52be701d51fdc_oAlbedo_0_Vector3;
+return surface;
+}
+
+// --------------------------------------------------
+// Build Graph Inputs
+
+VertexDescriptionInputs BuildVertexDescriptionInputs(Attributes input)
+{
+    VertexDescriptionInputs output;
+    ZERO_INITIALIZE(VertexDescriptionInputs, output);
+
+    output.ObjectSpaceNormal =                          input.normalOS;
+    output.ObjectSpaceTangent =                         input.tangentOS.xyz;
+    output.ObjectSpacePosition =                        input.positionOS;
+    output.uv0 =                                        input.uv0;
+    output.uv1 =                                        input.uv1;
+    output.uv2 =                                        input.uv2;
+    output.uv3 =                                        input.uv3;
+    output.VertexColor =                                input.color;
+#if UNITY_ANY_INSTANCING_ENABLED
+    output.InstanceID =                                 unity_InstanceID;
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+    output.InstanceID =                                 input.instanceID;
+#endif
+
+    return output;
+}
+SurfaceDescriptionInputs BuildSurfaceDescriptionInputs(Varyings input)
+{
+    SurfaceDescriptionInputs output;
+    ZERO_INITIALIZE(SurfaceDescriptionInputs, output);
+
+    output.extraV2F0 = input.extraV2F0;
+
+    // must use interpolated tangent, bitangent and normal before they are normalized in the pixel shader.
+    float3 unnormalizedNormalWS = input.normalWS;
+    const float renormFactor = 1.0 / length(unnormalizedNormalWS);
+
+
+    output.WorldSpaceNormal = renormFactor * input.normalWS.xyz;      // we want a unit length Normal Vector node in shader graph
+
+    // to preserve mikktspace compliance we use same scale renormFactor as was used on the normal.
+    // This is explained in section 2.2 in "surface gradient based bump mapping framework"
+    output.WorldSpaceTangent = renormFactor * input.tangentWS.xyz;
+
+    output.WorldSpacePosition = input.positionWS;
+
+    #if UNITY_UV_STARTS_AT_TOP
+    #else
+    #endif
+
+
+    output.uv0 = input.texCoord0;
+    output.uv1 = input.texCoord1;
+#if UNITY_ANY_INSTANCING_ENABLED
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN output.FaceSign =                    IS_FRONT_VFACE(input.cullFace, true, false);
+#else
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+#endif
+    BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+#undef BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+
+        return output;
+}
+
+void BuildAppDataFull(Attributes attributes, VertexDescription vertexDescription, inout appdata_full result)
+{
+    result.vertex     = float4(attributes.positionOS, 1);
+    result.tangent    = attributes.tangentOS;
+    result.normal     = attributes.normalOS;
+    result.texcoord   = attributes.uv0;
+    result.texcoord1  = attributes.uv1;
+    result.texcoord2  = attributes.uv2;
+    result.texcoord3  = attributes.uv3;
+    result.color      = attributes.color;
+    result.vertex     = float4(vertexDescription.Position, 1);
+    result.normal     = vertexDescription.Normal;
+    result.tangent    = float4(vertexDescription.Tangent, 0);
+    #if UNITY_ANY_INSTANCING_ENABLED
+    result.instanceID = attributes.instanceID;
+    #endif
+}
+
+void VaryingsToSurfaceVertex(Varyings varyings, inout v2f_surf result)
+{
+    result.pos = varyings.positionCS;
+    result.worldPos = varyings.positionWS;
+    result.worldNormal = varyings.normalWS;
+    // World Tangent isn't an available input on v2f_surf
+
+
+    #if UNITY_ANY_INSTANCING_ENABLED
+    #endif
+    #if UNITY_SHOULD_SAMPLE_SH
+    #if !defined(LIGHTMAP_ON)
+    #endif
+    #endif
+    #if defined(LIGHTMAP_ON)
+    #endif
+    #ifdef VARYINGS_NEED_FOG_AND_VERTEX_LIGHT
+        result.fogCoord = varyings.fogFactorAndVertexLight.x;
+        COPY_TO_LIGHT_COORDS(result, varyings.fogFactorAndVertexLight.yzw);
+    #endif
+
+    DEFAULT_UNITY_TRANSFER_VERTEX_OUTPUT_STEREO(varyings, result);
+}
+
+void SurfaceVertexToVaryings(v2f_surf surfVertex, inout Varyings result)
+{
+    result.positionCS = surfVertex.pos;
+    result.positionWS = surfVertex.worldPos;
+    result.normalWS = surfVertex.worldNormal;
+    // viewDirectionWS is never filled out in the legacy pass' function. Always use the value computed by SRP
+    // World Tangent isn't an available input on v2f_surf
+
+    #if UNITY_ANY_INSTANCING_ENABLED
+    #endif
+    #if UNITY_SHOULD_SAMPLE_SH
+    #if !defined(LIGHTMAP_ON)
+    #endif
+    #endif
+    #if defined(LIGHTMAP_ON)
+    #endif
+    #ifdef VARYINGS_NEED_FOG_AND_VERTEX_LIGHT
+        result.fogFactorAndVertexLight.x = surfVertex.fogCoord;
+        COPY_FROM_LIGHT_COORDS(result.fogFactorAndVertexLight.yzw, surfVertex);
+    #endif
+
+    DEFAULT_UNITY_TRANSFER_VERTEX_OUTPUT_STEREO(surfVertex, result);
+}
+
+// --------------------------------------------------
+// Main
+
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/Editor/ShaderGraph/Includes/Varyings.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/Editor/ShaderGraph/Includes/UnlitPass.hlsl"
+
+ENDHLSL
+}
+Pass
+{
+    Name "ShadowCaster"
+    Tags
+    {
+        "LightMode" = "ShadowCaster"
+    }
+
+// Render State
+Cull Back
+Blend One Zero
+ZTest LEqual
+ZWrite On
+ColorMask 0
+
+// Debug
+// <None>
+
+// --------------------------------------------------
+// Pass
+
+HLSLPROGRAM
+#define _SSS_PASS_SHADOWCASTER 1
+
+#define _SSS_BIRP 1
+
+
+// Pragmas
+#pragma target 3.0
+#pragma multi_compile_shadowcaster
+#pragma vertex vert
+#pragma fragment frag
+
+// Keywords
+#pragma multi_compile _ _CASTING_PUNCTUAL_LIGHT_SHADOW
+// GraphKeywords: <None>
+
+// Defines
+#define ATTRIBUTES_NEED_NORMAL
+#define ATTRIBUTES_NEED_TANGENT
+#define ATTRIBUTES_NEED_TEXCOORD0
+#define ATTRIBUTES_NEED_TEXCOORD1
+#define ATTRIBUTES_NEED_TEXCOORD2
+#define ATTRIBUTES_NEED_TEXCOORD3
+#define ATTRIBUTES_NEED_COLOR
+#define ATTRIBUTES_NEED_INSTANCEID
+#define FEATURES_GRAPH_VERTEX
+/* WARNING: $splice Could not find named fragment 'PassInstancing' */
+#define SHADERPASS SHADERPASS_SHADOWCASTER
+#define BUILTIN_TARGET_API 1
+#ifdef _BUILTIN_SURFACE_TYPE_TRANSPARENT
+#define _SURFACE_TYPE_TRANSPARENT _BUILTIN_SURFACE_TYPE_TRANSPARENT
+#endif
+#ifdef _BUILTIN_ALPHATEST_ON
+#define _ALPHATEST_ON _BUILTIN_ALPHATEST_ON
+#endif
+#ifdef _BUILTIN_AlphaClip
+#define _AlphaClip _BUILTIN_AlphaClip
+#endif
+#ifdef _BUILTIN_ALPHAPREMULTIPLY_ON
+#define _ALPHAPREMULTIPLY_ON _BUILTIN_ALPHAPREMULTIPLY_ON
+#endif
+
+
+// custom interpolator pre-include
+/* WARNING: $splice Could not find named fragment 'sgci_CustomInterpolatorPreInclude' */
+
+// Includes
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/ShaderLibrary/Shim/Shims.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/ShaderLibrary/Core.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/ShaderLibrary/Lighting.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/Editor/ShaderGraph/Includes/LegacySurfaceVertex.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/ShaderLibrary/ShaderGraphFunctions.hlsl"
+
+// --------------------------------------------------
+// Structs and Packing
+
+// custom interpolators pre packing
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPrePacking' */
+
+struct Attributes
+{
+ float3 positionOS : POSITION;
+ float3 normalOS : NORMAL;
+ float4 tangentOS : TANGENT;
+ float4 uv0 : TEXCOORD0;
+ float4 uv1 : TEXCOORD1;
+ float4 uv2 : TEXCOORD2;
+ float4 uv3 : TEXCOORD3;
+ float4 color : COLOR;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(ATTRIBUTES_NEED_INSTANCEID)
+ uint instanceID : INSTANCEID_SEMANTIC;
+#endif
+};
+struct Varyings
+{
+ float4 positionCS : SV_POSITION;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+};
+struct SurfaceDescriptionInputs
+{
+};
+struct VertexDescriptionInputs
+{
+ float3 ObjectSpaceNormal;
+ float3 ObjectSpaceTangent;
+ float3 ObjectSpacePosition;
+ float4 uv0;
+ float4 uv1;
+ float4 uv2;
+ float4 uv3;
+ float4 VertexColor;
+ uint InstanceID;
+};
+struct PackedVaryings
+{
+ float4 positionCS : SV_POSITION;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+};
+
+PackedVaryings PackVaryings (Varyings input)
+{
+PackedVaryings output;
+ZERO_INITIALIZE(PackedVaryings, output);
+output.positionCS = input.positionCS;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+Varyings UnpackVaryings (PackedVaryings input)
+{
+Varyings output;
+output.positionCS = input.positionCS;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+
+// --------------------------------------------------
+// Graph
+
+// Graph Properties
+CBUFFER_START(UnityPerMaterial)
+
+
+
+CBUFFER_END
+
+
+// Object and Global properties
+
+// -- Property used by ScenePickingPass
+#ifdef SCENEPICKINGPASS
+float4 _SelectionID;
+#endif
+
+// -- Properties used by SceneSelectionPass
+#ifdef SCENESELECTIONPASS
+int _ObjectId;
+int _PassValue;
+#endif
+
+// Graph Includes
+// UNITY_SHADER_NO_UPGRADE
+float3 SSS_HClipToScreen(float4 v)
+{
+	float3 uv = v.xyz / v.w;
+	#if UNITY_UV_STARTS_AT_TOP
+		uv.y = -uv.y;
+	#endif
+	uv.xy = uv.xy * 0.5 + 0.5;
+	return uv;
+}
+
+#if _SSS_HDRP
+	float3 SSS_WorldToAbsolute(float3 v) { return GetAbsolutePositionWS(v); }
+	float3 SSS_AbsoluteToWorld(float3 v) { return GetCameraRelativePositionWS(v); }
+#else
+	float3 SSS_WorldToAbsolute(float3 v) { return v; }
+	float3 SSS_AbsoluteToWorld(float3 v) { return v; }
+#endif
+
+float3 SSS_WorldToView(float3 v) { return TransformWorldToView(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToObject(float3 v) { return TransformWorldToObject(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToScreen(float3 v) { return SSS_HClipToScreen(TransformWorldToHClip(SSS_AbsoluteToWorld(v))); }
+float3 SSS_ObjectToScreen(float3 v) { return SSS_HClipToScreen(TransformObjectToHClip(v)); }
+float3 SSS_ObjectToWorld(float3 v) { return SSS_WorldToAbsolute(TransformObjectToWorld(v)); }
+float3 SSS_ObjectToView(float3 v) { return TransformWorldToView(TransformObjectToWorld(v)); }
+float3 SSS_ScreenToWorld(float3 v) { return SSS_WorldToAbsolute(ComputeWorldSpacePosition(v.xy, v.z, UNITY_MATRIX_I_VP)); }
+float3 SSS_ScreenToObject(float3 v) { return SSS_WorldToObject(SSS_ScreenToWorld(v)); }
+float3 SSS_ScreenToView(float3 v) { return SSS_WorldToView(SSS_ScreenToWorld(v)); }
+float3 SSS_ViewToWorld(float3 v) { return mul(UNITY_MATRIX_I_V, float4(v, 1.0)).xyz; }
+float3 SSS_ViewToObject(float3 v) { return TransformWorldToObject(SSS_ViewToWorld(v)); }
+float3 SSS_ViewToScreen(float3 v) { return SSS_HClipToScreen(TransformWViewToHClip(v)); }
+float3 SSS_ObjectToWorldDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformObjectToWorldDir(v);
+	#else
+		return TransformObjectToWorldDir(v, true);
+	#endif
+}
+float3 SSS_ObjectToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v));
+	#else
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v, false), true);
+	#endif
+}
+float3 SSS_WorldToObjectDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToObjectDir(v);
+	#else
+		return TransformWorldToObjectDir(v, true);
+	#endif
+}
+float3 SSS_WorldToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(v);
+	#else
+		return TransformWorldToViewDir(v, true);
+	#endif
+}
+float3 SSS_ViewToObjectDir(float3 v)
+{
+	#if _SSS_URP || _SSS_HDRP
+		return SSS_WorldToObjectDir(mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz);
+	#else
+		return SSS_WorldToObjectDir(mul((float3x3)UNITY_MATRIX_I_V, v));
+	#endif
+}
+float3 SSS_ViewToWorldDir(float3 v)
+{
+	return mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz;
+}
+
+#if _SSS_NO_DERIVATIVES
+	float3 SSS_GetSceneColor(float2 uv) { return float3(0.0, 0.0, 0.0); }
+	float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	float  SSS_GetSceneDepth(float2 uv) { return 0.0; }
+#else
+	#if _SSS_URP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#elif _SSS_HDRP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv)
+		{
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(_SURFACE_TYPE_TRANSPARENT) && defined(SHADERPASS) && (SHADERPASS != SHADERPASS_LIGHT_TRANSPORT) && (SHADERPASS != SHADERPASS_PATH_TRACING) && (SHADERPASS != SHADERPASS_RAYTRACING_VISIBILITY) && (SHADERPASS != SHADERPASS_RAYTRACING_FORWARD)
+			return SampleCameraColor(uv, 0);
+			#endif
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(CUSTOM_PASS_SAMPLING_HLSL) && defined(SHADERPASS) && (SHADERPASS == SHADERPASS_DRAWPROCEDURAL || SHADERPASS == SHADERPASS_BLIT)
+			return CustomPassSampleCameraColor(uv, 0);
+			#endif
+			return float3(0.0, 0.0, 0.0);
+		}
+	#else
+		#if defined(UNITY_DECLARE_OPAQUE_TEXTURE_INCLUDED)
+			float3 SSS_GetSceneColor(float2 uv) { return SampleSceneColor(uv); }
+		#else
+			sampler2D _CameraOpaqueTexture; float3 SSS_GetSceneColor(float2 uv) { return tex2D(_CameraOpaqueTexture, uv).xyz; }
+		#endif
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#endif
+
+	float SSS_GetSceneDepth(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv); }
+#endif
+
+float3 SSS_GetSceneWorldPosition(float2 screenUV, float sceneDepth)
+{
+	#if _SSS_BIRP
+		float4 clipPos  = float4(screenUV * 2.0f - 1.0f, 0.0f, 1.0f);
+		float4 viewPos  = mul(unity_CameraInvProjection, clipPos);
+		float3 worldDir = mul((float3x3)UNITY_MATRIX_I_V, viewPos.xyz);
+					
+		return _WorldSpaceCameraPos + worldDir * LinearEyeDepth(sceneDepth);
+	#else
+		float4 clipPos = float4(screenUV * 2.0 - 1.0, sceneDepth, 1.0);
+					
+		#if UNITY_UV_STARTS_AT_TOP
+			clipPos.y = -clipPos.y;
+		#endif
+					
+		float4 worldPos = mul(UNITY_MATRIX_I_VP, clipPos);
+					
+		worldPos.xyz /= worldPos.w;
+					
+		#if _SSS_HDRP
+			worldPos.xyz = GetAbsolutePositionWS(worldPos.xyz);
+		#endif
+					
+		return worldPos.xyz;
+	#endif
+}
+
+float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
+{
+	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
+}
+
+struct SSS_VertexData
+{
+	float  instanceID;
+	float3 position;
+	float3 normal;
+	float3 tangent;
+	float4 color;
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+	
+
+};
+
+struct SSS_FragmentData
+{
+	float3 localSpacePosition;
+	float3 localSpaceNormal;
+	float3 localSpaceTangent;
+	
+	float3 worldSpacePosition;
+	float3 worldSpaceNormal;
+	float3 worldSpaceTangent;
+	//float tangentSign;
+
+	float3 worldSpaceViewDir;
+	//float3 tangentSpaceViewDir;
+	
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	
+	float2 screenUV;
+	float4 screenPos;
+
+	float4 vertexColor;
+	bool isFrontFace;
+	
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+
+	float3x3 TBNMatrix;
+	
+
+};
+
+struct SSS_SurfaceData
+{
+	float3 Albedo;
+	float  Smoothness;
+	float3 Normal;
+	float3 Emission;
+	float  Occlusion;
+	float  Metallic;
+	float  Alpha;
+};
+
+
+
+
+
+
+
+
+
+void SSS_Vert(inout SSS_VertexData v)
+{
+}
+ 
+void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
+{
+}
+
+
+
+
+void Vert_float
+	(
+	float  iInstanceID,
+	float3 iPosition,
+	float3 iNormal,
+	float3 iTangent,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+
+	out float3 oPosition,
+	out float3 oNormal,
+	out float3 oTangent,
+	out float4 oExtraV2F0,
+	out float4 oExtraV2F1,
+	out float4 oExtraV2F2,
+	out float4 oExtraV2F3,
+	out float4 oExtraV2F4,
+	out float4 oExtraV2F5,
+	out float4 oExtraV2F6,
+	out float4 oExtraV2F7
+	)
+{
+	SSS_VertexData v = (SSS_VertexData)0;
+	
+	v.instanceID = iInstanceID;
+	v.position   = iPosition;
+	v.normal     = iNormal;
+	v.tangent    = iTangent;
+	v.color      = iColor;
+	v.texcoord0  = iTexcoord0;
+	v.texcoord1  = iTexcoord1;
+	v.texcoord2  = iTexcoord2;
+	v.texcoord3  = iTexcoord3;
+	v.extraV2F0  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F1  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F2  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F3  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F4  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F5  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F6  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F7  = float4(0.0, 0.0, 0.0, 0.0);
+	
+	SSS_Vert(v);
+	
+	oPosition  = v.position;
+	oNormal    = v.normal;
+	oTangent   = v.tangent;
+	oExtraV2F0 = v.extraV2F0;
+	oExtraV2F1 = v.extraV2F1;
+	oExtraV2F2 = v.extraV2F2;
+	oExtraV2F3 = v.extraV2F3;
+	oExtraV2F4 = v.extraV2F4;
+	oExtraV2F5 = v.extraV2F5;
+	oExtraV2F6 = v.extraV2F6;
+	oExtraV2F7 = v.extraV2F7;
+}
+
+void Frag_float
+	(
+	inout float3 iPosition,
+	inout float3 iNormal,
+	inout float3 iTangent,
+	bool   iIsFrontFace,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+	float4 iExtraV2F0,
+	float4 iExtraV2F1,
+	float4 iExtraV2F2,
+	float4 iExtraV2F3,
+	float4 iExtraV2F4,
+	float4 iExtraV2F5,
+	float4 iExtraV2F6,
+	float4 iExtraV2F7,
+
+	out float4x4 oExtra,
+	out float3   oAlbedo,
+	out float    oSmoothness,
+	out float3   oNormal,
+	out float3   oEmission,
+	out float    oOcclusion,
+	out float    oMetallic,
+	out float    oAlpha
+	)
+{
+	SSS_SurfaceData  s = (SSS_SurfaceData)0;
+	SSS_FragmentData d = (SSS_FragmentData)0;
+	
+	s.Albedo = 1.0;
+	s.Smoothness = 0.5;
+	s.Normal = float3(0.0, 0.0, 1.0);
+	s.Emission = float3(0.0, 0.0, 0.0);
+	s.Occlusion = 0.0;
+	s.Metallic = 0.0;
+	s.Alpha = 1.0;
+	
+	iPosition = SSS_WorldToAbsolute(iPosition);
+	
+	d.localSpacePosition = SSS_WorldToObject(iPosition);
+	d.localSpaceNormal   = normalize(SSS_WorldToObjectDir(iNormal));
+	d.localSpaceTangent  = normalize(SSS_WorldToObjectDir(iTangent));
+	
+	d.worldSpacePosition = iPosition;
+	d.worldSpaceNormal   = iNormal;
+	d.worldSpaceTangent  = iTangent;
+	//d.tangentSign;
+	
+	d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	//d.tangentSpaceViewDir;
+	
+	d.texcoord0 = iTexcoord0;
+	d.texcoord1 = iTexcoord1;
+	d.texcoord2 = iTexcoord2;
+	d.texcoord3 = iTexcoord3;
+	
+	d.screenPos = float4(SSS_WorldToScreen(iPosition), 1.0);
+	d.screenUV  = d.screenPos.xy;
+
+	d.vertexColor = iColor;
+	d.isFrontFace = iIsFrontFace;
+	
+	d.extraV2F0 = iExtraV2F0;
+	d.extraV2F1 = iExtraV2F1;
+	d.extraV2F2 = iExtraV2F2;
+	d.extraV2F3 = iExtraV2F3;
+	d.extraV2F4 = iExtraV2F4;
+	d.extraV2F5 = iExtraV2F5;
+	d.extraV2F6 = iExtraV2F6;
+	d.extraV2F7 = iExtraV2F7;
+
+	d.TBNMatrix = float3x3(d.worldSpaceTangent, normalize(cross(d.worldSpaceNormal, d.worldSpaceTangent)), d.worldSpaceNormal);
+	
+	SSS_Frag(s, d);
+	
+	iPosition = SSS_AbsoluteToWorld(d.worldSpacePosition); iNormal = d.worldSpaceNormal; iTangent = d.worldSpaceTangent; // Write back
+	
+	oExtra      = float4x4(d.extraV2F0, d.extraV2F1, d.extraV2F2, d.extraV2F3);
+	oAlbedo     = s.Albedo;
+	oSmoothness = s.Smoothness;
+	oNormal     = s.Normal;
+	oEmission   = s.Emission;
+	oOcclusion  = s.Occlusion;
+	oMetallic   = s.Metallic;
+	oAlpha      = s.Alpha;
+}
+
+
+
+
+// Graph Functions
+// GraphFunctions: <None>
+
+// Custom interpolators pre vertex
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPreVertex' */
+
+// Graph Vertex
+struct VertexDescription
+{
+float3 Position;
+float3 Normal;
+float3 Tangent;
+};
+
+VertexDescription VertexDescriptionFunction(VertexDescriptionInputs IN)
+{
+VertexDescription description = (VertexDescription)0;
+float4 _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4 = IN.uv0;
+float4 _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4 = IN.uv1;
+float4 _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4 = IN.uv2;
+float4 _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4 = IN.uv3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4;
+Vert_float(IN.InstanceID, IN.ObjectSpacePosition, IN.ObjectSpaceNormal, IN.ObjectSpaceTangent, IN.VertexColor, _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4, _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4, _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4, _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4);
+description.Position = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+description.Normal = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3;
+description.Tangent = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3;
+return description;
+}
+
+// Custom interpolators, pre surface
+#ifdef FEATURES_GRAPH_VERTEX
+Varyings CustomInterpolatorPassThroughFunc(inout Varyings output, VertexDescription input)
+{
+return output;
+}
+#define CUSTOMINTERPOLATOR_VARYPASSTHROUGH_FUNC
+#endif
+
+// Graph Pixel
+struct SurfaceDescription
+{
+};
+
+SurfaceDescription SurfaceDescriptionFunction(SurfaceDescriptionInputs IN)
+{
+SurfaceDescription surface = (SurfaceDescription)0;
+return surface;
+}
+
+// --------------------------------------------------
+// Build Graph Inputs
+
+VertexDescriptionInputs BuildVertexDescriptionInputs(Attributes input)
+{
+    VertexDescriptionInputs output;
+    ZERO_INITIALIZE(VertexDescriptionInputs, output);
+
+    output.ObjectSpaceNormal =                          input.normalOS;
+    output.ObjectSpaceTangent =                         input.tangentOS.xyz;
+    output.ObjectSpacePosition =                        input.positionOS;
+    output.uv0 =                                        input.uv0;
+    output.uv1 =                                        input.uv1;
+    output.uv2 =                                        input.uv2;
+    output.uv3 =                                        input.uv3;
+    output.VertexColor =                                input.color;
+#if UNITY_ANY_INSTANCING_ENABLED
+    output.InstanceID =                                 unity_InstanceID;
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+    output.InstanceID =                                 input.instanceID;
+#endif
+
+    return output;
+}
+SurfaceDescriptionInputs BuildSurfaceDescriptionInputs(Varyings input)
+{
+    SurfaceDescriptionInputs output;
+    ZERO_INITIALIZE(SurfaceDescriptionInputs, output);
+
+    
+
+
+
+
+
+
+    #if UNITY_UV_STARTS_AT_TOP
+    #else
+    #endif
+
+
+#if UNITY_ANY_INSTANCING_ENABLED
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN output.FaceSign =                    IS_FRONT_VFACE(input.cullFace, true, false);
+#else
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+#endif
+#undef BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+
+        return output;
+}
+
+void BuildAppDataFull(Attributes attributes, VertexDescription vertexDescription, inout appdata_full result)
+{
+    result.vertex     = float4(attributes.positionOS, 1);
+    result.tangent    = attributes.tangentOS;
+    result.normal     = attributes.normalOS;
+    result.texcoord   = attributes.uv0;
+    result.texcoord1  = attributes.uv1;
+    result.texcoord2  = attributes.uv2;
+    result.texcoord3  = attributes.uv3;
+    result.color      = attributes.color;
+    result.vertex     = float4(vertexDescription.Position, 1);
+    result.normal     = vertexDescription.Normal;
+    result.tangent    = float4(vertexDescription.Tangent, 0);
+    #if UNITY_ANY_INSTANCING_ENABLED
+    result.instanceID = attributes.instanceID;
+    #endif
+}
+
+void VaryingsToSurfaceVertex(Varyings varyings, inout v2f_surf result)
+{
+    result.pos = varyings.positionCS;
+    // World Tangent isn't an available input on v2f_surf
+
+
+    #if UNITY_ANY_INSTANCING_ENABLED
+    #endif
+    #if UNITY_SHOULD_SAMPLE_SH
+    #if !defined(LIGHTMAP_ON)
+    #endif
+    #endif
+    #if defined(LIGHTMAP_ON)
+    #endif
+    #ifdef VARYINGS_NEED_FOG_AND_VERTEX_LIGHT
+        result.fogCoord = varyings.fogFactorAndVertexLight.x;
+        COPY_TO_LIGHT_COORDS(result, varyings.fogFactorAndVertexLight.yzw);
+    #endif
+
+    DEFAULT_UNITY_TRANSFER_VERTEX_OUTPUT_STEREO(varyings, result);
+}
+
+void SurfaceVertexToVaryings(v2f_surf surfVertex, inout Varyings result)
+{
+    result.positionCS = surfVertex.pos;
+    // viewDirectionWS is never filled out in the legacy pass' function. Always use the value computed by SRP
+    // World Tangent isn't an available input on v2f_surf
+
+    #if UNITY_ANY_INSTANCING_ENABLED
+    #endif
+    #if UNITY_SHOULD_SAMPLE_SH
+    #if !defined(LIGHTMAP_ON)
+    #endif
+    #endif
+    #if defined(LIGHTMAP_ON)
+    #endif
+    #ifdef VARYINGS_NEED_FOG_AND_VERTEX_LIGHT
+        result.fogFactorAndVertexLight.x = surfVertex.fogCoord;
+        COPY_FROM_LIGHT_COORDS(result.fogFactorAndVertexLight.yzw, surfVertex);
+    #endif
+
+    DEFAULT_UNITY_TRANSFER_VERTEX_OUTPUT_STEREO(surfVertex, result);
+}
+
+// --------------------------------------------------
+// Main
+
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/Editor/ShaderGraph/Includes/Varyings.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/Editor/ShaderGraph/Includes/ShadowCasterPass.hlsl"
+
+ENDHLSL
+}
+Pass
+{
+    Name "SceneSelectionPass"
+    Tags
+    {
+        "LightMode" = "SceneSelectionPass"
+    }
+
+// Render State
+Cull Off
+
+// Debug
+// <None>
+
+// --------------------------------------------------
+// Pass
+
+HLSLPROGRAM
+#define _SSS_PASS_SCENESELECTIONPASS 1
+
+#define _SSS_BIRP 1
+
+
+// Pragmas
+#pragma target 3.0
+#pragma multi_compile_instancing
+#pragma vertex vert
+#pragma fragment frag
+
+// Keywords
+// PassKeywords: <None>
+// GraphKeywords: <None>
+
+// Defines
+#define ATTRIBUTES_NEED_NORMAL
+#define ATTRIBUTES_NEED_TANGENT
+#define ATTRIBUTES_NEED_TEXCOORD0
+#define ATTRIBUTES_NEED_TEXCOORD1
+#define ATTRIBUTES_NEED_TEXCOORD2
+#define ATTRIBUTES_NEED_TEXCOORD3
+#define ATTRIBUTES_NEED_COLOR
+#define ATTRIBUTES_NEED_INSTANCEID
+#define FEATURES_GRAPH_VERTEX
+/* WARNING: $splice Could not find named fragment 'PassInstancing' */
+#define SHADERPASS SceneSelectionPass
+#define BUILTIN_TARGET_API 1
+#define SCENESELECTIONPASS 1
+#ifdef _BUILTIN_SURFACE_TYPE_TRANSPARENT
+#define _SURFACE_TYPE_TRANSPARENT _BUILTIN_SURFACE_TYPE_TRANSPARENT
+#endif
+#ifdef _BUILTIN_ALPHATEST_ON
+#define _ALPHATEST_ON _BUILTIN_ALPHATEST_ON
+#endif
+#ifdef _BUILTIN_AlphaClip
+#define _AlphaClip _BUILTIN_AlphaClip
+#endif
+#ifdef _BUILTIN_ALPHAPREMULTIPLY_ON
+#define _ALPHAPREMULTIPLY_ON _BUILTIN_ALPHAPREMULTIPLY_ON
+#endif
+
+
+// custom interpolator pre-include
+/* WARNING: $splice Could not find named fragment 'sgci_CustomInterpolatorPreInclude' */
+
+// Includes
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/ShaderLibrary/Shim/Shims.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/ShaderLibrary/Core.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/ShaderLibrary/Lighting.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/Editor/ShaderGraph/Includes/LegacySurfaceVertex.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/ShaderLibrary/ShaderGraphFunctions.hlsl"
+
+// --------------------------------------------------
+// Structs and Packing
+
+// custom interpolators pre packing
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPrePacking' */
+
+struct Attributes
+{
+ float3 positionOS : POSITION;
+ float3 normalOS : NORMAL;
+ float4 tangentOS : TANGENT;
+ float4 uv0 : TEXCOORD0;
+ float4 uv1 : TEXCOORD1;
+ float4 uv2 : TEXCOORD2;
+ float4 uv3 : TEXCOORD3;
+ float4 color : COLOR;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(ATTRIBUTES_NEED_INSTANCEID)
+ uint instanceID : INSTANCEID_SEMANTIC;
+#endif
+};
+struct Varyings
+{
+ float4 positionCS : SV_POSITION;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+};
+struct SurfaceDescriptionInputs
+{
+};
+struct VertexDescriptionInputs
+{
+ float3 ObjectSpaceNormal;
+ float3 ObjectSpaceTangent;
+ float3 ObjectSpacePosition;
+ float4 uv0;
+ float4 uv1;
+ float4 uv2;
+ float4 uv3;
+ float4 VertexColor;
+ uint InstanceID;
+};
+struct PackedVaryings
+{
+ float4 positionCS : SV_POSITION;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+};
+
+PackedVaryings PackVaryings (Varyings input)
+{
+PackedVaryings output;
+ZERO_INITIALIZE(PackedVaryings, output);
+output.positionCS = input.positionCS;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+Varyings UnpackVaryings (PackedVaryings input)
+{
+Varyings output;
+output.positionCS = input.positionCS;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+
+// --------------------------------------------------
+// Graph
+
+// Graph Properties
+CBUFFER_START(UnityPerMaterial)
+
+
+
+CBUFFER_END
+
+
+// Object and Global properties
+
+// -- Property used by ScenePickingPass
+#ifdef SCENEPICKINGPASS
+float4 _SelectionID;
+#endif
+
+// -- Properties used by SceneSelectionPass
+#ifdef SCENESELECTIONPASS
+int _ObjectId;
+int _PassValue;
+#endif
+
+// Graph Includes
+// UNITY_SHADER_NO_UPGRADE
+float3 SSS_HClipToScreen(float4 v)
+{
+	float3 uv = v.xyz / v.w;
+	#if UNITY_UV_STARTS_AT_TOP
+		uv.y = -uv.y;
+	#endif
+	uv.xy = uv.xy * 0.5 + 0.5;
+	return uv;
+}
+
+#if _SSS_HDRP
+	float3 SSS_WorldToAbsolute(float3 v) { return GetAbsolutePositionWS(v); }
+	float3 SSS_AbsoluteToWorld(float3 v) { return GetCameraRelativePositionWS(v); }
+#else
+	float3 SSS_WorldToAbsolute(float3 v) { return v; }
+	float3 SSS_AbsoluteToWorld(float3 v) { return v; }
+#endif
+
+float3 SSS_WorldToView(float3 v) { return TransformWorldToView(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToObject(float3 v) { return TransformWorldToObject(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToScreen(float3 v) { return SSS_HClipToScreen(TransformWorldToHClip(SSS_AbsoluteToWorld(v))); }
+float3 SSS_ObjectToScreen(float3 v) { return SSS_HClipToScreen(TransformObjectToHClip(v)); }
+float3 SSS_ObjectToWorld(float3 v) { return SSS_WorldToAbsolute(TransformObjectToWorld(v)); }
+float3 SSS_ObjectToView(float3 v) { return TransformWorldToView(TransformObjectToWorld(v)); }
+float3 SSS_ScreenToWorld(float3 v) { return SSS_WorldToAbsolute(ComputeWorldSpacePosition(v.xy, v.z, UNITY_MATRIX_I_VP)); }
+float3 SSS_ScreenToObject(float3 v) { return SSS_WorldToObject(SSS_ScreenToWorld(v)); }
+float3 SSS_ScreenToView(float3 v) { return SSS_WorldToView(SSS_ScreenToWorld(v)); }
+float3 SSS_ViewToWorld(float3 v) { return mul(UNITY_MATRIX_I_V, float4(v, 1.0)).xyz; }
+float3 SSS_ViewToObject(float3 v) { return TransformWorldToObject(SSS_ViewToWorld(v)); }
+float3 SSS_ViewToScreen(float3 v) { return SSS_HClipToScreen(TransformWViewToHClip(v)); }
+float3 SSS_ObjectToWorldDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformObjectToWorldDir(v);
+	#else
+		return TransformObjectToWorldDir(v, true);
+	#endif
+}
+float3 SSS_ObjectToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v));
+	#else
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v, false), true);
+	#endif
+}
+float3 SSS_WorldToObjectDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToObjectDir(v);
+	#else
+		return TransformWorldToObjectDir(v, true);
+	#endif
+}
+float3 SSS_WorldToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(v);
+	#else
+		return TransformWorldToViewDir(v, true);
+	#endif
+}
+float3 SSS_ViewToObjectDir(float3 v)
+{
+	#if _SSS_URP || _SSS_HDRP
+		return SSS_WorldToObjectDir(mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz);
+	#else
+		return SSS_WorldToObjectDir(mul((float3x3)UNITY_MATRIX_I_V, v));
+	#endif
+}
+float3 SSS_ViewToWorldDir(float3 v)
+{
+	return mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz;
+}
+
+#if _SSS_NO_DERIVATIVES
+	float3 SSS_GetSceneColor(float2 uv) { return float3(0.0, 0.0, 0.0); }
+	float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	float  SSS_GetSceneDepth(float2 uv) { return 0.0; }
+#else
+	#if _SSS_URP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#elif _SSS_HDRP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv)
+		{
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(_SURFACE_TYPE_TRANSPARENT) && defined(SHADERPASS) && (SHADERPASS != SHADERPASS_LIGHT_TRANSPORT) && (SHADERPASS != SHADERPASS_PATH_TRACING) && (SHADERPASS != SHADERPASS_RAYTRACING_VISIBILITY) && (SHADERPASS != SHADERPASS_RAYTRACING_FORWARD)
+			return SampleCameraColor(uv, 0);
+			#endif
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(CUSTOM_PASS_SAMPLING_HLSL) && defined(SHADERPASS) && (SHADERPASS == SHADERPASS_DRAWPROCEDURAL || SHADERPASS == SHADERPASS_BLIT)
+			return CustomPassSampleCameraColor(uv, 0);
+			#endif
+			return float3(0.0, 0.0, 0.0);
+		}
+	#else
+		#if defined(UNITY_DECLARE_OPAQUE_TEXTURE_INCLUDED)
+			float3 SSS_GetSceneColor(float2 uv) { return SampleSceneColor(uv); }
+		#else
+			sampler2D _CameraOpaqueTexture; float3 SSS_GetSceneColor(float2 uv) { return tex2D(_CameraOpaqueTexture, uv).xyz; }
+		#endif
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#endif
+
+	float SSS_GetSceneDepth(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv); }
+#endif
+
+float3 SSS_GetSceneWorldPosition(float2 screenUV, float sceneDepth)
+{
+	#if _SSS_BIRP
+		float4 clipPos  = float4(screenUV * 2.0f - 1.0f, 0.0f, 1.0f);
+		float4 viewPos  = mul(unity_CameraInvProjection, clipPos);
+		float3 worldDir = mul((float3x3)UNITY_MATRIX_I_V, viewPos.xyz);
+					
+		return _WorldSpaceCameraPos + worldDir * LinearEyeDepth(sceneDepth);
+	#else
+		float4 clipPos = float4(screenUV * 2.0 - 1.0, sceneDepth, 1.0);
+					
+		#if UNITY_UV_STARTS_AT_TOP
+			clipPos.y = -clipPos.y;
+		#endif
+					
+		float4 worldPos = mul(UNITY_MATRIX_I_VP, clipPos);
+					
+		worldPos.xyz /= worldPos.w;
+					
+		#if _SSS_HDRP
+			worldPos.xyz = GetAbsolutePositionWS(worldPos.xyz);
+		#endif
+					
+		return worldPos.xyz;
+	#endif
+}
+
+float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
+{
+	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
+}
+
+struct SSS_VertexData
+{
+	float  instanceID;
+	float3 position;
+	float3 normal;
+	float3 tangent;
+	float4 color;
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+	
+
+};
+
+struct SSS_FragmentData
+{
+	float3 localSpacePosition;
+	float3 localSpaceNormal;
+	float3 localSpaceTangent;
+	
+	float3 worldSpacePosition;
+	float3 worldSpaceNormal;
+	float3 worldSpaceTangent;
+	//float tangentSign;
+
+	float3 worldSpaceViewDir;
+	//float3 tangentSpaceViewDir;
+	
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	
+	float2 screenUV;
+	float4 screenPos;
+
+	float4 vertexColor;
+	bool isFrontFace;
+	
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+
+	float3x3 TBNMatrix;
+	
+
+};
+
+struct SSS_SurfaceData
+{
+	float3 Albedo;
+	float  Smoothness;
+	float3 Normal;
+	float3 Emission;
+	float  Occlusion;
+	float  Metallic;
+	float  Alpha;
+};
+
+
+
+
+
+
+
+
+
+void SSS_Vert(inout SSS_VertexData v)
+{
+}
+ 
+void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
+{
+}
+
+
+
+
+void Vert_float
+	(
+	float  iInstanceID,
+	float3 iPosition,
+	float3 iNormal,
+	float3 iTangent,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+
+	out float3 oPosition,
+	out float3 oNormal,
+	out float3 oTangent,
+	out float4 oExtraV2F0,
+	out float4 oExtraV2F1,
+	out float4 oExtraV2F2,
+	out float4 oExtraV2F3,
+	out float4 oExtraV2F4,
+	out float4 oExtraV2F5,
+	out float4 oExtraV2F6,
+	out float4 oExtraV2F7
+	)
+{
+	SSS_VertexData v = (SSS_VertexData)0;
+	
+	v.instanceID = iInstanceID;
+	v.position   = iPosition;
+	v.normal     = iNormal;
+	v.tangent    = iTangent;
+	v.color      = iColor;
+	v.texcoord0  = iTexcoord0;
+	v.texcoord1  = iTexcoord1;
+	v.texcoord2  = iTexcoord2;
+	v.texcoord3  = iTexcoord3;
+	v.extraV2F0  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F1  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F2  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F3  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F4  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F5  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F6  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F7  = float4(0.0, 0.0, 0.0, 0.0);
+	
+	SSS_Vert(v);
+	
+	oPosition  = v.position;
+	oNormal    = v.normal;
+	oTangent   = v.tangent;
+	oExtraV2F0 = v.extraV2F0;
+	oExtraV2F1 = v.extraV2F1;
+	oExtraV2F2 = v.extraV2F2;
+	oExtraV2F3 = v.extraV2F3;
+	oExtraV2F4 = v.extraV2F4;
+	oExtraV2F5 = v.extraV2F5;
+	oExtraV2F6 = v.extraV2F6;
+	oExtraV2F7 = v.extraV2F7;
+}
+
+void Frag_float
+	(
+	inout float3 iPosition,
+	inout float3 iNormal,
+	inout float3 iTangent,
+	bool   iIsFrontFace,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+	float4 iExtraV2F0,
+	float4 iExtraV2F1,
+	float4 iExtraV2F2,
+	float4 iExtraV2F3,
+	float4 iExtraV2F4,
+	float4 iExtraV2F5,
+	float4 iExtraV2F6,
+	float4 iExtraV2F7,
+
+	out float4x4 oExtra,
+	out float3   oAlbedo,
+	out float    oSmoothness,
+	out float3   oNormal,
+	out float3   oEmission,
+	out float    oOcclusion,
+	out float    oMetallic,
+	out float    oAlpha
+	)
+{
+	SSS_SurfaceData  s = (SSS_SurfaceData)0;
+	SSS_FragmentData d = (SSS_FragmentData)0;
+	
+	s.Albedo = 1.0;
+	s.Smoothness = 0.5;
+	s.Normal = float3(0.0, 0.0, 1.0);
+	s.Emission = float3(0.0, 0.0, 0.0);
+	s.Occlusion = 0.0;
+	s.Metallic = 0.0;
+	s.Alpha = 1.0;
+	
+	iPosition = SSS_WorldToAbsolute(iPosition);
+	
+	d.localSpacePosition = SSS_WorldToObject(iPosition);
+	d.localSpaceNormal   = normalize(SSS_WorldToObjectDir(iNormal));
+	d.localSpaceTangent  = normalize(SSS_WorldToObjectDir(iTangent));
+	
+	d.worldSpacePosition = iPosition;
+	d.worldSpaceNormal   = iNormal;
+	d.worldSpaceTangent  = iTangent;
+	//d.tangentSign;
+	
+	d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	//d.tangentSpaceViewDir;
+	
+	d.texcoord0 = iTexcoord0;
+	d.texcoord1 = iTexcoord1;
+	d.texcoord2 = iTexcoord2;
+	d.texcoord3 = iTexcoord3;
+	
+	d.screenPos = float4(SSS_WorldToScreen(iPosition), 1.0);
+	d.screenUV  = d.screenPos.xy;
+
+	d.vertexColor = iColor;
+	d.isFrontFace = iIsFrontFace;
+	
+	d.extraV2F0 = iExtraV2F0;
+	d.extraV2F1 = iExtraV2F1;
+	d.extraV2F2 = iExtraV2F2;
+	d.extraV2F3 = iExtraV2F3;
+	d.extraV2F4 = iExtraV2F4;
+	d.extraV2F5 = iExtraV2F5;
+	d.extraV2F6 = iExtraV2F6;
+	d.extraV2F7 = iExtraV2F7;
+
+	d.TBNMatrix = float3x3(d.worldSpaceTangent, normalize(cross(d.worldSpaceNormal, d.worldSpaceTangent)), d.worldSpaceNormal);
+	
+	SSS_Frag(s, d);
+	
+	iPosition = SSS_AbsoluteToWorld(d.worldSpacePosition); iNormal = d.worldSpaceNormal; iTangent = d.worldSpaceTangent; // Write back
+	
+	oExtra      = float4x4(d.extraV2F0, d.extraV2F1, d.extraV2F2, d.extraV2F3);
+	oAlbedo     = s.Albedo;
+	oSmoothness = s.Smoothness;
+	oNormal     = s.Normal;
+	oEmission   = s.Emission;
+	oOcclusion  = s.Occlusion;
+	oMetallic   = s.Metallic;
+	oAlpha      = s.Alpha;
+}
+
+
+
+
+// Graph Functions
+// GraphFunctions: <None>
+
+// Custom interpolators pre vertex
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPreVertex' */
+
+// Graph Vertex
+struct VertexDescription
+{
+float3 Position;
+float3 Normal;
+float3 Tangent;
+};
+
+VertexDescription VertexDescriptionFunction(VertexDescriptionInputs IN)
+{
+VertexDescription description = (VertexDescription)0;
+float4 _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4 = IN.uv0;
+float4 _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4 = IN.uv1;
+float4 _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4 = IN.uv2;
+float4 _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4 = IN.uv3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4;
+Vert_float(IN.InstanceID, IN.ObjectSpacePosition, IN.ObjectSpaceNormal, IN.ObjectSpaceTangent, IN.VertexColor, _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4, _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4, _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4, _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4);
+description.Position = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+description.Normal = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3;
+description.Tangent = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3;
+return description;
+}
+
+// Custom interpolators, pre surface
+#ifdef FEATURES_GRAPH_VERTEX
+Varyings CustomInterpolatorPassThroughFunc(inout Varyings output, VertexDescription input)
+{
+return output;
+}
+#define CUSTOMINTERPOLATOR_VARYPASSTHROUGH_FUNC
+#endif
+
+// Graph Pixel
+struct SurfaceDescription
+{
+};
+
+SurfaceDescription SurfaceDescriptionFunction(SurfaceDescriptionInputs IN)
+{
+SurfaceDescription surface = (SurfaceDescription)0;
+return surface;
+}
+
+// --------------------------------------------------
+// Build Graph Inputs
+
+VertexDescriptionInputs BuildVertexDescriptionInputs(Attributes input)
+{
+    VertexDescriptionInputs output;
+    ZERO_INITIALIZE(VertexDescriptionInputs, output);
+
+    output.ObjectSpaceNormal =                          input.normalOS;
+    output.ObjectSpaceTangent =                         input.tangentOS.xyz;
+    output.ObjectSpacePosition =                        input.positionOS;
+    output.uv0 =                                        input.uv0;
+    output.uv1 =                                        input.uv1;
+    output.uv2 =                                        input.uv2;
+    output.uv3 =                                        input.uv3;
+    output.VertexColor =                                input.color;
+#if UNITY_ANY_INSTANCING_ENABLED
+    output.InstanceID =                                 unity_InstanceID;
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+    output.InstanceID =                                 input.instanceID;
+#endif
+
+    return output;
+}
+SurfaceDescriptionInputs BuildSurfaceDescriptionInputs(Varyings input)
+{
+    SurfaceDescriptionInputs output;
+    ZERO_INITIALIZE(SurfaceDescriptionInputs, output);
+
+    
+
+
+
+
+
+
+    #if UNITY_UV_STARTS_AT_TOP
+    #else
+    #endif
+
+
+#if UNITY_ANY_INSTANCING_ENABLED
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN output.FaceSign =                    IS_FRONT_VFACE(input.cullFace, true, false);
+#else
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+#endif
+#undef BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+
+        return output;
+}
+
+void BuildAppDataFull(Attributes attributes, VertexDescription vertexDescription, inout appdata_full result)
+{
+    result.vertex     = float4(attributes.positionOS, 1);
+    result.tangent    = attributes.tangentOS;
+    result.normal     = attributes.normalOS;
+    result.texcoord   = attributes.uv0;
+    result.texcoord1  = attributes.uv1;
+    result.texcoord2  = attributes.uv2;
+    result.texcoord3  = attributes.uv3;
+    result.color      = attributes.color;
+    result.vertex     = float4(vertexDescription.Position, 1);
+    result.normal     = vertexDescription.Normal;
+    result.tangent    = float4(vertexDescription.Tangent, 0);
+    #if UNITY_ANY_INSTANCING_ENABLED
+    result.instanceID = attributes.instanceID;
+    #endif
+}
+
+void VaryingsToSurfaceVertex(Varyings varyings, inout v2f_surf result)
+{
+    result.pos = varyings.positionCS;
+    // World Tangent isn't an available input on v2f_surf
+
+
+    #if UNITY_ANY_INSTANCING_ENABLED
+    #endif
+    #if UNITY_SHOULD_SAMPLE_SH
+    #if !defined(LIGHTMAP_ON)
+    #endif
+    #endif
+    #if defined(LIGHTMAP_ON)
+    #endif
+    #ifdef VARYINGS_NEED_FOG_AND_VERTEX_LIGHT
+        result.fogCoord = varyings.fogFactorAndVertexLight.x;
+        COPY_TO_LIGHT_COORDS(result, varyings.fogFactorAndVertexLight.yzw);
+    #endif
+
+    DEFAULT_UNITY_TRANSFER_VERTEX_OUTPUT_STEREO(varyings, result);
+}
+
+void SurfaceVertexToVaryings(v2f_surf surfVertex, inout Varyings result)
+{
+    result.positionCS = surfVertex.pos;
+    // viewDirectionWS is never filled out in the legacy pass' function. Always use the value computed by SRP
+    // World Tangent isn't an available input on v2f_surf
+
+    #if UNITY_ANY_INSTANCING_ENABLED
+    #endif
+    #if UNITY_SHOULD_SAMPLE_SH
+    #if !defined(LIGHTMAP_ON)
+    #endif
+    #endif
+    #if defined(LIGHTMAP_ON)
+    #endif
+    #ifdef VARYINGS_NEED_FOG_AND_VERTEX_LIGHT
+        result.fogFactorAndVertexLight.x = surfVertex.fogCoord;
+        COPY_FROM_LIGHT_COORDS(result.fogFactorAndVertexLight.yzw, surfVertex);
+    #endif
+
+    DEFAULT_UNITY_TRANSFER_VERTEX_OUTPUT_STEREO(surfVertex, result);
+}
+
+// --------------------------------------------------
+// Main
+
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/Editor/ShaderGraph/Includes/Varyings.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/Editor/ShaderGraph/Includes/DepthOnlyPass.hlsl"
+
+ENDHLSL
+}
+Pass
+{
+    Name "ScenePickingPass"
+    Tags
+    {
+        "LightMode" = "Picking"
+    }
+
+// Render State
+Cull Back
+
+// Debug
+// <None>
+
+// --------------------------------------------------
+// Pass
+
+HLSLPROGRAM
+#define _SSS_PASS_SCENEPICKINGPASS 1
+
+#define _SSS_BIRP 1
+
+
+// Pragmas
+#pragma target 3.0
+#pragma multi_compile_instancing
+#pragma vertex vert
+#pragma fragment frag
+
+// Keywords
+// PassKeywords: <None>
+// GraphKeywords: <None>
+
+// Defines
+#define ATTRIBUTES_NEED_NORMAL
+#define ATTRIBUTES_NEED_TANGENT
+#define ATTRIBUTES_NEED_TEXCOORD0
+#define ATTRIBUTES_NEED_TEXCOORD1
+#define ATTRIBUTES_NEED_TEXCOORD2
+#define ATTRIBUTES_NEED_TEXCOORD3
+#define ATTRIBUTES_NEED_COLOR
+#define ATTRIBUTES_NEED_INSTANCEID
+#define FEATURES_GRAPH_VERTEX
+/* WARNING: $splice Could not find named fragment 'PassInstancing' */
+#define SHADERPASS ScenePickingPass
+#define BUILTIN_TARGET_API 1
+#define SCENEPICKINGPASS 1
+#ifdef _BUILTIN_SURFACE_TYPE_TRANSPARENT
+#define _SURFACE_TYPE_TRANSPARENT _BUILTIN_SURFACE_TYPE_TRANSPARENT
+#endif
+#ifdef _BUILTIN_ALPHATEST_ON
+#define _ALPHATEST_ON _BUILTIN_ALPHATEST_ON
+#endif
+#ifdef _BUILTIN_AlphaClip
+#define _AlphaClip _BUILTIN_AlphaClip
+#endif
+#ifdef _BUILTIN_ALPHAPREMULTIPLY_ON
+#define _ALPHAPREMULTIPLY_ON _BUILTIN_ALPHAPREMULTIPLY_ON
+#endif
+
+
+// custom interpolator pre-include
+/* WARNING: $splice Could not find named fragment 'sgci_CustomInterpolatorPreInclude' */
+
+// Includes
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/ShaderLibrary/Shim/Shims.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/ShaderLibrary/Core.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/ShaderLibrary/Lighting.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/Editor/ShaderGraph/Includes/LegacySurfaceVertex.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/ShaderLibrary/ShaderGraphFunctions.hlsl"
+
+// --------------------------------------------------
+// Structs and Packing
+
+// custom interpolators pre packing
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPrePacking' */
+
+struct Attributes
+{
+ float3 positionOS : POSITION;
+ float3 normalOS : NORMAL;
+ float4 tangentOS : TANGENT;
+ float4 uv0 : TEXCOORD0;
+ float4 uv1 : TEXCOORD1;
+ float4 uv2 : TEXCOORD2;
+ float4 uv3 : TEXCOORD3;
+ float4 color : COLOR;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(ATTRIBUTES_NEED_INSTANCEID)
+ uint instanceID : INSTANCEID_SEMANTIC;
+#endif
+};
+struct Varyings
+{
+ float4 positionCS : SV_POSITION;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+};
+struct SurfaceDescriptionInputs
+{
+};
+struct VertexDescriptionInputs
+{
+ float3 ObjectSpaceNormal;
+ float3 ObjectSpaceTangent;
+ float3 ObjectSpacePosition;
+ float4 uv0;
+ float4 uv1;
+ float4 uv2;
+ float4 uv3;
+ float4 VertexColor;
+ uint InstanceID;
+};
+struct PackedVaryings
+{
+ float4 positionCS : SV_POSITION;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+ uint instanceID : CUSTOM_INSTANCE_ID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+ uint stereoTargetEyeIndexAsBlendIdx0 : BLENDINDICES0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+ uint stereoTargetEyeIndexAsRTArrayIdx : SV_RenderTargetArrayIndex;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+ FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+#endif
+};
+
+PackedVaryings PackVaryings (Varyings input)
+{
+PackedVaryings output;
+ZERO_INITIALIZE(PackedVaryings, output);
+output.positionCS = input.positionCS;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+Varyings UnpackVaryings (PackedVaryings input)
+{
+Varyings output;
+output.positionCS = input.positionCS;
+#if UNITY_ANY_INSTANCING_ENABLED || defined(VARYINGS_NEED_INSTANCEID)
+output.instanceID = input.instanceID;
+#endif
+#if (defined(UNITY_STEREO_MULTIVIEW_ENABLED)) || (defined(UNITY_STEREO_INSTANCING_ENABLED) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)))
+output.stereoTargetEyeIndexAsBlendIdx0 = input.stereoTargetEyeIndexAsBlendIdx0;
+#endif
+#if (defined(UNITY_STEREO_INSTANCING_ENABLED))
+output.stereoTargetEyeIndexAsRTArrayIdx = input.stereoTargetEyeIndexAsRTArrayIdx;
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+output.cullFace = input.cullFace;
+#endif
+return output;
+}
+
+
+// --------------------------------------------------
+// Graph
+
+// Graph Properties
+CBUFFER_START(UnityPerMaterial)
+
+
+
+CBUFFER_END
+
+
+// Object and Global properties
+
+// -- Property used by ScenePickingPass
+#ifdef SCENEPICKINGPASS
+float4 _SelectionID;
+#endif
+
+// -- Properties used by SceneSelectionPass
+#ifdef SCENESELECTIONPASS
+int _ObjectId;
+int _PassValue;
+#endif
+
+// Graph Includes
+// UNITY_SHADER_NO_UPGRADE
+float3 SSS_HClipToScreen(float4 v)
+{
+	float3 uv = v.xyz / v.w;
+	#if UNITY_UV_STARTS_AT_TOP
+		uv.y = -uv.y;
+	#endif
+	uv.xy = uv.xy * 0.5 + 0.5;
+	return uv;
+}
+
+#if _SSS_HDRP
+	float3 SSS_WorldToAbsolute(float3 v) { return GetAbsolutePositionWS(v); }
+	float3 SSS_AbsoluteToWorld(float3 v) { return GetCameraRelativePositionWS(v); }
+#else
+	float3 SSS_WorldToAbsolute(float3 v) { return v; }
+	float3 SSS_AbsoluteToWorld(float3 v) { return v; }
+#endif
+
+float3 SSS_WorldToView(float3 v) { return TransformWorldToView(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToObject(float3 v) { return TransformWorldToObject(SSS_AbsoluteToWorld(v)); }
+float3 SSS_WorldToScreen(float3 v) { return SSS_HClipToScreen(TransformWorldToHClip(SSS_AbsoluteToWorld(v))); }
+float3 SSS_ObjectToScreen(float3 v) { return SSS_HClipToScreen(TransformObjectToHClip(v)); }
+float3 SSS_ObjectToWorld(float3 v) { return SSS_WorldToAbsolute(TransformObjectToWorld(v)); }
+float3 SSS_ObjectToView(float3 v) { return TransformWorldToView(TransformObjectToWorld(v)); }
+float3 SSS_ScreenToWorld(float3 v) { return SSS_WorldToAbsolute(ComputeWorldSpacePosition(v.xy, v.z, UNITY_MATRIX_I_VP)); }
+float3 SSS_ScreenToObject(float3 v) { return SSS_WorldToObject(SSS_ScreenToWorld(v)); }
+float3 SSS_ScreenToView(float3 v) { return SSS_WorldToView(SSS_ScreenToWorld(v)); }
+float3 SSS_ViewToWorld(float3 v) { return mul(UNITY_MATRIX_I_V, float4(v, 1.0)).xyz; }
+float3 SSS_ViewToObject(float3 v) { return TransformWorldToObject(SSS_ViewToWorld(v)); }
+float3 SSS_ViewToScreen(float3 v) { return SSS_HClipToScreen(TransformWViewToHClip(v)); }
+float3 SSS_ObjectToWorldDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformObjectToWorldDir(v);
+	#else
+		return TransformObjectToWorldDir(v, true);
+	#endif
+}
+float3 SSS_ObjectToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v));
+	#else
+		return TransformWorldToViewDir(TransformObjectToWorldDir(v, false), true);
+	#endif
+}
+float3 SSS_WorldToObjectDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToObjectDir(v);
+	#else
+		return TransformWorldToObjectDir(v, true);
+	#endif
+}
+float3 SSS_WorldToViewDir(float3 v)
+{
+	#if _SSS_BIRP
+		return TransformWorldToViewDir(v);
+	#else
+		return TransformWorldToViewDir(v, true);
+	#endif
+}
+float3 SSS_ViewToObjectDir(float3 v)
+{
+	#if _SSS_URP || _SSS_HDRP
+		return SSS_WorldToObjectDir(mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz);
+	#else
+		return SSS_WorldToObjectDir(mul((float3x3)UNITY_MATRIX_I_V, v));
+	#endif
+}
+float3 SSS_ViewToWorldDir(float3 v)
+{
+	return mul(UNITY_MATRIX_I_V, float4(v, 0.0)).xyz;
+}
+
+#if _SSS_NO_DERIVATIVES
+	float3 SSS_GetSceneColor(float2 uv) { return float3(0.0, 0.0, 0.0); }
+	float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	float  SSS_GetSceneDepth(float2 uv) { return 0.0; }
+#else
+	#if _SSS_URP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#elif _SSS_HDRP
+		float3 SSS_GetSceneColor(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_COLOR(uv).xyz; }
+		float3 SSS_GetSceneColorHD(float2 uv)
+		{
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(_SURFACE_TYPE_TRANSPARENT) && defined(SHADERPASS) && (SHADERPASS != SHADERPASS_LIGHT_TRANSPORT) && (SHADERPASS != SHADERPASS_PATH_TRACING) && (SHADERPASS != SHADERPASS_RAYTRACING_VISIBILITY) && (SHADERPASS != SHADERPASS_RAYTRACING_FORWARD)
+			return SampleCameraColor(uv, 0);
+			#endif
+			#if defined(REQUIRE_OPAQUE_TEXTURE) && defined(CUSTOM_PASS_SAMPLING_HLSL) && defined(SHADERPASS) && (SHADERPASS == SHADERPASS_DRAWPROCEDURAL || SHADERPASS == SHADERPASS_BLIT)
+			return CustomPassSampleCameraColor(uv, 0);
+			#endif
+			return float3(0.0, 0.0, 0.0);
+		}
+	#else
+		#if defined(UNITY_DECLARE_OPAQUE_TEXTURE_INCLUDED)
+			float3 SSS_GetSceneColor(float2 uv) { return SampleSceneColor(uv); }
+		#else
+			sampler2D _CameraOpaqueTexture; float3 SSS_GetSceneColor(float2 uv) { return tex2D(_CameraOpaqueTexture, uv).xyz; }
+		#endif
+		float3 SSS_GetSceneColorHD(float2 uv) { return SSS_GetSceneColor(uv); }
+	#endif
+
+	float SSS_GetSceneDepth(float2 uv) { return SHADERGRAPH_SAMPLE_SCENE_DEPTH(uv); }
+#endif
+
+float3 SSS_GetSceneWorldPosition(float2 screenUV, float sceneDepth)
+{
+	#if _SSS_BIRP
+		float4 clipPos  = float4(screenUV * 2.0f - 1.0f, 0.0f, 1.0f);
+		float4 viewPos  = mul(unity_CameraInvProjection, clipPos);
+		float3 worldDir = mul((float3x3)UNITY_MATRIX_I_V, viewPos.xyz);
+					
+		return _WorldSpaceCameraPos + worldDir * LinearEyeDepth(sceneDepth);
+	#else
+		float4 clipPos = float4(screenUV * 2.0 - 1.0, sceneDepth, 1.0);
+					
+		#if UNITY_UV_STARTS_AT_TOP
+			clipPos.y = -clipPos.y;
+		#endif
+					
+		float4 worldPos = mul(UNITY_MATRIX_I_VP, clipPos);
+					
+		worldPos.xyz /= worldPos.w;
+					
+		#if _SSS_HDRP
+			worldPos.xyz = GetAbsolutePositionWS(worldPos.xyz);
+		#endif
+					
+		return worldPos.xyz;
+	#endif
+}
+
+float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
+{
+	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
+}
+
+struct SSS_VertexData
+{
+	float  instanceID;
+	float3 position;
+	float3 normal;
+	float3 tangent;
+	float4 color;
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+	
+
+};
+
+struct SSS_FragmentData
+{
+	float3 localSpacePosition;
+	float3 localSpaceNormal;
+	float3 localSpaceTangent;
+	
+	float3 worldSpacePosition;
+	float3 worldSpaceNormal;
+	float3 worldSpaceTangent;
+	//float tangentSign;
+
+	float3 worldSpaceViewDir;
+	//float3 tangentSpaceViewDir;
+	
+	float4 texcoord0;
+	float4 texcoord1;
+	float4 texcoord2;
+	float4 texcoord3;
+	
+	float2 screenUV;
+	float4 screenPos;
+
+	float4 vertexColor;
+	bool isFrontFace;
+	
+	float4 extraV2F0;
+	float4 extraV2F1;
+	float4 extraV2F2;
+	float4 extraV2F3;
+	float4 extraV2F4;
+	float4 extraV2F5;
+	float4 extraV2F6;
+	float4 extraV2F7;
+
+	float3x3 TBNMatrix;
+	
+
+};
+
+struct SSS_SurfaceData
+{
+	float3 Albedo;
+	float  Smoothness;
+	float3 Normal;
+	float3 Emission;
+	float  Occlusion;
+	float  Metallic;
+	float  Alpha;
+};
+
+
+
+
+
+
+
+
+
+void SSS_Vert(inout SSS_VertexData v)
+{
+}
+ 
+void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
+{
+}
+
+
+
+
+void Vert_float
+	(
+	float  iInstanceID,
+	float3 iPosition,
+	float3 iNormal,
+	float3 iTangent,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+
+	out float3 oPosition,
+	out float3 oNormal,
+	out float3 oTangent,
+	out float4 oExtraV2F0,
+	out float4 oExtraV2F1,
+	out float4 oExtraV2F2,
+	out float4 oExtraV2F3,
+	out float4 oExtraV2F4,
+	out float4 oExtraV2F5,
+	out float4 oExtraV2F6,
+	out float4 oExtraV2F7
+	)
+{
+	SSS_VertexData v = (SSS_VertexData)0;
+	
+	v.instanceID = iInstanceID;
+	v.position   = iPosition;
+	v.normal     = iNormal;
+	v.tangent    = iTangent;
+	v.color      = iColor;
+	v.texcoord0  = iTexcoord0;
+	v.texcoord1  = iTexcoord1;
+	v.texcoord2  = iTexcoord2;
+	v.texcoord3  = iTexcoord3;
+	v.extraV2F0  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F1  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F2  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F3  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F4  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F5  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F6  = float4(0.0, 0.0, 0.0, 0.0);
+	v.extraV2F7  = float4(0.0, 0.0, 0.0, 0.0);
+	
+	SSS_Vert(v);
+	
+	oPosition  = v.position;
+	oNormal    = v.normal;
+	oTangent   = v.tangent;
+	oExtraV2F0 = v.extraV2F0;
+	oExtraV2F1 = v.extraV2F1;
+	oExtraV2F2 = v.extraV2F2;
+	oExtraV2F3 = v.extraV2F3;
+	oExtraV2F4 = v.extraV2F4;
+	oExtraV2F5 = v.extraV2F5;
+	oExtraV2F6 = v.extraV2F6;
+	oExtraV2F7 = v.extraV2F7;
+}
+
+void Frag_float
+	(
+	inout float3 iPosition,
+	inout float3 iNormal,
+	inout float3 iTangent,
+	bool   iIsFrontFace,
+	float4 iColor,
+	float4 iTexcoord0,
+	float4 iTexcoord1,
+	float4 iTexcoord2,
+	float4 iTexcoord3,
+	float4 iExtraV2F0,
+	float4 iExtraV2F1,
+	float4 iExtraV2F2,
+	float4 iExtraV2F3,
+	float4 iExtraV2F4,
+	float4 iExtraV2F5,
+	float4 iExtraV2F6,
+	float4 iExtraV2F7,
+
+	out float4x4 oExtra,
+	out float3   oAlbedo,
+	out float    oSmoothness,
+	out float3   oNormal,
+	out float3   oEmission,
+	out float    oOcclusion,
+	out float    oMetallic,
+	out float    oAlpha
+	)
+{
+	SSS_SurfaceData  s = (SSS_SurfaceData)0;
+	SSS_FragmentData d = (SSS_FragmentData)0;
+	
+	s.Albedo = 1.0;
+	s.Smoothness = 0.5;
+	s.Normal = float3(0.0, 0.0, 1.0);
+	s.Emission = float3(0.0, 0.0, 0.0);
+	s.Occlusion = 0.0;
+	s.Metallic = 0.0;
+	s.Alpha = 1.0;
+	
+	iPosition = SSS_WorldToAbsolute(iPosition);
+	
+	d.localSpacePosition = SSS_WorldToObject(iPosition);
+	d.localSpaceNormal   = normalize(SSS_WorldToObjectDir(iNormal));
+	d.localSpaceTangent  = normalize(SSS_WorldToObjectDir(iTangent));
+	
+	d.worldSpacePosition = iPosition;
+	d.worldSpaceNormal   = iNormal;
+	d.worldSpaceTangent  = iTangent;
+	//d.tangentSign;
+	
+	d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	//d.tangentSpaceViewDir;
+	
+	d.texcoord0 = iTexcoord0;
+	d.texcoord1 = iTexcoord1;
+	d.texcoord2 = iTexcoord2;
+	d.texcoord3 = iTexcoord3;
+	
+	d.screenPos = float4(SSS_WorldToScreen(iPosition), 1.0);
+	d.screenUV  = d.screenPos.xy;
+
+	d.vertexColor = iColor;
+	d.isFrontFace = iIsFrontFace;
+	
+	d.extraV2F0 = iExtraV2F0;
+	d.extraV2F1 = iExtraV2F1;
+	d.extraV2F2 = iExtraV2F2;
+	d.extraV2F3 = iExtraV2F3;
+	d.extraV2F4 = iExtraV2F4;
+	d.extraV2F5 = iExtraV2F5;
+	d.extraV2F6 = iExtraV2F6;
+	d.extraV2F7 = iExtraV2F7;
+
+	d.TBNMatrix = float3x3(d.worldSpaceTangent, normalize(cross(d.worldSpaceNormal, d.worldSpaceTangent)), d.worldSpaceNormal);
+	
+	SSS_Frag(s, d);
+	
+	iPosition = SSS_AbsoluteToWorld(d.worldSpacePosition); iNormal = d.worldSpaceNormal; iTangent = d.worldSpaceTangent; // Write back
+	
+	oExtra      = float4x4(d.extraV2F0, d.extraV2F1, d.extraV2F2, d.extraV2F3);
+	oAlbedo     = s.Albedo;
+	oSmoothness = s.Smoothness;
+	oNormal     = s.Normal;
+	oEmission   = s.Emission;
+	oOcclusion  = s.Occlusion;
+	oMetallic   = s.Metallic;
+	oAlpha      = s.Alpha;
+}
+
+
+
+
+// Graph Functions
+// GraphFunctions: <None>
+
+// Custom interpolators pre vertex
+/* WARNING: $splice Could not find named fragment 'CustomInterpolatorPreVertex' */
+
+// Graph Vertex
+struct VertexDescription
+{
+float3 Position;
+float3 Normal;
+float3 Tangent;
+};
+
+VertexDescription VertexDescriptionFunction(VertexDescriptionInputs IN)
+{
+VertexDescription description = (VertexDescription)0;
+float4 _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4 = IN.uv0;
+float4 _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4 = IN.uv1;
+float4 _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4 = IN.uv2;
+float4 _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4 = IN.uv3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3;
+float3 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4;
+float4 _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4;
+Vert_float(IN.InstanceID, IN.ObjectSpacePosition, IN.ObjectSpaceNormal, IN.ObjectSpaceTangent, IN.VertexColor, _UV_ccc703dc3bdd420e8a8a4aa0607d4ec4_Out_0_Vector4, _UV_46571950324b44e8bf8895f08abd191f_Out_0_Vector4, _UV_ba4ef72275334f08b9b01fedf9da0065_Out_0_Vector4, _UV_255ab3a515d14af686e70c40d04416e6_Out_0_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F0_7_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F1_8_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F2_13_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F3_14_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F4_15_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F5_16_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F6_17_Vector4, _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oExtraV2F7_18_Vector4);
+description.Position = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oPosition_0_Vector3;
+description.Normal = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oNormal_5_Vector3;
+description.Tangent = _VertCustomFunction_c06714ff508d45fab2f28a5dcfca5564_oTangent_6_Vector3;
+return description;
+}
+
+// Custom interpolators, pre surface
+#ifdef FEATURES_GRAPH_VERTEX
+Varyings CustomInterpolatorPassThroughFunc(inout Varyings output, VertexDescription input)
+{
+return output;
+}
+#define CUSTOMINTERPOLATOR_VARYPASSTHROUGH_FUNC
+#endif
+
+// Graph Pixel
+struct SurfaceDescription
+{
+};
+
+SurfaceDescription SurfaceDescriptionFunction(SurfaceDescriptionInputs IN)
+{
+SurfaceDescription surface = (SurfaceDescription)0;
+return surface;
+}
+
+// --------------------------------------------------
+// Build Graph Inputs
+
+VertexDescriptionInputs BuildVertexDescriptionInputs(Attributes input)
+{
+    VertexDescriptionInputs output;
+    ZERO_INITIALIZE(VertexDescriptionInputs, output);
+
+    output.ObjectSpaceNormal =                          input.normalOS;
+    output.ObjectSpaceTangent =                         input.tangentOS.xyz;
+    output.ObjectSpacePosition =                        input.positionOS;
+    output.uv0 =                                        input.uv0;
+    output.uv1 =                                        input.uv1;
+    output.uv2 =                                        input.uv2;
+    output.uv3 =                                        input.uv3;
+    output.VertexColor =                                input.color;
+#if UNITY_ANY_INSTANCING_ENABLED
+    output.InstanceID =                                 unity_InstanceID;
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+    output.InstanceID =                                 input.instanceID;
+#endif
+
+    return output;
+}
+SurfaceDescriptionInputs BuildSurfaceDescriptionInputs(Varyings input)
+{
+    SurfaceDescriptionInputs output;
+    ZERO_INITIALIZE(SurfaceDescriptionInputs, output);
+
+    
+
+
+
+
+
+
+    #if UNITY_UV_STARTS_AT_TOP
+    #else
+    #endif
+
+
+#if UNITY_ANY_INSTANCING_ENABLED
+#else // TODO: XR support for procedural instancing because in this case UNITY_ANY_INSTANCING_ENABLED is not defined and instanceID is incorrect.
+#endif
+#if defined(SHADER_STAGE_FRAGMENT) && defined(VARYINGS_NEED_CULLFACE)
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN output.FaceSign =                    IS_FRONT_VFACE(input.cullFace, true, false);
+#else
+#define BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+#endif
+#undef BUILD_SURFACE_DESCRIPTION_INPUTS_OUTPUT_FACESIGN
+
+        return output;
+}
+
+void BuildAppDataFull(Attributes attributes, VertexDescription vertexDescription, inout appdata_full result)
+{
+    result.vertex     = float4(attributes.positionOS, 1);
+    result.tangent    = attributes.tangentOS;
+    result.normal     = attributes.normalOS;
+    result.texcoord   = attributes.uv0;
+    result.texcoord1  = attributes.uv1;
+    result.texcoord2  = attributes.uv2;
+    result.texcoord3  = attributes.uv3;
+    result.color      = attributes.color;
+    result.vertex     = float4(vertexDescription.Position, 1);
+    result.normal     = vertexDescription.Normal;
+    result.tangent    = float4(vertexDescription.Tangent, 0);
+    #if UNITY_ANY_INSTANCING_ENABLED
+    result.instanceID = attributes.instanceID;
+    #endif
+}
+
+void VaryingsToSurfaceVertex(Varyings varyings, inout v2f_surf result)
+{
+    result.pos = varyings.positionCS;
+    // World Tangent isn't an available input on v2f_surf
+
+
+    #if UNITY_ANY_INSTANCING_ENABLED
+    #endif
+    #if UNITY_SHOULD_SAMPLE_SH
+    #if !defined(LIGHTMAP_ON)
+    #endif
+    #endif
+    #if defined(LIGHTMAP_ON)
+    #endif
+    #ifdef VARYINGS_NEED_FOG_AND_VERTEX_LIGHT
+        result.fogCoord = varyings.fogFactorAndVertexLight.x;
+        COPY_TO_LIGHT_COORDS(result, varyings.fogFactorAndVertexLight.yzw);
+    #endif
+
+    DEFAULT_UNITY_TRANSFER_VERTEX_OUTPUT_STEREO(varyings, result);
+}
+
+void SurfaceVertexToVaryings(v2f_surf surfVertex, inout Varyings result)
+{
+    result.positionCS = surfVertex.pos;
+    // viewDirectionWS is never filled out in the legacy pass' function. Always use the value computed by SRP
+    // World Tangent isn't an available input on v2f_surf
+
+    #if UNITY_ANY_INSTANCING_ENABLED
+    #endif
+    #if UNITY_SHOULD_SAMPLE_SH
+    #if !defined(LIGHTMAP_ON)
+    #endif
+    #endif
+    #if defined(LIGHTMAP_ON)
+    #endif
+    #ifdef VARYINGS_NEED_FOG_AND_VERTEX_LIGHT
+        result.fogFactorAndVertexLight.x = surfVertex.fogCoord;
+        COPY_FROM_LIGHT_COORDS(result.fogFactorAndVertexLight.yzw, surfVertex);
+    #endif
+
+    DEFAULT_UNITY_TRANSFER_VERTEX_OUTPUT_STEREO(surfVertex, result);
+}
+
+// --------------------------------------------------
+// Main
+
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/Editor/ShaderGraph/Includes/ShaderPass.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/Editor/ShaderGraph/Includes/Varyings.hlsl"
+#include "Packages/com.unity.shadergraph/Editor/Generation/Targets/BuiltIn/Editor/ShaderGraph/Includes/DepthOnlyPass.hlsl"
+
+ENDHLSL
+}
+}
+CustomEditor "UnityEditor.ShaderGraph.GenericShaderGraphMaterialGUI"
+CustomEditorForRenderPipeline "UnityEditor.Rendering.BuiltIn.ShaderGraph.BuiltInUnlitGUI" ""
+CustomEditorForRenderPipeline "UnityEditor.ShaderGraphUnlitGUI" "UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset"
+FallBack "Hidden/Shader Graph/FallbackError"
 }

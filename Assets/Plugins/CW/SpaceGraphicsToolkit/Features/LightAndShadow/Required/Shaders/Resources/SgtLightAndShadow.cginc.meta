@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: b3e8fc45341f0f444ba3ffa518ba9c4c
+ShaderIncludeImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.11
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/LightAndShadow/Required/Shaders/Resources/SgtLightAndShadow.cginc
+  uploadId: 852530

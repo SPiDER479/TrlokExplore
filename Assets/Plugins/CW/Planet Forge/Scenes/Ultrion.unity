@@ -153,7 +153,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 915007379}
-  m_RootOrder: 2
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &380160474
 MonoBehaviour:
@@ -202,7 +202,7 @@ Transform:
   m_GameObject: {fileID: 616667778}
   m_LocalRotation: {x: 0, y: 1, z: 0, w: -0.00000004371139}
   m_LocalPosition: {x: 0, y: 0, z: -0.1}
-  m_LocalScale: {x: 520, y: 520, z: 520}
+  m_LocalScale: {x: 1091.4, y: 1091.4, z: 1091.4}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 970346960}
@@ -230,7 +230,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 616667778}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -243,7 +243,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2100000, guid: d0470dd0285dc2a4685aa8b900ea0cc4, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -272,7 +272,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 616667778}
-  m_Mesh: {fileID: -1086744806390364007, guid: 85e7b0bd229113941869a11455180727, type: 3}
+  m_Mesh: {fileID: 0}
 --- !u!1 &626535954
 GameObject:
   m_ObjectHideFlags: 0
@@ -308,7 +308,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &674744673
+--- !u!1 &871038075
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -316,57 +316,57 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 674744674}
-  - component: {fileID: 674744677}
-  - component: {fileID: 674744676}
-  - component: {fileID: 674744675}
+  - component: {fileID: 871038076}
+  - component: {fileID: 871038079}
+  - component: {fileID: 871038078}
+  - component: {fileID: 871038077}
   m_Layer: 0
-  m_Name: SgtCloudModel
+  m_Name: SgtOceanModel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &674744674
+--- !u!4 &871038076
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 674744673}
-  m_LocalRotation: {x: 0, y: 1, z: 0, w: -0.00000004371139}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 535, y: 535, z: 535}
+  m_GameObject: {fileID: 871038075}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -0.1}
+  m_LocalScale: {x: 1091.4, y: 1091.4, z: 1091.4}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 915007379}
+  m_Father: {fileID: 1912516624}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &674744675
+--- !u!114 &871038077
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 674744673}
+  m_GameObject: {fileID: 871038075}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5c813fcdb88f8ee46ab87ff936ceadc0, type: 3}
+  m_Script: {fileID: 11500000, guid: 441fee8d7ee25d8448637076329c2259, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  parent: {fileID: 915007380}
-  cachedMeshFilter: {fileID: 674744677}
-  cachedMeshRenderer: {fileID: 674744676}
---- !u!23 &674744676
+  parent: {fileID: 1912516627}
+  cachedMeshFilter: {fileID: 871038079}
+  cachedMeshRenderer: {fileID: 871038078}
+--- !u!23 &871038078
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 674744673}
+  m_GameObject: {fileID: 871038075}
   m_Enabled: 1
-  m_CastShadows: 3
-  m_ReceiveShadows: 0
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
   m_MotionVectors: 1
@@ -377,7 +377,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2100000, guid: a0c330cf67d0b5a4ea1690c51f4268ba, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -399,14 +399,14 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &674744677
+--- !u!33 &871038079
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 674744673}
-  m_Mesh: {fileID: -1086744806390364007, guid: 85e7b0bd229113941869a11455180727, type: 3}
+  m_GameObject: {fileID: 871038075}
+  m_Mesh: {fileID: 0}
 --- !u!850595691 &878699092
 LightingSettings:
   m_ObjectHideFlags: 0
@@ -498,7 +498,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 674744674}
   - {fileID: 1806016019}
   - {fileID: 380160473}
   m_Father: {fileID: 626535955}
@@ -516,32 +515,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c066d15bc639e8449a7a0222266b70f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  material: {fileID: 2100000, guid: 9be9fc2d7cdb25148b94a2097786a3ff, type: 2}
   coverageTex: {fileID: 0}
-  sphereMesh: {fileID: -1086744806390364007, guid: 85e7b0bd229113941869a11455180727,
-    type: 3}
-  density: 5000
+  outerRadius: 508
+  innerRadius: 507
+  cullStrength: 128
+  sortOffset: 0.01
+  erodeTiling: 70
+  erodeRange: 0.2
+  erodeStrength: 2
+  sky: {fileID: 970346961}
+  density: 1500
   resolution: 512
   highPrecision: 1
-  warp: 1
   color: {r: 1, g: 0.4760489, b: 0, a: 1}
-  shadowDensity: 40
-  shadowOffset: 0.5
-  cloudLayers:
-  - Height: 0.532
-    Thickness: 0.4
-    Density: 1
-    Shadow: 3
-    Shape: 1
-  coverage: 0
+  color2: {r: 1, g: 1, b: 1, a: 1}
+  brightness: 1
+  shadowDensity: 0.1
+  shadowOpacity: 1
+  shadowOffset: 0.6
+  shadowDetail: 0.8
+  nearDetail: 0.07
+  farDetail: 0
+  coverage: 1
   coverageBundle: {fileID: 0}
   coverageLayers: []
-  albedo: 0
-  albedoGradientTex: {fileID: 0}
-  albedoVariationX: 0
-  albedoVariationY: 0
-  albedoLatitudeX: 0.1
-  albedoStrataY: 0.1
-  model: {fileID: 674744675}
 --- !u!1 &970346959
 GameObject:
   m_ObjectHideFlags: 0
@@ -587,36 +585,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c045983184b273146aa6b17b4293937b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sourceMaterial: {fileID: 2100000, guid: d0470dd0285dc2a4685aa8b900ea0cc4, type: 2}
-  upperColor: {r: 1, g: 0.6627451, b: 0.2901961, a: 1}
-  lowerColor: {r: 1, g: 0.9176471, b: 0.654902, a: 1}
+  material: {fileID: 2100000, guid: d0470dd0285dc2a4685aa8b900ea0cc4, type: 2}
+  color: {r: 1, g: 1, b: 1, a: 1}
   brightness: 1
   innerMeshRadius: 500
-  outerMesh: {fileID: -1086744806390364007, guid: 85e7b0bd229113941869a11455180727,
-    type: 3}
-  outerMeshRadius: 1
-  height: 20
-  density: 10
-  clouds: {fileID: 915007380}
-  weight: 3
-  colorWeight: 3
-  detail: 2
-  surfaceScattering: 0.01
+  height: 35
+  density: 0.2
   cameraOffset: 0.1
+  clipRadius: -1
   depthOpaque: 5
-  lighting: 1
-  lightingStart: 0.35
-  lightingEnd: 0.77
-  lightingSharpnessR: 1.9918711
-  lightingSharpnessG: 1.9284822
-  lightingSharpnessB: 3.0796452
-  scatteringStart: 0.35
-  scatteringEnd: 0.75
-  scatteringSharpnessR: 1
-  scatteringSharpnessG: 1
-  scatteringSharpnessB: 2
-  scatteringTerms: {x: 500, y: 100, z: 2, w: -2}
-  scatteringPower: {x: 5, y: 5, z: 1, w: 0.1}
+  rayleighColor: {r: 1, g: 0.17647058, b: 0.19293761, a: 1}
+  rayleighMultiplier: 33.1
+  rayleighHeight: 0.255
+  mieAbsorb: 4.4
+  mieMultiplier: 21
+  mieHeight: 0.02
+  mieAsymmetry: 0.76
+  mieAsymmetry2: 0.999
+  ozoneColor: {r: 0.345, g: 1, b: 0.045, a: 1}
+  ozoneMultiplier: 1.881
+  ozoneHeight: 0.25
+  ozoneThickness: 0.15
+  albedoTex: {fileID: 0}
+  exposure: 20
   model: {fileID: 616667780}
 --- !u!1001 &1422857340
 PrefabInstance:
@@ -844,7 +835,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 915007379}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1806016020
 MonoBehaviour:
@@ -895,7 +886,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 871038076}
   m_Father: {fileID: 626535955}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -923,6 +915,7 @@ MonoBehaviour:
   surfaceSharpness: 500
   deepSharpness: 600
   brightnessMin: 0
+  castShadows: 0
 --- !u!114 &1912516626
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -949,6 +942,7 @@ MonoBehaviour:
   flickerRateMin: 10
   flickerRateMax: 50
   brightnessMin: 0
+  castShadows: 0
 --- !u!114 &1912516627
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -961,43 +955,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5de2855d40c4cfa4da722a6c7ae99c9c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  radius: 498
+  material: {fileID: 2100000, guid: a0c330cf67d0b5a4ea1690c51f4268ba, type: 2}
+  sky: {fileID: 970346961}
+  radius: 500
   detail: 1.2
   cloudShadow: {fileID: 915007380}
-  observers: []
-  surfaceMaterial: {fileID: 2100000, guid: a0c330cf67d0b5a4ea1690c51f4268ba, type: 2}
+  observer: {fileID: 0}
+  cameraOffset: 0.1
   surfaceColor: {r: 0.5019608, g: 0.007843138, b: 0.042457614, a: 1}
   surfaceDensity: 0.5
-  surfaceMinimumOpacity: 0
-  surfaceSmoothness: 0.9
-  surfaceTexture: {fileID: 2800000, guid: 14f5906f302fa6e4c96d738618666ff5, type: 3}
-  surfaceTiling: {x: 100, y: 1000, z: 0, w: 0}
-  surfaceRange: {x: 200, y: 10, z: 0, w: 0}
-  surfaceStrength: {x: 0.5, y: 0, z: 0, w: 0}
-  underwaterColor: {r: 0.5019608, g: 0.007843138, b: 0.043137256, a: 1}
+  surfaceSmoothness: 0.95
   underwaterExtinction: {x: 1, y: 1, z: 1, w: 0.1}
   underwaterExtinctionRange: 10
-  underwaterDensity: 0.5
-  underwaterMinimumOpacity: 0
   underwaterLightingSharpness: 5
   underwaterShadowRange: 10
-  wavesTexture: {fileID: 2800000, guid: 14f5906f302fa6e4c96d738618666ff5, type: 3}
-  wavesOffset: {fileID: 2800000, guid: 41156fa711f40054f94fecbd12f53c57, type: 3}
-  wavesSpeed: 3
-  wavesTiling: 100
-  wavesDisplacement: 0
+  wavesQuality: 3
+  wavesSpeed: 1.5
+  wavesDisplacement: 0.05
+  wavesFrequency: 2
+  wavesSteepness: 0.5
+  ripples: 1
+  ripplesTexture: {fileID: 2800000, guid: fa3ccaeff005f9e488f927b6e5484137, type: 3}
+  ripplesOffset: {fileID: 0}
+  ripplesScale: 1
+  ripplesSpeed: 0.75
   ripplesStrength: 0.5
-  ripplesTiling: 10
-  caustics: 1
-  causticsTexture: {fileID: 11700000, guid: f968585bd4a33c64e9699bc8a9c15972, type: 3}
+  fade: 0
+  fadeDistance: 200
+  fadeDeepDistance: 10000
+  fadeDeepDensity: 0.1
   causticsLight: {fileID: 0}
-  causticsSpeed: 0.5
-  causticsTiling: 0.5
-  causticsOpacity: 1
-  causticsPower: 2
-  causticsMaxDepth: 10
-  causticsSurfaceSharpness: 10
-  causticsDeepSharpness: 10
+  model: {fileID: 871038077}
 --- !u!1 &1979672835
 GameObject:
   m_ObjectHideFlags: 0
@@ -1047,6 +1035,7 @@ MonoBehaviour:
   editorDetail: 3.2
   initDetail: 0
   detail: 4
+  boostMultiplier: 1.75
   minimumTriangleSize: 0.01
   lodBudget: 0.001
   lodSteps: 30
@@ -1060,7 +1049,9 @@ MonoBehaviour:
   castShadows: 1
   receiveShadows: 1
   radius: 500
+  sky: {fileID: 970346961}
   cloudShadow: {fileID: 915007380}
+  oceanFade: {fileID: 0}
   albedoTex: {fileID: 0}
   heightTex: {fileID: 0}
   heightMidpoint: 0

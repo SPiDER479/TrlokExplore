@@ -42,7 +42,6 @@ Shader "Hidden/SgtCloud_Coverage"
 			sampler2D _SGT_CoverageTex;
 			float2    _SGT_CoverageSize;
 			float4x4  _SGT_Matrix;
-			float     _SGT_CloudWarp;
 
 			sampler _SGT_OldGradientTex;
 			sampler _SGT_NewGradientTex;
@@ -119,14 +118,15 @@ Shader "Hidden/SgtCloud_Coverage"
 				float c = cos(angle); float s = sin(angle); return float2( p.x * c - p.y * s, p.x * s + p.y * c);
 			}
 
-			float4 SGT_CalculateCoords(float3 direction)
+			float3 SGT_EquirectangularToDirection(float2 uv)
 			{ 
-				//float t = 0.25f - direction.x * rcp(abs(direction.x) + abs(direction.z)) * 0.25f;
-				//float u = 0.5f - (direction.z < 0.0f ? -t : t);
-				float u = 0.5f - atan2(direction.z, direction.x) / 3.1415926535f * 0.5f;
-				float v = 0.5f + asin(direction.y) / 3.1415926535f;
+				float t = uv.x * UNITY_PI * 2.0f;
+				float p = uv.y * UNITY_PI;
+				float x = sin(t) * sin(p);
+				float y = cos(p);
+				float z = cos(t) * sin(p);
 
-				return float4(u, v, direction.xz * 0.25f);
+				return float3(x, y, z);
 			}
 
 			float4 SGT_CalculateGradsX(float4 coords)
@@ -195,18 +195,8 @@ Shader "Hidden/SgtCloud_Coverage"
 
 			float4 frag(v2f i) : SV_Target
 			{
-				float2 coord       = i.texcoord0.xy * 2.0f - 1.0f;
-				float2 warpedCoord = coord * pow(saturate(length(coord)), _SGT_CloudWarp);
-
-				float3 rayP = float3(-warpedCoord.x, warpedCoord.y, -1.0f);
-				float3 rayD = float3(0.0f, 0.0f, 1.0f);
-				float  rayX = dot(rayP, rayD);
-				float  rayY = dot(rayP, rayP) - 1.0f;
-				float  rayZ = rayX * rayX - rayY; if (rayZ < 0.0f) return 0; // Miss
-				float  rayL = max(-rayX - sqrt(rayZ), 0.0f);
-
-				float3 d      = normalize(mul((float3x3)_SGT_Matrix, rayP + rayD * rayL));
-				float4 coords = SGT_CalculateCoords(d);
+				float3 direction = SGT_EquirectangularToDirection(i.texcoord0.xy);
+				float4 coords    = float4(i.texcoord0.xy, direction.xz * 0.25f);
 
 				#if _SGT_GENERATE_COVERAGE
 					float4 col = 0.0f;
@@ -235,15 +225,15 @@ Shader "Hidden/SgtCloud_Coverage"
 				#endif
 
 				#if _SGT_DETAIL_COUNT >= 1
-					col = SGT_ContributeDetail(col, d, coords, _SGT_DetailTex0, _SGT_DetailData0, _SGT_DetailChannels0);
+					col = SGT_ContributeDetail(col, direction, coords, _SGT_DetailTex0, _SGT_DetailData0, _SGT_DetailChannels0);
 				#endif
 
 				#if _SGT_DETAIL_COUNT >= 2
-					col = SGT_ContributeDetail(col, d, coords, _SGT_DetailTex1, _SGT_DetailData1, _SGT_DetailChannels1);
+					col = SGT_ContributeDetail(col, direction, coords, _SGT_DetailTex1, _SGT_DetailData1, _SGT_DetailChannels1);
 				#endif
 
 				#if _SGT_DETAIL_COUNT >= 3
-					col = SGT_ContributeDetail(col, d, coords, _SGT_DetailTex2, _SGT_DetailData2, _SGT_DetailChannels2);
+					col = SGT_ContributeDetail(col, direction, coords, _SGT_DetailTex2, _SGT_DetailData2, _SGT_DetailChannels2);
 				#endif
 
 				return saturate(col);
@@ -273,7 +263,6 @@ Shader "Hidden/SgtCloud_Coverage"
 			};
 
 			float4x4  _SGT_Matrix;
-			float     _SGT_CloudWarp;
 			sampler2D _SGT_GradientTex;
 			float4    _SGT_Variation;
 			sampler2D _SGT_CloudCoverageTex;
@@ -315,31 +304,24 @@ Shader "Hidden/SgtCloud_Coverage"
 				return lerp(lerp(sample3, sample2, weights.x), lerp(sample1, sample0, weights.x), weights.y);
 			}
 
-			float4 SGT_CalculateCoords(float3 direction)
-			{
-				float u = 0.5f - atan2(direction.z, direction.x) / 3.1415926535f * 0.5f;
-				float v = 0.5f + asin(direction.y) / 3.1415926535f;
+			float3 SGT_EquirectangularToDirection(float2 uv)
+			{ 
+				float t = uv.x * UNITY_PI * 2.0f;
+				float p = uv.y * UNITY_PI;
+				float x = sin(t) * sin(p);
+				float y = cos(p);
+				float z = cos(t) * sin(p);
 
-				return float4(u, v * 0.5f, direction.xz * 0.25f);
+				return float3(x, y, z);
 			}
 
 			float4 frag(v2f i) : SV_Target
 			{
-				float2 coord       = i.texcoord0.xy * 2.0f - 1.0f;
-				float2 warpedCoord = coord * pow(saturate(length(coord)), _SGT_CloudWarp);
-
-				float3 rayP = float3(-warpedCoord.x, warpedCoord.y, -1.0f);
-				float3 rayD = float3(0.0f, 0.0f, 1.0f);
-				float  rayX = dot(rayP, rayD);
-				float  rayY = dot(rayP, rayP) - 1.0f;
-				float  rayZ = rayX * rayX - rayY; if (rayZ < 0.0f) return 0; // Miss
-				float  rayL = max(-rayX - sqrt(rayZ), 0.0f);
-
-				float3 d   = normalize(mul((float3x3)_SGT_Matrix, rayP + rayD * rayL));
+				float3 direction = SGT_EquirectangularToDirection(i.texcoord0.xy);
 				float4 col = tex2Dlod(_SGT_CloudCoverageTex, float4(i.texcoord0.xy, 0, 0));
 
 				#if _SGT_GRADIENT_COLORING
-					col = tex2D(_SGT_GradientTex, _SGT_Variation.xy + _SGT_Variation.zw * float2(d.y * 0.5f + 0.5f, max(max(col.x, col.y), max(col.z, col.w))));
+					col = tex2D(_SGT_GradientTex, _SGT_Variation.xy + _SGT_Variation.zw * float2(direction.y * 0.5f + 0.5f, max(max(col.x, col.y), max(col.z, col.w))));
 				#endif
 
 				return saturate(col);
