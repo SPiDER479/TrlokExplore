@@ -9,6 +9,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: OceanRays
   m_Shader: {fileID: 4800000, guid: e864ddb4adc09af4ebb070cb33ee9838, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords:
   - _SURFACE_TYPE_TRANSPARENT
@@ -18,12 +20,11 @@ Material:
   m_CustomRenderQueue: 3000
   stringTagMap:
     MotionVector: User
-    RenderType: Transparent
   disabledShaderPasses:
   - TransparentDepthPrepass
   - TransparentDepthPostpass
   - TransparentBackface
-  - MOTIONVECTORS
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -66,6 +67,8 @@ Material:
     - _ExcludeFromTUAndAA: 0
     - _OpaqueCullMode: 2
     - _PerPixelSorting: 0
+    - _QueueControl: 1
+    - _QueueOffset: 0
     - _RenderQueueType: 4
     - _SGT_CloudWarp: 0
     - _SGT_Clouds: 0
@@ -104,3 +107,4 @@ Material:
     - _SGT_StretchDirection: {r: 0, g: 0, b: 0, a: 0}
     - _SGT_WrapSize: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1
