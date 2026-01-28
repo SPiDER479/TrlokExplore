@@ -9,8 +9,6 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: OceanSurface_Sphere LOW
   m_Shader: {fileID: 4800000, guid: 69e66e7ae071ae34580f6076eadfc5aa, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _SGT_CLOUDS
   - _SGT_LIGHTING
@@ -27,12 +25,13 @@ Material:
   m_CustomRenderQueue: 3000
   stringTagMap:
     MotionVector: User
+    RenderType: Transparent
   disabledShaderPasses:
   - TransparentDepthPrepass
   - TransparentDepthPostpass
   - TransparentBackface
   - RayTracingPrepass
-  m_LockedProperties: 
+  - MOTIONVECTORS
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -109,8 +108,6 @@ Material:
     - _MaterialTypeMask: 2
     - _OpaqueCullMode: 2
     - _PerPixelSorting: 0
-    - _QueueControl: 1
-    - _QueueOffset: 0
     - _RayTracing: 0
     - _ReceivesSSR: 1
     - _ReceivesSSRTransparent: 0
@@ -120,7 +117,6 @@ Material:
     - _SGT_Albedo: 0
     - _SGT_Caustics: 0
     - _SGT_CausticsBottomSharpness: 0.1
-    - _SGT_CausticsBrightness: 10
     - _SGT_CausticsSpeed: 0.2
     - _SGT_CausticsTiling: 1
     - _SGT_CausticsTopSharpness: 2
@@ -141,8 +137,6 @@ Material:
     - _SGT_Refraction: 0
     - _SGT_RefractionDistance: 0.39
     - _SGT_RingShadowCount: 0
-    - _SGT_SSS: 0
-    - _SGT_ScatteringDistanceFade: 0.01
     - _SGT_Shape: 1
     - _SGT_Shore: 1
     - _SGT_ShoreBias: 0.324
@@ -207,4 +201,3 @@ Material:
     - _SGT_UnderwaterColor: {r: 0, g: 0, b: 0, a: 0}
     - _SGT_UnderwaterExtinction: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
-  m_AllowLocking: 1

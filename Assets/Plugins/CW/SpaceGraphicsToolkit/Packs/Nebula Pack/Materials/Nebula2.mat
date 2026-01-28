@@ -2,25 +2,20 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!21 &2100000
 Material:
-  serializedVersion: 8
+  serializedVersion: 6
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Nebula2
   m_Shader: {fileID: 4800000, guid: 861c8831d07ecb94b9f4e67786286374, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - _SGT_SPHEREMASK_OFF
-  m_InvalidKeywords: []
+  m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -60,10 +55,6 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _SGT_DetailTexture:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     - _SGT_NearTex:
         m_Texture: {fileID: 2800000, guid: aa62984c244417943a42e326d40a286e, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -72,19 +63,6 @@ Material:
         m_Texture: {fileID: 2800000, guid: 471b6023f05baa841b977ca9546e3af9, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - unity_Lightmaps:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_LightmapsInd:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - unity_ShadowMasks:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
     m_Floats:
     - _BumpScale: 1
     - _CW_DisableFog: 0
@@ -94,22 +72,13 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
-    - _HasDetail: 0
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _QueueControl: -1
-    - _QueueOffset: 0
     - _SGT_ColorShift: 0
-    - _SGT_DetailBias: 1
-    - _SGT_DetailStrength: 1
-    - _SGT_DetailTiling: 5
     - _SGT_Near: 0
     - _SGT_NearRangeRecip: 1
-    - _SGT_SphereMask: 0
-    - _SGT_SphereMaskFalloff: 3
-    - _SGT_SphereMaskRadius: 1
     - _SGT_TextureJitter: 1.5
     - _SGT_TextureScale: 0.425
     - _SmoothnessTextureChannel: 0
@@ -122,8 +91,6 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SGT_RimMax: {r: 4, g: 5, b: 5, a: 1}
     - _SGT_RimMin: {r: 10, g: 12, b: 12, a: 1}
-    - _SGT_SphereMaskPosition: {r: 0, g: 0, b: 0, a: 1}
     - _SGT_TextureBlend: {r: 0.1, g: 6, b: 0, a: 0}
     - _SGT_Tint: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
-  m_AllowLocking: 1
