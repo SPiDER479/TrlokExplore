@@ -9,6 +9,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: SGT_Landscape_Sphere + Clouds
   m_Shader: {fileID: 4800000, guid: ccaf40f7b11b3284abc916adc0781fcd, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _SGT_CLOUDS
   - _SGT_SHAPE_SPHERE
@@ -27,7 +29,7 @@ Material:
   - TransparentDepthPostpass
   - TransparentBackface
   - RayTracingPrepass
-  - MOTIONVECTORS
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -90,6 +92,8 @@ Material:
     - _MaterialTypeMask: 2
     - _OpaqueCullMode: 2
     - _PerPixelSorting: 0
+    - _QueueControl: 1
+    - _QueueOffset: 0
     - _RayTracing: 0
     - _ReceivesSSR: 0
     - _ReceivesSSRTransparent: 0
@@ -145,3 +149,4 @@ Material:
     - _SGT_Off: {r: 0.5, g: 0.5, b: -3, a: -1}
     - _Shift: {r: 0, g: 0, b: 1, a: 1}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1
