@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Character
   - SenderTMP
+  - DataUITrigger
   layers:
   - Default
   - TransparentFX
@@ -13,7 +14,7 @@ TagManager:
   - 
   - Water
   - UI
-  - 
+  - Sun
   - Mercury
   - Venus
   - Earth

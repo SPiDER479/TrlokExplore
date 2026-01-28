@@ -15,7 +15,8 @@ public class Warp : MonoBehaviour
 
     public void WarpTo(TMP_Dropdown dropdown)
     {
-        int index = dropdown.value;
+        int index = dropdown.value - 1;
+        dropdown.value = 0;
         
         if (index >= 0 && index < warpableObjects.Length)
         {
