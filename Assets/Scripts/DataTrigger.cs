@@ -20,6 +20,7 @@ public class DataTrigger : MonoBehaviour
     {
         if (other.CompareTag("DataUITrigger"))
         {
+            StopAllCoroutines();
             text.text = other.GetComponent<DataContainer>().dataSet.data;
             StartCoroutine(AnimateOpen());
         }
@@ -29,6 +30,7 @@ public class DataTrigger : MonoBehaviour
     {
         if (other.CompareTag("DataUITrigger"))
         {
+            StopAllCoroutines();
             StartCoroutine(AnimateClose());
         }
     }
