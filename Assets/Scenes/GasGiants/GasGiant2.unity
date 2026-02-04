@@ -179,6 +179,34 @@ PrefabInstance:
       propertyPath: m_Name
       value: Demo UI + Light + Camera
       objectReference: {fileID: 0}
+    - target: {fileID: 4458438687575116855, guid: e3c0a640e9283cd49b3f98e3060ebfa7, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 599.39526
+      objectReference: {fileID: 0}
+    - target: {fileID: 4458438687575116855, guid: e3c0a640e9283cd49b3f98e3060ebfa7, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 258.58218
+      objectReference: {fileID: 0}
+    - target: {fileID: 4458438687575116855, guid: e3c0a640e9283cd49b3f98e3060ebfa7, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -730.9161
+      objectReference: {fileID: 0}
+    - target: {fileID: 4458438687575116855, guid: e3c0a640e9283cd49b3f98e3060ebfa7, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.77227557
+      objectReference: {fileID: 0}
+    - target: {fileID: 4458438687575116855, guid: e3c0a640e9283cd49b3f98e3060ebfa7, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.38205248
+      objectReference: {fileID: 0}
+    - target: {fileID: 4458438687575116855, guid: e3c0a640e9283cd49b3f98e3060ebfa7, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.48272136
+      objectReference: {fileID: 0}
+    - target: {fileID: 4458438687575116855, guid: e3c0a640e9283cd49b3f98e3060ebfa7, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.15686442
+      objectReference: {fileID: 0}
     - target: {fileID: 4522210901365020762, guid: e3c0a640e9283cd49b3f98e3060ebfa7, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -390,7 +418,7 @@ MonoBehaviour:
   sharpnessB: 20
   radiusMax: 600
   startCalled: 0
---- !u!28 &599037731
+--- !u!28 &366778318
 Texture2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1021,7 +1049,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de8a8b6168d60f746946e705aa4b0c3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  texture: {fileID: 599037731}
+  texture: {fileID: 366778318}
   radiusMin: 800
   radiusMax: 1000
 --- !u!114 &1461092602

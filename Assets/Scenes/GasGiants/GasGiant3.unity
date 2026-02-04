@@ -197,7 +197,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de8a8b6168d60f746946e705aa4b0c3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  texture: {fileID: 603655470}
+  texture: {fileID: 956787219}
   radiusMin: 800
   radiusMax: 1000
 --- !u!114 &41054302
@@ -298,52 +298,6 @@ MonoBehaviour:
   sharpnessB: 20
   radiusMax: 600
   startCalled: 0
---- !u!28 &603655470
-Texture2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: SgtRingSystem Generated ShadowTex
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 4
-  m_Width: 32
-  m_Height: 1
-  m_CompleteImageSize: 128
-  m_MipsStripped: 0
-  m_TextureFormat: 4
-  m_MipCount: 1
-  m_IsReadable: 1
-  m_IsPreProcessed: 0
-  m_IgnoreMipmapLimit: 1
-  m_MipmapLimitGroupName: 
-  m_StreamingMipmaps: 0
-  m_StreamingMipmapsPriority: 0
-  m_VTOnly: 0
-  m_AlphaIsTransparency: 0
-  m_ImageCount: 1
-  m_TextureDimension: 2
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 1
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 1
-    m_WrapV: 1
-    m_WrapW: 1
-  m_LightmapFormat: 0
-  m_ColorSpace: 1
-  m_PlatformBlob: 
-  image data: 128
-  _typelessdata: fffffffff5f7f6bdced3cfb9cdd3cececfd3d1d2f3f3f5b8f1efefa1ebe8e19ae6e2d9b3e9e6ded1caccc6e9b5bdb9e2b5bdbbddced1cfdee4e2dccce1ded3b7ddddd0bed0d0c4d7ced2cbefbcc3bfecaeb5abdca4a898ccc6c6b8aedfe3dc9fc9d1cc91c4cec992a5afa997c8cecd9dcdd0d1beeeeff1d9f4f5f5f8ffffffff
-  m_StreamData:
-    serializedVersion: 2
-    offset: 0
-    size: 0
-    path: 
 --- !u!1 &616667778
 GameObject:
   m_ObjectHideFlags: 0
@@ -742,6 +696,52 @@ LightingSettings:
   m_PVRFilteringAtrousPositionSigmaIndirect: 2
   m_PVRFilteringAtrousPositionSigmaAO: 1
   m_RespectSceneVisibilityWhenBakingGI: 0
+--- !u!28 &956787219
+Texture2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: SgtRingSystem Generated ShadowTex
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 4
+  m_Width: 32
+  m_Height: 1
+  m_CompleteImageSize: 128
+  m_MipsStripped: 0
+  m_TextureFormat: 4
+  m_MipCount: 1
+  m_IsReadable: 1
+  m_IsPreProcessed: 0
+  m_IgnoreMipmapLimit: 1
+  m_MipmapLimitGroupName: 
+  m_StreamingMipmaps: 0
+  m_StreamingMipmapsPriority: 0
+  m_VTOnly: 0
+  m_AlphaIsTransparency: 0
+  m_ImageCount: 1
+  m_TextureDimension: 2
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 1
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 1
+    m_WrapV: 1
+    m_WrapW: 1
+  m_LightmapFormat: 0
+  m_ColorSpace: 1
+  m_PlatformBlob: 
+  image data: 128
+  _typelessdata: fffffffff5f7f6bdced3cfb9cdd3cececfd3d1d2f3f3f5b8f1efefa1ebe8e19ae6e2d9b3e9e6ded1caccc6e9b5bdb9e2b5bdbbddced1cfdee4e2dccce1ded3b7ddddd0bed0d0c4d7ced2cbefbcc3bfecaeb5abdca4a898ccc6c6b8aedfe3dc9fc9d1cc91c4cec992a5afa997c8cecd9dcdd0d1beeeeff1d9f4f5f5f8ffffffff
+  m_StreamData:
+    serializedVersion: 2
+    offset: 0
+    size: 0
+    path: 
 --- !u!1 &970346959
 GameObject:
   m_ObjectHideFlags: 0
@@ -869,6 +869,34 @@ PrefabInstance:
     - target: {fileID: 4458438687503101120, guid: e3c0a640e9283cd49b3f98e3060ebfa7, type: 3}
       propertyPath: m_Name
       value: Demo UI + Light + Camera
+      objectReference: {fileID: 0}
+    - target: {fileID: 4458438687575116855, guid: e3c0a640e9283cd49b3f98e3060ebfa7, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 601.27576
+      objectReference: {fileID: 0}
+    - target: {fileID: 4458438687575116855, guid: e3c0a640e9283cd49b3f98e3060ebfa7, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 262.236
+      objectReference: {fileID: 0}
+    - target: {fileID: 4458438687575116855, guid: e3c0a640e9283cd49b3f98e3060ebfa7, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -717.5415
+      objectReference: {fileID: 0}
+    - target: {fileID: 4458438687575116855, guid: e3c0a640e9283cd49b3f98e3060ebfa7, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7497838
+      objectReference: {fileID: 0}
+    - target: {fileID: 4458438687575116855, guid: e3c0a640e9283cd49b3f98e3060ebfa7, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.41133082
+      objectReference: {fileID: 0}
+    - target: {fileID: 4458438687575116855, guid: e3c0a640e9283cd49b3f98e3060ebfa7, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.48003307
+      objectReference: {fileID: 0}
+    - target: {fileID: 4458438687575116855, guid: e3c0a640e9283cd49b3f98e3060ebfa7, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.19544683
       objectReference: {fileID: 0}
     - target: {fileID: 4522210901365020762, guid: e3c0a640e9283cd49b3f98e3060ebfa7, type: 3}
       propertyPath: m_AnchorMax.y
