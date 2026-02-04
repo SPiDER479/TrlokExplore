@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.cesium.unity": "1.22.0",
     "com.soupday.cc3_unity_tools": "https://github.com/soupday/cc_unity_tools_URP.git",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.ai.navigation": "2.0.10",
@@ -62,5 +63,14 @@
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
     "com.unity.modules.xr": "1.0.0"
-  }
+  },
+  "scopedRegistries": [
+    {
+      "name": "Cesium",
+      "url": "https://unity.pkg.cesium.com",
+      "scopes": [
+        "com.cesium.unity"
+      ]
+    }
+  ]
 }
