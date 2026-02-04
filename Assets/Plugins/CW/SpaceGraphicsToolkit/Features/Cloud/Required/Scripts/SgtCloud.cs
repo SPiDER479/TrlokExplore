@@ -212,7 +212,7 @@ namespace SpaceGraphicsToolkit.Cloud
 			{
 				if (sky != null)
 				{
-					sky.ApplySettings(properties);
+					sky.ApplySettings(properties, finalCamera);
 				}
 
 				if (generatedCoverageTexture != null)

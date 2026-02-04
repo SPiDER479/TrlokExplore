@@ -411,6 +411,7 @@ namespace SpaceGraphicsToolkit.Volumetrics
 	}
 
 #if __URP__
+	[System.Serializable]
 	public class CustomDepthPass : ScriptableRenderPass
 	{
 		#if __HAS_RENDER_GRAPH__
@@ -487,6 +488,7 @@ namespace SpaceGraphicsToolkit.Volumetrics
 		#endif
 	}
 #elif __HDRP__
+	[System.Serializable]
 	public class CustomDepthPass : CustomPass
 	{
 		public SgtVolumeCamera parent;

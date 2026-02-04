@@ -4,19 +4,11 @@ BEGIN_PROPERTIES
 	
 	[Header(LIGHTING)]
 	[Toggle(_SGT_LIGHTING)] _SGT_Lighting("	Enable", Float) = 0
-	
-	[Header(DITHER)]
-	[Toggle(_SGT_DITHER)] _SGT_Dither("	Enable", Float) = 0
-	
-	[Header(CLIP INNER)]
-	[Toggle(_SGT_CLIP_INNER)] _SGT_ClipInner("	Enable", Float) = 0
 END_PROPERTIES
 
 BEGIN_DEFINES
 	#pragma shader_feature_local _SGT_ALBEDO_OFF _SGT_ALBEDO
 	#pragma shader_feature_local _SGT_LIGHTING_OFF _SGT_LIGHTING
-	#pragma shader_feature_local _SGT_DITHER_OFF _SGT_DITHER
-	#pragma shader_feature_local _SGT_CLIP_OFF _SGT_CLIP_INNER
 END_DEFINES
 
 #include "SgtSky.cginc"
@@ -31,6 +23,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	float  wfar = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
 	float  worldEyeDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
 	float3 tint = 1.0f;
+	float  dither = SGT_DitherFast(d.screenUV);
 	  
 	wfar = min(wfar, worldEyeDepth);
 		
@@ -38,16 +31,14 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	float3 ocam = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos, 1.0f)).xyz;
 	float3 ofar = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos + wdir * wfar, 1.0f)).xyz;
 	float  omax = distance(ocam, ofar);
-	float3 odir = normalize(ofar - ocam);
+	float3 odir = normalize(mul(_SGT_WorldToSky, float4(-d.worldSpaceViewDir, 0.0f)).xyz);
 	float3 odst = SGT_SphereTest(ocam, odir, 1.0f);
 		
 	odst.xy = max(odst.xy, 0.0f);
 		
-	#if _SGT_CLIP_INNER
-		float3 ihit = SGT_SphereTest(ocam, odir, _SGT_SkyRadius.w);
-		omax = ihit.z > 0.0f && ihit.x > 0.0f ? min(ihit.x, omax) : omax;
-		//if (ihit.z > 0.0f && ihit.x > 0.0f && ihit.x < omax) discard;
-	#endif
+	// Clip Inner
+	float3 ihit = SGT_SphereTest(ocam, odir, _SGT_SkyRadius.w);
+	omax = ihit.z > 0.0f && ihit.x > 0.0f ? min(ihit.x, omax) : omax;
 		
 	float3 rayPos = ocam + odir * odst.x;
 	float3 rayDir = odir;
@@ -59,13 +50,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	#else
 		float3 sunDir = normalize(rayPos);
 	#endif
-		
-	#if _SGT_DITHER
-		float dither = SGT_DitherBlue(d.screenUV);
-	#else
-		float dither = 0.5f;
-	#endif
-		
+	
 	#if _SGT_ALBEDO
 		float2 uv  = SGT_DirectionToEquirectangular(rayPos);
 		float2 uvx = ddx(uv); uvx.x *= (abs(uvx.x) < 0.5f);

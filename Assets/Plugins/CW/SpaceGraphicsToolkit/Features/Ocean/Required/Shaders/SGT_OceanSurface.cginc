@@ -25,9 +25,6 @@ BEGIN_PROPERTIES
 	[Header(LIGHTING)]
 	[Toggle(_SGT_LIGHTING)] _SGT_Lighting("	Enable", Float) = 0
 	
-	[Header(DITHER)]
-	[Toggle(_SGT_DITHER)] _SGT_Dither("	Enable", Float) = 0
-	
 	[Header(CLOUDS)]
 	[Toggle(_SGT_CLOUDS)] _SGT_Clouds("	Enable", Float) = 0
 	[HideInInspector] [NoScaleOffset] _SGT_CloudShadowTex("", 2D) = "black" {}
@@ -50,9 +47,10 @@ BEGIN_PROPERTIES
 	_SGT_ShoreWidth("	Width", Range(0.1, 10)) = 1
 	_SGT_ShoreBias("	Bias", Range(0, 1)) = 0.5
 	
-	[Header(FAST SSR)]
+	[Header(FAST REFLECTIONS)]
 	[Toggle(_SGT_FASTSSR)] _SGT_FastSSR("	Enable", Float) = 0
 	_SGT_FssrFresnel("	Fresnel", Range(4, 32)) = 10
+	_SGT_FssrError("	Error Threshold", Float) = 100
 
 	[Header(SUBSURFACE SCATTERING)]
 	[Toggle(_SGT_FASTSSS)] _SGT_SSS("	Enable", Float) = 0
@@ -67,7 +65,6 @@ BEGIN_DEFINES
 	#pragma shader_feature_local _SGT_SHAPE_BOX _SGT_SHAPE_SPHERE
 	#pragma shader_feature_local _SGT_ALBEDO_OFF _SGT_ALBEDO
 	#pragma shader_feature_local _SGT_LIGHTING_OFF _SGT_LIGHTING
-	#pragma shader_feature_local _SGT_DITHER_OFF _SGT_DITHER
 	#pragma shader_feature_local _SGT_CLOUDS_OFF _SGT_CLOUDS
 	#pragma shader_feature_local _SGT_CAUSTICS_OFF _SGT_CAUSTICS
 	#pragma shader_feature_local _SGT_SHORE_OFF _SGT_SHORE
@@ -106,8 +103,9 @@ float     _SGT_ShoreDistance;
 float     _SGT_ShoreWidth;
 float     _SGT_ShoreBias;
 
-// FAST SSR
+// FAST REFLECTIONS
 float _SGT_FssrFresnel;
+float _SGT_FssrError;
 
 // SUBSURFACE SCATTERING
 float _SGT_ScatteringDistanceFade;
@@ -139,13 +137,13 @@ float SGT_Delta(float3 worldPos, float weight)
 	return lerp(planeDist, sphereDist, weight);
 }
 
-float CW_SampleCaustics(float3 worldPosition)
+float CW_SampleCaustics(float3 worldPosition, float blurStrength)
 {
 	float  slice     = _Time.y * _SGT_CausticsSpeed;
 	float  delta     = SGT_Delta(worldPosition, 0);
 	float  shore     = saturate(-delta * _SGT_CausticsTopSharpness);
 	float  deep      = exp(min(0.0, delta) * _SGT_SurfaceDensity);
-	float  lod       = pow(1.0 - deep, 1) * 4.0;
+	float  lod       = pow(1.0 - deep, 1) * 4.0 + blurStrength * 5.0;
 	worldPosition += tex3D(_SGT_NoiseTex, worldPosition * 0.1 + float3(0,0,_Time.x)).x * pow(1.0 - deep, 2.0) * 0.5;
 	
 	float2 posA      = mul(_SGT_CausticsMatrixA, float4(worldPosition, 1.0f)).xy;
@@ -157,22 +155,85 @@ float CW_SampleCaustics(float3 worldPosition)
 	return lerp(causticsA, causticsB, _SGT_CausticsBlend) * shore * deep * _SGT_CausticsBrightness;
 }
 
-float3 SGT_SSR(float3 worldPos, float3 worldNormal, float3 worldViewDir, float worldEyeDepth, float surfaceDistance, float4 baseColor, float wmax)
+float2 SGT_FixRefractedUV(float2 originalUV, float2 refractedUV)
 {
-	worldEyeDepth = min(worldEyeDepth, distance(_WorldSpaceCameraPos, _SGT_SphereData.xyz)); // Clip distance if there is no geometry
+	float2 uvOffset = refractedUV - originalUV;
 	
-	float3 reflectedPos = worldPos + reflect(worldViewDir, worldNormal) * abs(worldEyeDepth - surfaceDistance);
-	float2 uv           = SGT_ProjectWorldToScreen(reflectedPos);
-	float2 edge         = saturate(1.0 - abs(uv * 2.0 - 1.0));
-	float  fresnel      = pow(1.0 - saturate(dot(worldNormal, -worldViewDir)), _SGT_FssrFresnel);
-	float  sceneDepth   = SSS_GetSceneWorldDistance(uv, SSS_GetSceneDepth(uv));
+	// Edge distances: 0 at edge, 1 at center
+	float2 edgeDistMin = originalUV;
+	float2 edgeDistMax = 1.0 - originalUV;
 	
-	if (sceneDepth < wmax)
-	{
-		baseColor.xyz = SSS_GetSceneColorHD(uv);
-	}
+	// Select the edge we're moving towards
+	float2 relevantEdgeDist = lerp(edgeDistMax, edgeDistMin, step(uvOffset, 0.0));
+	
+	// Attenuation based on offset vs available distance
+	float  falloffZone  = 0.25;
+	float2 attenuation  = saturate(relevantEdgeDist / (abs(uvOffset) + falloffZone));
+	float  refractAtten = min(attenuation.x, attenuation.y);
+	
+	return lerp(originalUV, refractedUV, refractAtten);
+}
 
-	return baseColor.xyz * edge.x * edge.y * fresnel;
+float SGT_EdgeFade(float2 screenUV, float fadeWidth)
+{
+	float2 d = min(screenUV, 1.0 - screenUV);
+	return smoothstep(0, fadeWidth, min(d.x, d.y));
+}
+
+float3 SGT_SurfaceSSR(float2 screenUV, float3 worldPos, float3 worldNormal, float3 worldViewDir, float worldEyeDepth, float surfaceDistance, float wmax, float3 baseColor, float3 sunDir, float dither, float3 lighting)
+{
+	worldEyeDepth = min(worldEyeDepth, distance(_WorldSpaceCameraPos, _SGT_SphereData.xyz));
+	
+	float3 reflectedDir   = reflect(worldViewDir, worldNormal);
+	float  reflectedLen   = abs(worldEyeDepth - surfaceDistance);
+	float3 reflectedPos   = worldPos + reflectedDir * reflectedLen;
+	float2 reflectedUV    = SGT_ProjectWorldToScreen(reflectedPos);
+	float3 reflectedColor = SSS_GetSceneColorHD(reflectedUV);
+	float  reflectedDepth = SSS_GetSceneWorldDistance(reflectedUV, SSS_GetSceneDepth(reflectedUV));
+	float3 reflectedVDir  = -normalize(_WorldSpaceCameraPos - reflectedPos);
+	
+	// Directional edge fade
+	float2 normDir  = normalize(reflectedUV - screenUV + 1e-6);
+	float2 edgeDist = saturate(lerp(reflectedUV, 1.0 - reflectedUV, step(0, normDir)) * 10.0);
+	float2 fade2    = lerp(1.0, edgeDist, abs(normDir));
+	float  edgeFade = fade2.x * fade2.y;
+	
+	#if _SGT_CLOUDS
+		float4 cloudColor;
+		float  cloudDepth;
+	
+		float3 reflectedPos2   = worldPos + reflectedDir * (_SGT_SkyRadius.y - _SGT_SkyRadius.x) * 0.5;
+		float2 reflectedUV2    = SGT_ProjectWorldToScreen(reflectedPos2);
+	
+		CW_SampleVolumetricsDefault(reflectedUV2, reflectedVDir, cloudColor, cloudDepth);
+	
+		if (cloudColor.w > 0.0f)
+		{
+			float3 cloudWPos = CW_Depth2World(cloudDepth, reflectedVDir);
+			float3 cloudSPos = mul(_SGT_WorldToSky, float4(cloudWPos, 1.0f)).xyz;
+		
+			cloudColor.rgb *= SGT_AtmosphereColor(cloudSPos, sunDir, dither) * lighting; // Apply atmospheric lighting to clouds
+	
+			// Directional edge fade
+			float2 normDirC  = normalize(reflectedUV2 - screenUV + 1e-6);
+			float2 edgeDistC = saturate(lerp(reflectedUV2, 1.0 - reflectedUV2, step(0, normDirC)) * 10.0);
+			float2 fadeC2    = lerp(1.0, edgeDistC, abs(normDirC));
+			float  edgeFadeC = fadeC2.x * fadeC2.y;
+	
+			baseColor = lerp(baseColor, cloudColor.xyz, cloudColor.w * edgeFadeC);
+		}
+	#endif
+	
+	// Depth confidence fade
+	float expectedDepth = length(reflectedPos - _WorldSpaceCameraPos);
+	float depthError    = abs(reflectedDepth - expectedDepth);
+	float contactBlend  = saturate(reflectedLen / _SGT_FssrError);
+	float fadeDist      = lerp(_SGT_FssrError, reflectedLen, contactBlend);
+	float depthFade     = saturate(1.0 - depthError / fadeDist);
+	
+	baseColor = lerp(baseColor, reflectedColor, edgeFade * depthFade * step(reflectedDepth, wmax));
+	
+	return baseColor;
 }
 
 float3 SGT_UnderwaterSSR(float3 worldPos, float3 worldNormal, float3 worldViewDir, float worldEyeDepth, float surfaceDistance, float4 baseColor, float wmax)
@@ -199,19 +260,51 @@ float3 SGT_UnderwaterSSR(float3 worldPos, float3 worldNormal, float3 worldViewDi
 
 float3 SGT_CalculateOceanSSS(float3 normal, float3 viewDir, float3 lightDir, float3 lightColor, float waveHeight, float surfaceDistance)
 {
-	float  sssPower      = 8.0;
-	
-	float fresnel = pow(saturate(1.0 - dot(viewDir, normal) - surfaceDistance * _SGT_ScatteringDistanceFade), sssPower);
-	
-	float heightWeight = saturate((waveHeight + _SGT_WaveData.z) * _SGT_WaveData.w);
-	
-	return fresnel * heightWeight * _SGT_SurfaceScattering.xyz * lightColor;
+	// --- Refraction: approximate internal light direction ---
+	// IOR ratio: air (1.0) -> water (1.33)
+	float eta = 0.66;
+	float3 refractedDir = normalize(refract(-viewDir, normal, eta));
+
+	// --- Forward scattering lobe ---
+	// Strong when refracted ray aligns with sun
+	float forwardScatter =
+		pow(saturate(dot(refractedDir, lightDir)), 16.0);
+
+	// --- Sun elevation factor ---
+	// More SSS when sun is higher in the sky
+	float sunUp = saturate(dot(lightDir, float3(0.0, 1.0, 0.0)));
+
+	float sunElevationBoost =
+		1.0 - 1.0 / (1.0 + 5.0 * sunUp);
+
+	// --- Spectral water scattering color ---
+	float3 waterSSSColor = float3(0.01, 0.33, 0.55) * 0.171;
+
+	// --- Forward-scattered sun glow ---
+	float3 forwardSSS =
+		_SGT_SurfaceScattering.xyz * _SGT_SurfaceScattering.w *
+		forwardScatter *
+		lightColor *
+		81.0 *
+		sunElevationBoost;
+
+	// --- Volumetric depth-based scattering ---
+	float3 volumeSSS =
+		waterSSSColor *
+		lightColor *
+		(0.3 + 5.0) *
+		saturate(waveHeight) *
+		0.3 *
+		sunUp;
+
+	return forwardSSS + volumeSSS;
 }
+
 
 float SGT_InterleavedGradientNoise(float2 screenPos)
 {
-    float3 magic = float3(0.06711056, 0.00583715, 52.9829189);
-    return frac(magic.z * frac(dot(screenPos + _SGT_Frame * 5.588238, magic.xy)));
+	float3 magic = float3(0.06711056, 0.00583715, 52.9829189);
+	return frac(magic.z * frac(dot(screenPos + _SGT_Frame * 5.588238, magic.xy)));
 }
 
 void SSS_Vert(inout SSS_VertexData v)
@@ -225,9 +318,9 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float  wfar = wmax;
 	float  worldEyeDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
 	float3 tint = 1.0f;
+	float  dither = SGT_DitherFast(d.screenUV);
 
 	wfar = min(wfar, worldEyeDepth);
-
 
 	float3 worldEyePosition   = _WorldSpaceCameraPos - d.worldSpaceViewDir * worldEyeDepth;
 	float  worldCamUnderwater = max(0.0, -SGT_Delta(_WorldSpaceCameraPos, 0.0));
@@ -263,12 +356,16 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float3 ocam = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos, 1.0f)).xyz;
 	float3 ofar = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos + wdir * wfar, 1.0f)).xyz;
 	float  omax = distance(ocam, ofar);
-	float3 odir = normalize(ofar - ocam);
+	float3 odir = normalize(mul(_SGT_WorldToSky, float4(-d.worldSpaceViewDir, 0.0f)).xyz);
 	float3 odst = SGT_SphereTest(ocam, odir, 1.0f);
 	
 	if (odst.z < 0.0f) discard; // Miss
 	
 	odst.xy = max(odst.xy, 0.0f);
+	
+	// Clip Inner
+	float3 ihit = SGT_SphereTest(ocam, odir, _SGT_SkyRadius.w);
+	omax = ihit.z > 0.0f && ihit.x > 0.0f ? min(ihit.x, omax) : omax;
 	
 	float3 rayPos = ocam + odir * odst.x;
 	float3 rayDir = odir;
@@ -281,12 +378,6 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 		float3 sunDir = normalize(rayPos);
 	#endif
 	
-	#if _SGT_DITHER
-		float dither = SGT_DitherBlue(d.screenUV);
-	#else
-		float dither = 0.5f;
-	#endif
-	
 	#if _SGT_ALBEDO
 		float2 uv  = SGT_DirectionToEquirectangular(rayPos);
 		float2 uvx = ddx(uv); uvx.x *= (abs(uvx.x) < 0.5f);
@@ -295,46 +386,50 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 		tint = tex2Dgrad(_SGT_SkyAlbedoTex, uv, uvx, uvy).xyz;
 	#endif
 	
-	float4 cloudColor;
-	float  cloudDepth;
-	
-	CW_SampleVolumetrics(d.screenUV, -d.worldSpaceViewDir, wfar, cloudColor, cloudDepth);
-	
 	#if _SGT_LIGHTING
-		float4 lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
+		float3 lighting = 0.0f;
 		
 		for (int i = 0; i < _SGT_LightCount; i++)
 		{
-			lighting.xyz += _SGT_LightColor[i].xyz;
+			lighting += _SGT_LightColor[i].xyz;
 		}
 	#else
-		float4 lighting = float4(1.0f, 1.0f, 1.0f, 1.0f);
+		float3 lighting = 1.0f;
 	#endif
 	
-	float4 color = SGT_Atmosphere(rayPos, rayDir, rayFar, rayMax, sunDir, _SGT_SkyExposure, dither);
+	#if _SSS_HDRP && !_SSS_NO_DERIVATIVES
+		lighting *= GetCurrentExposureMultiplier();
+	#endif
+	
+	float4 color = SGT_Atmosphere(rayPos, rayDir, rayFar, rayMax, sunDir, _SGT_SkyExposure, dither); // Something about this is a little wrong and causes color brightness pops when near ocean on massive planets
 	
 	// Boost opacity when near ground
 	float skyWeight = rayMax * 1.02f > rayFar;//saturate(rayMax / rayFar); skyWeight = pow(skyWeight,16);
 	float luminance = dot(color.xyz, float3(0.2126f, 0.7152f, 0.0722f));
 	float boost     = dot(SGT_GetDensity2(rayPos), 1) * luminance * _SGT_SkyDepthOpaque;
 	
-	color.xyz *= lighting.xyz;
+	color.xyz *= lighting;
 	color.w    = lerp(1.0f, color.a, exp(-boost * skyWeight));
 	
-	//float3 skyColor = color.xyz; // Why doesn't this work properly?
-	float3 skyColor = SGT_AtmosphereColor(ocam, sunDir, dither);
+	float3 skyColor = color.xyz; // Why doesn't this work properly? it causes brightness pops with altitude
+	//float3 skyColor   = SGT_AtmosphereColor(ocam, sunDir, dither);
 	float3 skyAmbient = skyColor;
+	
+	#if _SGT_LIGHTING && _SSS_HDRP
+		lighting *= 0.25;
+	#endif
+	
+	float4 cloudColor;
+	float  cloudDepth;
+	
+	CW_SampleVolumetrics(d.screenUV, -d.worldSpaceViewDir, wfar, cloudColor, cloudDepth);
 	
 	if (cloudColor.w > 0.0f && (surfaceDistance == 0.0 || cloudDepth < abs(surfaceDistance)))
 	{
 		float3 cloudWPos = CW_Depth2World(cloudDepth, -d.worldSpaceViewDir);
 		float3 cloudSPos = mul(_SGT_WorldToSky, float4(cloudWPos, 1.0f)).xyz;
 		
-		#if _SGT_LIGHTING && _SSS_HDRP
-			lighting.xyz *= 0.25;
-		#endif
-		
-		cloudColor.rgb *= SGT_AtmosphereColor(cloudSPos, sunDir, dither) * lighting.xyz; // Apply atmospheric lighting to clouds
+		cloudColor.rgb *= SGT_AtmosphereColor(cloudSPos, sunDir, dither) * lighting; // Apply atmospheric lighting to clouds
 		
 		color.rgb *= color.a;
 		cloudColor.rgb *= cloudColor.a;
@@ -342,10 +437,6 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 		color.a += cloudColor.a * (1.0f - color.a);
 		color.rgb = (cloudColor.rgb + color.rgb * (1.0 - cloudColor.a)) / max(color.a, 1e-6);
 	}
-	
-	#if _SSS_HDRP && !_SSS_NO_DERIVATIVES
-		color.xyz *= GetCurrentExposureMultiplier();
-	#endif
 	
 	float3 oceanTransmittance;
 	float3 oceanScatter;
@@ -357,17 +448,14 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 		d.worldSpaceNormal   = -surfaceNormal;
 		d.worldSpaceTangent  = normalize(cross(float3(0,1,0), d.worldSpaceNormal));
 		
-		float dist    = min(-surfaceDistance, worldEyeDepth);
-		float opacity = 1.0;// - exp(-dist * _SGT_SurfaceDensity);
+		float dist         = min(-surfaceDistance, worldEyeDepth);
+		float blurStrength = 1.0 - exp(-dist * _SGT_SurfaceDensity * 0.1);
+		float opacity      = 1.0;// - exp(-dist * _SGT_SurfaceDensity);
 		
 		GetOceanTransmittanceScatter(oceanTransmittance, oceanScatter, dist, -d.worldSpaceViewDir, _SGT_LightDirection[0].xyz, skyColor, skyAmbient, worldCamUnderwater, _SGT_SurfaceColor.xyz, _SGT_SurfaceDensity);
 		
 		o.Smoothness = _SGT_SurfaceSmoothness;
 		o.Alpha      = 1.0;
-		
-		#if _SGT_LIGHTING && _SGT_FASTSSS
-			d.extraV2F1.xyz += SGT_CalculateOceanSSS(surfaceNormal, d.worldSpaceViewDir, _SGT_LightDirection[0].xyz, skyColor, waveHeight, surfaceDistance);
-		#endif
 		
 		if (abs(surfaceDistance) < worldEyeDepth) // Ocean surface
 		{
@@ -377,9 +465,7 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 				#if _SGT_FASTSSR
 					d.extraV2F1.xyz += SGT_UnderwaterSSR(d.worldSpacePosition, surfaceNormal, -d.worldSpaceViewDir, -worldEyeDepth, surfaceDistance, float4(_SGT_SurfaceColor.xyz, 1), wmax);
 				#endif
-			#endif
 			
-			#if _SGT_REFRACTION
 				float3 refractDir  = refract(-d.worldSpaceViewDir, surfaceNormal, waterIOR / airIOR);
 				float2 refractedUV = SGT_ProjectWorldToScreen(d.worldSpacePosition + refractDir * _SGT_RefractionDistance);
 			
@@ -395,11 +481,13 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 		}
 		else // Sea floor
 		{
+			float blurStrength = 1.0 - exp(-dist * _SGT_SurfaceDensity * 0.1);
+			
 			d.extraV2F0.xyz = 0.0; // Replace post lighting color with black
 			d.extraV2F1.xyz = SSS_GetSceneColorHD(d.screenUV); // Begin with scene color
 			
 			#if _SGT_CAUSTICS
-				d.extraV2F1.xyz *= 1.0 + CW_SampleCaustics(worldEyePosition);
+				d.extraV2F1.xyz *= 1.0 + CW_SampleCaustics(worldEyePosition, blurStrength);
 			#endif
 		
 			d.extraV2F1.xyz = d.extraV2F1.xyz * oceanTransmittance + oceanScatter;
@@ -407,27 +495,15 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	}
 	else if (surfaceDistance > 0.0f && surfaceDistance < worldEyeDepth) // Above ocean
 	{
-		if (SGT_DitherBlue(d.screenUV) < _SGT_FadeOpacity.y)
-		{
-			o.Alpha = 0.0;
-		}
-		else
-		{
-			o.Alpha = 1.0;
-		}
-		o.Alpha = 1.0;
-		
 		// Override fragment data
 		d.worldSpacePosition = worldHit;
 		d.worldSpaceNormal   = surfaceNormal;
 		d.worldSpaceTangent  = normalize(cross(float3(0,1,0), d.worldSpaceNormal));
 		
-		float originalDist = worldEyeDepth - surfaceDistance;
-		
 		#if _SGT_REFRACTION
 			float3 refractDir      = refract(-d.worldSpaceViewDir, d.worldSpaceNormal, airIOR / waterIOR);
 			float3 refractedWP     = d.worldSpacePosition + refractDir * _SGT_RefractionDistance;
-			float2 refractedUV     = SGT_ProjectWorldToScreen(refractedWP);
+			float2 refractedUV     = SGT_FixRefractedUV(d.screenUV, SGT_ProjectWorldToScreen(refractedWP));
 			float3 refractedPos    = SSS_GetSceneWorldPosition(refractedUV, SSS_GetSceneDepth(refractedUV));
 			float  refractedDist   = distance(_WorldSpaceCameraPos, refractedPos);
 			float  refractedWeight = saturate(refractedDist - surfaceDistance);
@@ -439,19 +515,20 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 		#endif
 		
 		float dist         = worldEyeDepth - surfaceDistance;
-		float opticalDepth = 1.0 - exp(-max(0.0f, dist) * _SGT_SurfaceDensity);
-		float shoreClip    = 1.0 - exp(-originalDist * 100);
+		float blurStrength = 1.0 - exp(-dist * _SGT_SurfaceDensity * 0.1);
+		float shoreClip    = 1.0 - exp(-dist * 100);
 		
 		o.Smoothness = _SGT_SurfaceSmoothness;
+		o.Alpha      = 1.0;
 		
 		GetOceanTransmittanceScatter(oceanTransmittance, oceanScatter, dist, -d.worldSpaceViewDir, _SGT_LightDirection[0].xyz, skyColor, lerp(1.0, skyAmbient, _SGT_FadeOpacity.x), 0.0, _SGT_SurfaceColor.xyz, _SGT_SurfaceDensity);
 		
 		#if _SGT_REFRACTION
-			o.Albedo     = 0.0f;
-			d.extraV2F1.xyz   = SSS_GetSceneColorHD(d.screenUV);
+			o.Albedo        = 0.0f;
+			d.extraV2F1.xyz = SSS_GetSceneColorHD(d.screenUV);
 		
 			#if _SGT_CAUSTICS
-				d.extraV2F1.xyz += d.extraV2F1.xyz * CW_SampleCaustics(worldEyePosition);
+				d.extraV2F1.xyz += d.extraV2F1.xyz * CW_SampleCaustics(worldEyePosition, blurStrength);
 			#endif
 		
 			d.extraV2F1.xyz = d.extraV2F1.xyz * oceanTransmittance;
@@ -461,7 +538,7 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 			o.Albedo   = lerp(d.extraV2F1.xyz, o.Albedo, _SGT_FadeOpacity.x);
 			d.extraV2F1.xyz = lerp(0.0, d.extraV2F1.xyz, _SGT_FadeOpacity.x);
 		#else
-			o.Albedo = _SGT_SurfaceColor.xyz * oceanTransmittance + oceanScatter;
+			o.Albedo = _SGT_SurfaceColor.xyz;
 		#endif
 		
 		#if _SGT_CLOUDS
@@ -471,26 +548,32 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 		
 		#if _SGT_SHORE
 			float  stretch   = lerp(abs(dot(localViewDir, _SGT_PlaneData.xyz)), 1.0f, _SGT_ShoreBias);
-			float3 shore     = exp(-originalDist * stretch * float3(10, 20, 40) * _SGT_ShoreWidth);
+			float3 shore     = exp(-dist * stretch * float3(10, 20, 40) * _SGT_ShoreWidth);
 			float2 shorePosA = mul(_SGT_ShoreMatrixA, float4(worldHit, 1.0f)).xy;
 			float2 shorePosB = mul(_SGT_ShoreMatrixB, float4(worldHit, 1.0f)).xy;
 			float3 shoreTexA = tex2D(_SGT_ShoreTex, shorePosA).xyz;
 			float3 shoreTexB = tex2D(_SGT_ShoreTex, shorePosB).xyz;
-			float3 shoreTex  = lerp(shoreTexA, shoreTexB, _SGT_RipplesBlend);
+			float3 shoreTex  = lerp(shoreTexA, shoreTexB, _SGT_ShoreBlend);
 			float  shoreFade = 1.0f - saturate(surfaceDistance / _SGT_ShoreDistance);
 			
 			o.Albedo = lerp(o.Albedo, 1.0f, saturate(dot(shoreTex, shore * shoreFade * shoreClip)));
 		#endif
 		
 		#if _SGT_LIGHTING && _SGT_FASTSSS
-			d.extraV2F1.xyz += SGT_CalculateOceanSSS(surfaceNormal, d.worldSpaceViewDir, _SGT_LightDirection[0].xyz, skyColor, waveHeight, surfaceDistance);
+			d.extraV2F1.xyz += SGT_CalculateOceanSSS(surfaceNormal, d.worldSpaceViewDir, _SGT_LightDirection[0].xyz, skyColor, waveHeight, surfaceDistance) * _SGT_FadeOpacity.x;
 		#endif
 		
 		#if _SGT_FASTSSR
-			d.extraV2F1.xyz += SGT_SSR(d.worldSpacePosition, d.worldSpaceNormal, -d.worldSpaceViewDir, worldEyeDepth, surfaceDistance, color, wmax) * _SGT_FadeOpacity.x;
+			float3 reflectedColor = SGT_SurfaceSSR(d.screenUV, d.worldSpacePosition, d.worldSpaceNormal, -d.worldSpaceViewDir, worldEyeDepth, surfaceDistance, wmax, color.xyz, sunDir, dither, lighting);
+			float cosTheta = clamp(dot(d.worldSpaceViewDir, d.worldSpaceNormal), 0.0, 1.0);
+			float F0 = pow((waterIOR / airIOR - 1.0) / (waterIOR / airIOR + 1.0), 2.0);
+
+			float fresnel = F0 + (1.0 - F0) * pow(1.0 - cosTheta, _SGT_FssrFresnel);
+		
+			d.extraV2F1.xyz = lerp(d.extraV2F1.xyz, reflectedColor, fresnel * _SGT_FadeOpacity.x);
 		#endif
 		
-		d.extraV2F0.xyz = 1.0f; // Use Unity lighting result as-is
+		d.extraV2F0.xyz = 1.0f * (1.0f - color.w); // Use Unity lighting result as-is
 		d.extraV2F1.xyz = d.extraV2F1.xyz * (1.0f - color.w) + color.xyz * color.w; // Fade out water contributions based on atmosphere/cloud opacity, and then add atmmosphere/cloud contribution
 	}
 	else // Nothing - use sky color directly

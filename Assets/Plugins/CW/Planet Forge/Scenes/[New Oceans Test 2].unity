@@ -309,7 +309,6 @@ MonoBehaviour:
   height: 100000
   density: 3
   cameraOffset: 5
-  clipRadius: 4987402.5
   depthOpaque: 50
   rayleighColor: {r: 0.17522, g: 0.4078, b: 1, a: 1}
   rayleighMultiplier: 285
@@ -722,12 +721,17 @@ PrefabInstance:
     - target: {fileID: 4458438687575116855, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -1.6348006
+      objectReference: {fileID: 0}
+    - target: {fileID: 4458438687575116855, guid: 878ce59f73abbb44ab69db81db47def7,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.8168738
       objectReference: {fileID: 0}
     - target: {fileID: 4458438687575116855, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 9.589159
       objectReference: {fileID: 0}
     - target: {fileID: 4458438687575116855, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
@@ -772,32 +776,32 @@ PrefabInstance:
     - target: {fileID: 4458438687637886519, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.8100274
+      value: 0.98928446
       objectReference: {fileID: 0}
     - target: {fileID: 4458438687637886519, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.20046149
+      value: 0.09003191
       objectReference: {fileID: 0}
     - target: {fileID: 4458438687637886519, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.5349263
+      value: 0.11446409
       objectReference: {fileID: 0}
     - target: {fileID: 4458438687637886519, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.13238086
+      value: -0.010417045
       objectReference: {fileID: 0}
     - target: {fileID: 4458438687637886519, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 27.8
+      value: 10.4
       objectReference: {fileID: 0}
     - target: {fileID: 4458438687637886519, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 66.88
+      value: 13.2
       objectReference: {fileID: 0}
     - target: {fileID: 4522210901365020762, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
@@ -1055,11 +1059,10 @@ MonoBehaviour:
   surfaceSmoothness: 0.9
   underwaterLightingSharpness: 5
   underwaterShadowRange: 10
-  wavesDisplacement: 0.2
-  wavesScale: 0.2
-  wavesSteepness: 0.5
-  wavesSpeed: 1.5
-  wavesQuality: 3
+  wavesDisplacement: 1
+  wavesScale: 1
+  wavesSpeed: 1
+  wavesQuality: 1
   shoreScale: 1
   shoreSpeed: 0.75
   ripples: 1

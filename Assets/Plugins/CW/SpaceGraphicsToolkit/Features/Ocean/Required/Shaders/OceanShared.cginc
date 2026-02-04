@@ -36,26 +36,9 @@ SamplerState sampler_point_clamp;
 
 float2 _SGT_FadeOpacity;
 
-#define GERSTNER_LAYERS 4
-#if !defined(GERSTNER_WAVES_PER_LAYER)
-	#define GERSTNER_WAVES_PER_LAYER 3
+#if !defined(WAVE_SKIP)
+	#define WAVE_SKIP 3
 #endif
-
-// Hard-coded wave directions for tiling compatibility (30Åã increments)
-static const float2 g_WaveDirections[12] = {
-	float2(1.0, 0.0),           // 0Åã
-	float2(0.866025, 0.5),      // 30Åã
-	float2(0.5, 0.866025),      // 60Åã
-	float2(0.0, 1.0),           // 90Åã
-	float2(-0.5, 0.866025),     // 120Åã
-	float2(-0.866025, 0.5),     // 150Åã
-	float2(-1.0, 0.0),          // 180Åã
-	float2(-0.866025, -0.5),    // 210Åã
-	float2(-0.5, -0.866025),    // 240Åã
-	float2(0.0, -1.0),          // 270Åã
-	float2(0.5, -0.866025),     // 300Åã
-	float2(0.866025, -0.5),     // 330Åã
-};
 
 void SGT_ComputeTangentFrame(float3 N, out float3 T, out float3 B)
 {
@@ -73,110 +56,43 @@ void SGT_ComputeTangentFrame(float3 N, out float3 T, out float3 B)
 	}
 }
 
-float4x4 _WaveMatrices[16];
-float4   _WaveData[16]; // x = scale, y = weight
+float4x4 _WaveMatrices[24];
+float4   _WaveData[24]; // x = scale, y = weight
 
-void SGT_ComputeGerstnerWave(
-    float3 waveDir, 
-    float3 surfaceNormal, 
-    float amplitude, 
-    float frequency, 
-    float steepness, 
-    float phase, 
-    float3 samplePos, 
-    inout float3 displacement, 
-    inout float3 normalAccum)
+void SGT_ApplyWaves(
+	inout float3 vertex,
+	inout float3 normal,
+	inout float3 tangent,
+	inout float3 binormal,
+	float2 normalDetail,
+	float pixelSize)
 {
-    float theta = dot(waveDir, samplePos) * frequency + phase;
-    
-    float sinT, cosT;
-    sincos(theta, sinT, cosT);
-    
-    float Q = min(steepness, 1.0);
-    float QA = Q * amplitude;
-    float WA = frequency * amplitude;
-    
-    displacement += waveDir * (QA * cosT);
-    displacement += surfaceNormal * (amplitude * sinT);
-    
-    normalAccum -= waveDir * (WA * cosT);
-    normalAccum -= surfaceNormal * (Q * WA * sinT);
-}
-
-// Rotate 2D direction by octave matrix rotation
-float2 RotateDirectionByMatrix(float2 dir, float4x4 mat)
-{
-    // Extract rotation from matrix (first two rows, XZ components)
-    // The matrix includes scale, so we normalize
-    float2 axisX = normalize(float2(mat._m00, mat._m02));
-    float2 axisY = normalize(float2(mat._m10, mat._m12));
-    
-    // Apply rotation: new = dir.x * axisX + dir.y * axisY
-    return dir.x * axisX + dir.y * axisY;
-}
-
-void SGT_ApplyGerstnerNoise(
-    inout float3 vertex,
-    inout float3 normal,
-    float3 tangent,
-    float3 binormal,
-    float amplitude,
-    float steepness,
-    float time)
-{
-    float3 vertexDelta = 0.0;
-    float3 normalDelta = normal;
-    
-    [unroll]
-    for (int i = 0; i < 3; i++)
-    {
-        float scale = 1.0f;
-        float weight = _WaveData[i].y;
-        
-        // Skip faded-out octaves
-        if (weight < 0.001)
-            continue;
-        
-        // Transform position to wave space
-        float3 wavePos = mul(_WaveMatrices[i], float4(vertex, 1.0)).xyz;
-        
-        // Frequency derived from scale (wavelength)
-        float octaveFreq = 1.0 * (1.0 / scale);
-        
-        // Amplitude for this octave (weighted by fade and scale ratio)
-        float octaveAmp = amplitude * weight;
-        
-        [unroll]
-        for (int w = 0; w < GERSTNER_WAVES_PER_LAYER; w++)
-        {
-            // Get base direction and rotate by octave matrix
-            float2 dir2D = g_WaveDirections[w % 12];
-            dir2D = RotateDirectionByMatrix(dir2D, _WaveMatrices[i]);
-            
-            float3 waveDir = normalize(float3(dir2D.x, 0.0, dir2D.y));
-            
-            // Phase speed from dispersion relation
-            float phaseSpeed = sqrt(9.81 / octaveFreq) * 1;
-            float phase = time * phaseSpeed;
-            
-            SGT_ComputeGerstnerWave(
-                waveDir, 
-                normal, 
-                octaveAmp, 
-                octaveFreq, 
-                steepness, 
-                phase, 
-                wavePos.xzy,  // Swizzle if needed based on your coordinate system
-                vertexDelta, 
-                normalDelta);
-            
-            octaveFreq *= 1.8;
-            octaveAmp *= 0.5;
-        }
-    }
-    
-    vertex = vertex + vertexDelta;
-    normal = normalize(normal + normalDelta);
+	float3 displacement = 0, gradient = 0;
+	float3 N = normal, T = tangent, B = binormal;
+	
+	[unroll]
+	for (int i = 0; i < 24; i += WAVE_SKIP)
+	{
+		float3 scale = _WaveMatrices[i][0].xyz;
+		float2 pos   = mul(_WaveMatrices[i], float4(vertex, 1)).xy;
+		float  fade  = saturate(1.0 - (pixelSize * _WaveData[i].w));
+		
+		float s, c;
+		sincos(pos.x, s, c);
+		
+		float amp = _WaveData[i].z * fade;
+		
+		displacement += N * (s * amp);
+		gradient     += scale * (c * amp);
+	}
+	
+	float dhdT = dot(gradient, T) + normalDetail.x;
+	float dhdB = dot(gradient, B) + normalDetail.y;
+	
+	vertex  += displacement;
+	normal   = normalize(N - dhdT * T - dhdB * B);
+	tangent  = normalize(T + dhdT * N);
+	binormal = normalize(B + dhdB * N);
 }
 
 void SGT_GetOceanData(float2 uv, out float distance, out float3 normal)
@@ -187,68 +103,6 @@ void SGT_GetOceanData(float2 uv, out float distance, out float3 normal)
 	normal   = data.xyz;
 }
 
-float CW_Asin(float x)
-{
-	return x + (x * x * x / 6.0f) + ((3.0f * x * x * x * x * x) / 40.0f);
-}
-
-float4 CW_CalculateCoords(float3 direction)
-{
-	float u = atan2(direction.z, direction.x) / (3.1415926535f * 2.0f) + 0.5f;
-	float v = CW_Asin(direction.y) / 3.1415926535f + 0.5f;
-	//float v = direction.y * 0.3f + 0.5f;
-
-	return float4(u, v * 0.5f, direction.xz * 0.25f);
-}
-
-float4 CW_CalculateCoords2(float3 direction)
-{
-	float u = atan2(-direction.z, -direction.x) / (3.1415926535f * 2.0f);
-	float v = CW_Asin(direction.y) / 3.1415926535f + 0.5f;
-	//float v = direction.y * 0.3f + 0.5f;
-
-	return float4(u, v * 0.5f, direction.xz * 0.25f);
-}
-
-float4 CW_CalculateGradsX(float4 coords)
-{
-	float4 grad = ddx(coords); grad.x *= abs(grad.x) < 0.5f; return grad;
-}
-
-float4 CW_CalculateGradsY(float4 coords)
-{
-	float4 grad = ddy(coords); grad.x *= abs(grad.x) < 0.5f; return grad;
-}
-
-float2 CW_Offset(float2 coords, int index, float tiling)
-{
-	//coords.y += cos(coords.x * ceil(tiling / 2) * 6.2831853f) * 0.002;
-	coords.xy += sin(float2(3,7) * index);
-	
-	return coords;
-}
-
-float4 CW_SampleSphere(sampler2D samp, float4 coords, float4 gradsX, float4 gradsY, float tiling)
-{
-	float bands    = max(tiling * 0.25f, 1);
-	float poles    = abs(coords.y * 4.0f - 1.0f); poles = 1.0f - poles * poles;
-	float vertical = coords.y * 16 * bands + cos(coords.x * ceil(tiling / 3) * 6.2831853f) * 2 * poles;
-
-	float indexA = floor(vertical);
-	float indexB = indexA + 1.0f;
-
-	float overA = abs(indexA - bands * 4.0f) >= bands * 2.5f;
-	float overB = abs(indexB - bands * 4.0f) >= bands * 2.5f;
-
-	float2 coordA = CW_Offset(overA ? coords.zw : coords.xy, indexA, tiling);
-	float2 coordB = CW_Offset(overB ? coords.zw : coords.xy, indexB, tiling);
-
-	float4 sampleA = tex2Dgrad(samp, coordA * tiling, (overA ? gradsX.zw : gradsX.xy) * tiling, (overA ? gradsY.zw : gradsY.xy) * tiling);
-	float4 sampleB = tex2Dgrad(samp, coordB * tiling, (overB ? gradsX.zw : gradsX.xy) * tiling, (overB ? gradsY.zw : gradsY.xy) * tiling);
-	
-	return lerp(sampleA, sampleB, frac(vertical));
-}
-
 float3 SGT_BlendNormals(float3 a, float3 b)
 {
 	return normalize(float3(a.xy + b.xy, a.z));
@@ -256,57 +110,57 @@ float3 SGT_BlendNormals(float3 a, float3 b)
 
 float HenyeyGreenstein(float cosTheta, float g)
 {
-    float g2 = g * g;
-    float denom = 1.0 + g2 - 2.0 * g * cosTheta;
-    return (1.0 - g2) / (4.0 * 3.14159265 * pow(max(denom, 0.0001), 1.5));
+	float g2 = g * g;
+	float denom = 1.0 + g2 - 2.0 * g * cosTheta;
+	return (1.0 - g2) / (4.0 * 3.14159265 * pow(max(denom, 0.0001), 1.5));
 }
 
 void GetOceanTransmittanceScatter(
-    out float3 transmittance,
-    out float3 scatter,
-    float  waterDepth,
-    float3 viewDir,
-    float3 sunDir,
-    float3 sunColor,
-    float3 ambientColor,
-    float  cameraDepth,
-    float3 waterColor, // The "Deep" convergence color
-    float  waterDensity)
+	out float3 transmittance,
+	out float3 scatter,
+	float  waterDepth,
+	float3 viewDir,
+	float3 sunDir,
+	float3 sunColor,
+	float3 ambientColor,
+	float  cameraDepth,
+	float3 waterColor, // The "Deep" convergence color
+	float  waterDensity)
 {
-    // 1. Artist-Friendly Absorption Profile
-    // Typical ocean water absorbs Red much faster than Blue.
-    // We use these coefficients to scale the extinction per channel.
-    // Higher value = color disappears faster with depth.
-    float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
-    
-    // 2. Derive Coefficients
-    // Extinction must be float3 for color shifting to happen.
-    float3 extinction = absorptionWeight * waterDensity;
-    
-    // To ensure convergence to waterColor at infinite depth, 
-    // the scattering/extinction ratio must equal waterColor.
-    float3 scatt = waterColor * extinction;
-    
-    // 3. Transmittance (The "Nice Shift" happens here)
-    // Red channel will drop to 0 much faster than Blue.
-    transmittance = exp(-extinction * waterDepth);
-    
-    float viewCos = abs(viewDir.y);
-    float sunCos = max(sunDir.y, 0.01);
-    
-    // 4. Sun Scattering
-    float3 sunExt = extinction * (1.0 + viewCos / sunCos);
-    float3 sunAtten = sunColor * exp(-extinction * cameraDepth / sunCos);
-    float  phase = HenyeyGreenstein(dot(viewDir, sunDir), 0.7);
-    
-    // Volume scattering formula with float3 coefficients
-    scatter = sunAtten * phase * (scatt / max(sunExt, 1e-4)) * (1.0 - exp(-sunExt * waterDepth));
-    
-    // 5. Ambient Scattering (Converges to waterColor when ambient=1)
-    float  geomFactor = (1.0 + viewCos * 2.0); 
-    float3 ambExt = extinction * geomFactor;
-    float3 ambAtten = ambientColor * exp(-extinction * cameraDepth * 2.0);
-    
-    // This term simplifies to (scatt / extinction) at infinite depth
-    scatter += ambAtten * (scatt * geomFactor / max(ambExt, 1e-4)) * (1.0 - exp(-ambExt * waterDepth));
+	// 1. Artist-Friendly Absorption Profile
+	// Typical ocean water absorbs Red much faster than Blue.
+	// We use these coefficients to scale the extinction per channel.
+	// Higher value = color disappears faster with depth.
+	float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
+	
+	// 2. Derive Coefficients
+	// Extinction must be float3 for color shifting to happen.
+	float3 extinction = absorptionWeight * waterDensity;
+	
+	// To ensure convergence to waterColor at infinite depth, 
+	// the scattering/extinction ratio must equal waterColor.
+	float3 scatt = waterColor * extinction;
+	
+	// 3. Transmittance (The "Nice Shift" happens here)
+	// Red channel will drop to 0 much faster than Blue.
+	transmittance = exp(-extinction * waterDepth);
+	
+	float viewCos = abs(viewDir.y);
+	float sunCos = max(sunDir.y, 0.01);
+	
+	// 4. Sun Scattering
+	float3 sunExt = extinction * (1.0 + viewCos / sunCos);
+	float3 sunAtten = sunColor * exp(-extinction * cameraDepth / sunCos);
+	float  phase = HenyeyGreenstein(dot(viewDir, sunDir), 0.7);
+	
+	// Volume scattering formula with float3 coefficients
+	scatter = sunAtten * phase * (scatt / max(sunExt, 1e-4)) * (1.0 - exp(-sunExt * waterDepth));
+	
+	// 5. Ambient Scattering (Converges to waterColor when ambient=1)
+	float  geomFactor = (1.0 + viewCos * 2.0); 
+	float3 ambExt = extinction * geomFactor;
+	float3 ambAtten = ambientColor * exp(-extinction * cameraDepth * 2.0);
+	
+	// This term simplifies to (scatt / extinction) at infinite depth
+	scatter += ambAtten * (scatt * geomFactor / max(ambExt, 1e-4)) * (1.0 - exp(-ambExt * waterDepth));
 }

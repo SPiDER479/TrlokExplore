@@ -1294,11 +1294,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_Value
-      value: 0.2
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_MaxValue
-      value: 2
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_MinValue
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
@@ -2239,11 +2243,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_Value
-      value: 0.2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_MaxValue
-      value: 2
+      value: 2.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_MinValue
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
@@ -3725,7 +3733,6 @@ MonoBehaviour:
   height: 35
   density: 0.3
   cameraOffset: 0.1
-  clipRadius: 29.060001
   depthOpaque: 50
   rayleighColor: {r: 0.5411765, g: 0.69803923, b: 0.7607843, a: 1}
   rayleighMultiplier: 30
@@ -4509,9 +4516,8 @@ MonoBehaviour:
   surfaceSmoothness: 1
   underwaterLightingSharpness: 5
   underwaterShadowRange: 10
-  wavesDisplacement: 0.2
-  wavesScale: 0.2
-  wavesSteepness: 0.5
+  wavesDisplacement: 2
+  wavesScale: 1
   wavesSpeed: 1
   wavesQuality: 3
   shoreScale: 1

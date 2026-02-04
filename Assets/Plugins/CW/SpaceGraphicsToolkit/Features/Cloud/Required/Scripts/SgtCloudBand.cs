@@ -77,7 +77,7 @@ namespace SpaceGraphicsToolkit.Cloud
 			{
 				if (sky != null)
 				{
-					sky.ApplySettings(properties);
+					sky.ApplySettings(properties, finalCamera);
 
 					properties.SetMatrix(_SGT_LightRotation, sky.transform.localToWorldMatrix * transform.worldToLocalMatrix);
 				}

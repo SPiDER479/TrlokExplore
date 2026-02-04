@@ -179,7 +179,8 @@ namespace SpaceGraphicsToolkit.Landscape
 
 			if (oceanFade != null && sky != null)
 			{
-				batch.Properties.SetVector(_SGT_OceanDistance, new Vector4(oceanFade.LandscapeOpacity, 1.0f / oceanFade.FadeDeepDistance));
+				batch.Properties.SetFloat(_SGT_OceanFade, oceanFade.LandscapeOpacity);
+				batch.Properties.SetVector(_SGT_OceanDensity, new Vector2(oceanFade.SurfaceDensity, oceanFade.FadeDeepDensity));
 				batch.Properties.SetColor(_SGT_OceanColor, oceanFade.SurfaceColor);
 				batch.Properties.SetFloat(_SGT_OceanSmoothness, oceanFade.SurfaceSmoothness);
 				batch.Properties.SetFloat(_SGT_OceanRadius, radius);

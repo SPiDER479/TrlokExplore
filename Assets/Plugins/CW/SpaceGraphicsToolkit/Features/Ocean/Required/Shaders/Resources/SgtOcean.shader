@@ -118,11 +118,11 @@ Shader "Hidden/SgtOcean"
 			#pragma multi_compile_local _SGT_WAVES_1 _SGT_WAVES_2 _SGT_WAVES_3
 
 			#if _SGT_WAVES_3
-				#define GERSTNER_WAVES_PER_LAYER 3
+				#define WAVE_SKIP 1
 			#elif _SGT_WAVES_2
-				#define GERSTNER_WAVES_PER_LAYER 2
+				#define WAVE_SKIP 2
 			#else
-				#define GERSTNER_WAVES_PER_LAYER 1
+				#define WAVE_SKIP 3
 			#endif
 
 			#include "UnityCG.cginc"
@@ -145,17 +145,25 @@ Shader "Hidden/SgtOcean"
 
 			struct v2f
 			{
-				float4 position           : SV_POSITION;
-				float3 worldSpacePosition : TEXCOORD0;
-				float3 worldSpaceNormal   : TEXCOORD1;
-				float3 worldSpaceTangent  : TEXCOORD2;
-				float4 worldSpaceBent     : TEXCOORD3;
+				float4 position            : SV_POSITION;
+				float3 objectSpacePosition : TEXCOORD0;
+				float3 objectSpaceNormal   : TEXCOORD1;
+				float3 objectSpaceTangent  : TEXCOORD2;
+				float4 worldSpaceBent      : TEXCOORD3;
+				float4 screenPos           : TEXCOORD4;
 			};
 
 			struct f2g
 			{
 				float4 distance : SV_Target0;
 			};
+
+			float SGT_Bayer4x4(float2 screenPos)
+			{
+				int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+				float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
+				return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
+			}
 
 			void SetupInstancing()
 			{
@@ -224,53 +232,65 @@ Shader "Hidden/SgtOcean"
 
 					SGT_ComputeTangentFrame(normal, tangent, binormal);
 				#endif
-
-				float3 normalD = normal;
+				
+				o.objectSpacePosition = v.vertex;
+				o.objectSpaceNormal   = normal;
+				o.objectSpaceTangent  = tangent;
 
 				#if _SGT_DISPLACEMENT_ON
-					SGT_ApplyGerstnerNoise(v.vertex.xyz, normalD, tangent, binormal, _SGT_WaveData.x, _SGT_WaveData.y, _SGT_WaveData.z);
+					SGT_ApplyWaves(v.vertex.xyz, normal, tangent, binormal, 0.0, 0.01);
 				#endif
 
 				o.position           = UnityObjectToClipPos(v.vertex);
-				o.worldSpacePosition = mul(_SGT_ObjectToWorld, v.vertex).xyz;
-				o.worldSpaceNormal   = mul((float3x3)_SGT_ObjectToWorld, normal);
-				o.worldSpaceTangent  = mul((float3x3)_SGT_ObjectToWorld, tangent);
-				o.worldSpaceBent.xyz = mul((float3x3)_SGT_ObjectToWorld, normalD);
-				o.worldSpaceBent.w   = lerp(0.0, 1.0, exp(-distance(v.vertex.xyz, _WorldSpaceCameraPos) * 0.1));
+				o.worldSpaceBent     = lerp(0.0, 1.0, exp(-distance(v.vertex.xyz, _WorldSpaceCameraPos) * 0.1));
+				o.screenPos          = ComputeScreenPos(o.position);
 			}
 
 			void frag(v2f i, out f2g o, in bool isFrontFace : SV_IsFrontFace)
 			{
-				float dist = distance(_SGT_WCam, i.worldSpacePosition);
+				float3 objectSpaceBinormal = cross(i.objectSpaceNormal, i.objectSpaceTangent);
 
-				i.worldSpaceNormal   = normalize(i.worldSpaceNormal);
-				i.worldSpaceTangent  = normalize(i.worldSpaceTangent);
-				i.worldSpaceBent.xyz = normalize(i.worldSpaceBent.xyz);
-
-				float3 worldSpaceBinormal = cross(i.worldSpaceBent.xyz, i.worldSpaceTangent);
+				float2 detail = 0.0;
 
 				#if _SGT_RIPPLES_ON
-					float2 det = SGT_GetRipplesNormal(i.worldSpacePosition);
-
-					i.worldSpaceBent.xyz = i.worldSpaceBent.xyz + i.worldSpaceTangent * det.x + worldSpaceBinormal * det.y;
+					float3 worldSpacePositionD = mul(_SGT_ObjectToWorld, float4(i.objectSpacePosition, 1.0)).xyz;
+					detail = SGT_GetRipplesNormal(worldSpacePositionD);
 				#endif
 
-				i.worldSpaceBent.xyz = lerp(i.worldSpaceNormal, i.worldSpaceBent.xyz, i.worldSpaceBent.w);
+				#if _SGT_DISPLACEMENT_ON
+					float pixelSize = length(fwidth(i.objectSpacePosition));
 
-				i.worldSpaceBent.xyz = normalize(i.worldSpaceBent.xyz);
+					SGT_ApplyWaves(i.objectSpacePosition, i.objectSpaceNormal, i.objectSpaceTangent, objectSpaceBinormal, detail, pixelSize);
+				#endif
+
+				float3 worldSpacePosition = mul(_SGT_ObjectToWorld, float4(i.objectSpacePosition, 1.0)).xyz;
+				float3 worldSpaceNormal   = normalize(mul((float3x3)_SGT_ObjectToWorld, i.objectSpaceNormal  ));
+				float3 worldSpaceTangent  = normalize(mul((float3x3)_SGT_ObjectToWorld, i.objectSpaceTangent ));
+				float3 worldSpaceBinormal = normalize(mul((float3x3)_SGT_ObjectToWorld,   objectSpaceBinormal));
+
+				//i.worldSpaceBent.xyz = lerp(i.worldSpaceNormal, i.worldSpaceBent.xyz, i.worldSpaceBent.w);
+
+				//i.worldSpaceBent.xyz = normalize(i.worldSpaceBent.xyz);
+
+				//i.worldSpaceBent.xyz = -normalize(cross(ddx(i.worldSpacePosition), ddy(i.worldSpacePosition)));
+
+				float  dist     = distance(_SGT_WCam, worldSpacePosition);
+				float2 screenUV = (i.screenPos.xy / i.screenPos.w);
 
 				// Top surface
 				if (isFrontFace == true)
 				{
-					o.distance = float4(i.worldSpaceBent.xyz, dist);
+					o.distance = float4(worldSpaceNormal, dist);
 				}
 				// Under surface
 				else
 				{
 					float alpha = saturate(1.0f - exp(-dist * _SGT_UnderwaterDensity) + _SGT_UnderwaterMinimumOpacity);
 
-					o.distance = float4(i.worldSpaceBent.xyz, -dist);
+					o.distance = float4(worldSpaceNormal, -dist);
 				}
+
+				o.distance *= step(_SGT_FadeOpacity.y, SGT_Bayer4x4(screenUV));
 			}
 			ENDCG
 		} // Pass

@@ -77,9 +77,15 @@ Shader "Hidden/SgtSphereLandscape"
 				return float4(u, v * 0.5f, direction.xz * 0.25f);
 			}
 
+			static const float WATER_DEPTH_SHALLOW = 30.0f;
+			static const float WATER_DEPTH_MAX = 3000.0f;
+
 			float CW_EncodeWaterDepth(float depthInMeters)
 			{
-				return saturate(depthInMeters / 30.0f);
+				float shallow = depthInMeters / (WATER_DEPTH_SHALLOW * 2.0f);
+				float deep = 0.5f + (depthInMeters - WATER_DEPTH_SHALLOW) / ((WATER_DEPTH_MAX - WATER_DEPTH_SHALLOW) * 2.0f);
+				float isDeep = step(WATER_DEPTH_SHALLOW, depthInMeters);
+				return saturate(lerp(shallow, deep, isDeep));
 			}
 
 			float CW_EncodeWaterDepth2(float depthInMeters)

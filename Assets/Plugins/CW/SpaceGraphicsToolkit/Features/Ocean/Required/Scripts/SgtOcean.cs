@@ -28,7 +28,7 @@ namespace SpaceGraphicsToolkit.Ocean
 		public float Radius { set { radius = value; } get { return radius; } } [SerializeField] private float radius = 50.0f;
 
 		/// <summary>The overall detail of the ocean relative to the camera distance. The higher you set this, the more triangles it will have.</summary>
-		public float Detail { set { detail = value; } get { return detail; } } [SerializeField] [Range(0.01f, 3.0f)] private float detail = 1.2f;
+		public float Detail { set { detail = value; } get { return detail; } } [SerializeField] [Range(0.01f, 5.0f)] private float detail = 1.2f;
 
 		/// <summary>If you want cloud shadows to appear on the surface of the ocean, specify them here.</summary>
 		public SgtCloud CloudShadow { set { cloudShadow = value; } get { return cloudShadow; } } [SerializeField] protected SgtCloud cloudShadow;
@@ -57,13 +57,10 @@ namespace SpaceGraphicsToolkit.Ocean
 		public float UnderwaterShadowRange { set { underwaterShadowRange = value; } get { return underwaterShadowRange; } } [SerializeField] private float underwaterShadowRange = 10.0f;
 
 		/// <summary>The maximum +- height displacement of the waves in world space.</summary>
-		public float WavesDisplacement { set { wavesDisplacement = value; } get { return wavesDisplacement; } } [SerializeField] [Range(0.0f, 20.0f)] private float wavesDisplacement = 1.0f;
+		public float WavesDisplacement { set { wavesDisplacement = value; } get { return wavesDisplacement; } } [SerializeField] [Range(0.0f, 20.0f)] private float wavesDisplacement = 0.1f;
 
 		/// <summary>The amount of waves there are on the ocean surface.</summary>
-		public float WavesScale { set { wavesScale = value; } get { return wavesScale; } } [SerializeField] [Range(0.01f, 10.0f)] private float wavesScale = 0.2f;
-
-		/// <summary>The steepness of the waves.</summary>
-		public float WavesSteepness { set { wavesSteepness = value; } get { return wavesSteepness; } } [SerializeField] [Range(0.0f, 1.0f)] private float wavesSteepness = 0.5f;
+		public float WavesScale { set { wavesScale = value; } get { return wavesScale; } } [SerializeField] [Range(0.01f, 10.0f)] private float wavesScale = 1.0f;
 
 		/// <summary>The animation speed of the waves.</summary>
 		public float WavesSpeed { set { wavesSpeed = value; } get { return wavesSpeed; } } [SerializeField] [Range(0.0f, 10.0f)] private float wavesSpeed = 1.0f;
@@ -242,6 +239,7 @@ namespace SpaceGraphicsToolkit.Ocean
 
 		private static readonly int _SGT_World2View           = Shader.PropertyToID("_SGT_World2View");
 		private static readonly int _SGT_WCam                 = Shader.PropertyToID("_SGT_WCam");
+		private static readonly int _SGT_ScreenFactor         = Shader.PropertyToID("_SGT_ScreenFactor");
 
 		public Texture3D NoiseTex
 		{
@@ -437,9 +435,9 @@ namespace SpaceGraphicsToolkit.Ocean
 				causticsMatrixA *= delta;
 				causticsMatrixB *= delta;
 
-				for (int i = 0; i < waveCount; i++)
+				for (int i = 0; i < WAVE_COUNT; i++)
 				{
-					matrixBuffer[i] *= delta;
+					waveMatrices[i] *= delta;
 				}
 			}
 		}
@@ -472,7 +470,7 @@ namespace SpaceGraphicsToolkit.Ocean
 			trianglesJob.CameraDetailSq  = 1.0f / (detail * detail);
 			trianglesJob.Deform          = DeformType.Sphere;
 			trianglesJob.Radius          = radius;
-			trianglesJob.MaxDepth        = 50;
+			trianglesJob.MaxDepth        = 60;
 			trianglesJob.MaxSteps        = 100;
 
 			trianglesJob.Triangles   = triangles;
@@ -577,42 +575,67 @@ namespace SpaceGraphicsToolkit.Ocean
 			return matrix;
 		}
 
-		private int waveCount = 3;
-		private float lifetime = 12.0f;
+		private static readonly int WAVE_COUNT = 24;
 
-		private float globalTimer = -1f;
-		private Matrix4x4[] matrixBuffer;
-		private Vector4[] dataBuffer;
+		[System.NonSerialized] private int waveIndex = -1;
+		[System.NonSerialized] private float waveProgress; // 0 (full) -> 0.5 (reset) -> 1 (full)
+		[System.NonSerialized] private Matrix4x4[] waveMatrices;
+		[System.NonSerialized] private Vector4[] waveData; // x = displacement, y = speed, z = displacement * fade, w = inv size
+
+		private void ResetWave(int i)
+		{
+			var size = wavesScale * math.pow(0.847f, i);
+
+			waveMatrices[i] = GenerateWaterMatrix(Camera.main, size, i * 137.5f);
+			waveData[i] = new Vector4(wavesDisplacement * math.pow(0.8f, i), wavesSpeed * math.pow(1.07f, i), 0.0f, 1.0f / size);
+		}
 
 		private void UpdateWaves()
 		{
-			if (globalTimer < 0f)
+			if (waveIndex < 0)
 			{
-				globalTimer = 0f;
-				matrixBuffer = new Matrix4x4[waveCount];
-				dataBuffer = new Vector4[waveCount];
-				for (int i = 0; i < waveCount; i++)
-					matrixBuffer[i] = GenerateWaterMatrix(Camera.main, wavesScale, UnityEngine.Random.value * 360f);
+				waveMatrices = new Matrix4x4[WAVE_COUNT];
+				waveData = new Vector4[WAVE_COUNT];
+				waveIndex = 0;
+
+				for (int i = 0; i < WAVE_COUNT; i++) ResetWave(i);
 			}
 
-			float prevPhase = globalTimer / lifetime;
-			globalTimer += Time.deltaTime;
-			while (globalTimer >= lifetime)
-				globalTimer -= lifetime;
-			float phase = globalTimer / lifetime;
+			var cycleSpeed  = math.min(0.2f * math.pow(1.25f, waveIndex), 2.0f);
+			var oldProgress = waveProgress;
 
-			for (int i = 0; i < waveCount; i++)
+			waveProgress += Time.deltaTime * cycleSpeed;
+
+			if (oldProgress < 0.5f && waveProgress >= 0.5f) 
 			{
-				float localPhase = (phase + (float)i / waveCount) % 1f;
-				float prevLocalPhase = (prevPhase + (float)i / waveCount) % 1f;
+				ResetWave(waveIndex);
+			}
 
-				// Regenerate when phase wraps (at minimum weight)
-				if (localPhase < prevLocalPhase - 0.5f)
-					matrixBuffer[i] = GenerateWaterMatrix(Camera.main, wavesScale, UnityEngine.Random.value * 360f);
+			if (waveProgress >= 1.0f)
+			{
+				waveProgress = 0.0f;
+				waveIndex    = (waveIndex + 1) % WAVE_COUNT;
+			}
 
-				// Sine wave weight: sum of all weights = 1.0
-				float weight = (1f - Mathf.Cos(2f * Mathf.PI * localPhase)) / waveCount;
-				dataBuffer[i] = new Vector4(wavesScale, weight * wavesDisplacement, 0f, 0f);
+			// Animate waves
+			var weightSum = 0.0f;
+
+			for (int i = 0; i < WAVE_COUNT; i++)
+			{
+				var weight = i != waveIndex ? 1.0f : math.abs(math.saturate(waveProgress) * 2.0f - 1.0f);
+
+				weightSum += weight;
+
+				waveMatrices[i] = Matrix4x4.Translate(Vector3.right * waveData[i].y * Time.deltaTime) * waveMatrices[i];
+			}
+
+			var weightScale = 1.0f / math.max(0.01f, weightSum);
+
+			for (int i = 0; i < WAVE_COUNT; i++)
+			{
+				var weight = i != waveIndex ? 1.0f : math.abs(math.saturate(waveProgress) * 2.0f - 1.0f);
+
+				waveData[i].z = waveData[i].x * weight * weightScale;
 			}
 		}
 
@@ -658,8 +681,8 @@ namespace SpaceGraphicsToolkit.Ocean
 				model.transform.localScale = Vector3.one * CwHelper.Divide(sky.OuterRadius, 0.5f / sphereInflate);
 
 				var altitude    = CalculateWorldAltitude(finalCamera.transform.position);
-				var fadeOpacity = Mathf.InverseLerp(fadeDistance, 0.0f, altitude);
-				var targetLO    = altitude >= fadeDistance ? 1.0f : 0.0f;
+				var fadeOpacity = fade == true ? Mathf.InverseLerp(fadeDistance, 0.0f, altitude) : 0.0f;
+				var targetLO    = fade == true && altitude >= fadeDistance ? 1.0f : 0.0f;
 
 				if (landscapeOpacity >= 0.0f)
 				{
@@ -681,13 +704,11 @@ namespace SpaceGraphicsToolkit.Ocean
 					sky.Model.CachedMeshRenderer.enabled = false;
 				}
 
-				sky.ClipRadius = math.lerp(radius, -1.0f, fadeOpacity);
-
 				model.CachedMeshRenderer.sharedMaterial = material;
 
 				model.CachedMeshRenderer.GetPropertyBlock(properties);
 
-				sky.ApplySettings(properties);
+				sky.ApplySettings(properties, finalCamera);
 
 				underwaterBrightness = CalculateUnderwaterBrightness();
 
@@ -710,7 +731,7 @@ namespace SpaceGraphicsToolkit.Ocean
 				properties.SetColor(_SGT_SurfaceScattering, surfaceScattering * surfaceScattering.a);
 				properties.SetFloat(_SGT_SurfaceDensity, surfaceDensity);
 				properties.SetFloat(_SGT_SurfaceSmoothness, surfaceSmoothness);
-				properties.SetVector(_SGT_FadeOpacity, new Vector2(fadeOpacity, landscapeOpacity));
+				properties.SetVector(_SGT_FadeOpacity, new Vector2(fadeOpacity, 1.0f - landscapeOpacity));
 				properties.SetFloat(_SGT_FadeDensity, fadeDeepDensity);
 
 				if (ripplesBlend >= 0.0f)
@@ -731,8 +752,8 @@ namespace SpaceGraphicsToolkit.Ocean
 					ripplesBlend   = 0.0f;
 				}
 
-				properties.SetMatrixArray("_WaveMatrices", matrixBuffer);
-				properties.SetVectorArray("_WaveData", dataBuffer);
+				properties.SetMatrixArray("_WaveMatrices", waveMatrices);
+				properties.SetVectorArray("_WaveData", waveData);
 				properties.SetTexture(_SGT_NoiseTex, NoiseTex);
 
 				properties.SetMatrix(_SGT_RipplesMatrixA, ripplesMatrixA);
@@ -809,6 +830,7 @@ namespace SpaceGraphicsToolkit.Ocean
 			}
 
 			blitMaterial.SetVector(_SGT_WCam, finalCamera.transform.position);
+			blitMaterial.SetFloat(_SGT_ScreenFactor, (2.0f * math.tan(math.radians(finalCamera.fieldOfView * 0.5f))) / (float)renderSize.y);
 
 			blitMaterial.SetFloat(_SGT_SurfaceDensity, surfaceDensity);
 
@@ -878,7 +900,8 @@ namespace SpaceGraphicsToolkit.Ocean
 			properties.SetMatrix(_SGT_WorldToObject, w2o);
 			properties.SetVector(_SGT_Offset, rot);
 			properties.SetFloat(_SGT_Radius, radius);
-			properties.SetVector(_SGT_WaveData, new Vector4(wavesDisplacement, wavesSteepness, wavesPosition, 0.0f));
+			properties.SetVector(_SGT_FadeOpacity, new Vector2(1.0f, landscapeOpacity));
+			properties.SetVector(_SGT_WaveData, new Vector4(wavesDisplacement, 0.0f, wavesPosition, 0.0f));
 			properties.SetVector(_SGT_RipplesData, new Vector4(ripplesStrength, ripplesPosition * Mathf.PI, 0.0f, 0.0f));
 
 			foreach (var batch in batches)
@@ -1018,7 +1041,6 @@ namespace SpaceGraphicsToolkit.Ocean
 
 			Draw("wavesDisplacement", "The maximum +- height displacement of the waves in world space.");
 			Draw("wavesScale");
-			Draw("wavesSteepness", "The steepness of the waves.");
 			Draw("wavesSpeed", "The animation speed of the waves.");
 			Draw("wavesQuality", "The amount of combined wave layers.");
 

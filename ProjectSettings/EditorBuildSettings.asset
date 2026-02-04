@@ -12,7 +12,7 @@ EditorBuildSettings:
     path: Assets/Scenes/Jupiter/Jupiter.unity
     guid: 4485210caa8584140b25e2ebf47b101d
   - enabled: 1
-    path: Assets/Scenes/Custom/Custom.unity
+    path: Assets/Scenes/Custom/CustomPlanet.unity
     guid: 15a33e4d161ff624ca60dc6a639d1346
   - enabled: 1
     path: Assets/Scenes/AI/AI.unity

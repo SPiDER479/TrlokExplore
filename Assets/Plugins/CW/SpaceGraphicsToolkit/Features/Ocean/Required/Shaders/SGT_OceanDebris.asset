@@ -16,6 +16,7 @@ MonoBehaviour:
     type: 3}
   shaderFiles:
   - {fileID: 10900000, guid: b3e8fc45341f0f444ba3ffa518ba9c4c, type: 3}
+  - {fileID: 10900000, guid: ed64468c4e24ed74faa0a23c544573d5, type: 3}
   - {fileID: 10900000, guid: ced807f9f6b19e344b6d78452b96dd94, type: 3}
   outputShader: {fileID: 4800000, guid: eacf70128aed6b8459cd4978a3ffe987, type: 3}
   outputTitle: Space Graphics Toolkit/OceanDebris

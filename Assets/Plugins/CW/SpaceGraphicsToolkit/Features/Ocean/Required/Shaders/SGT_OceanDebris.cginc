@@ -29,7 +29,6 @@ float     _SGT_Roll;
 float4    _SGT_WrapSize;
 float4    _SGT_DataA;
 float4    _SGT_DataB;
-float3    _SGT_Offset;
 float     _SGT_UnderwaterBrightness;
 float     _SGT_UnderwaterShadowRange;
 float4x4  _SGT_WorldToLocal;
@@ -101,7 +100,7 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float  deepSharpness    = _SGT_DataB.w;
 	float  maxDepth         = _SGT_DataB.z;
 		
-	float camDist = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+	float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
 		
 	float3 localPos = mul(_SGT_WorldToLocal, float4(d.worldSpacePosition, 1.0f)).xyz;
 		
@@ -109,13 +108,17 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 		
 	finalColor *= tex2D(_SGT_MainTex, d.extraV2F0.xy).x;
 		
-	finalColor *= saturate(1.0f - camDist * _SGT_WrapSize.y * 2.0f);
-		
-	finalColor *= 1.0f - pow(saturate(1.0f - depth / maxDepth), surfaceSharpness);
+	finalColor *= saturate(1.0f - cameraDistance * _SGT_WrapSize.y * 2.0f);
 		
 	finalColor *= 1.0f - pow(saturate(depth / maxDepth), deepSharpness);
 		
 	finalColor *= _SGT_UnderwaterBrightness;
+	
+	// Fade with ocean surface
+	float  surfaceDistance;
+	float3 surfaceNormal;
+	SGT_GetOceanData(d.screenUV, surfaceDistance, surfaceNormal);
+	finalColor *= saturate(sign(surfaceDistance) * (cameraDistance - abs(surfaceDistance)));
 		
 	#if _SGT_CLOUDS
 		float shadow2 = SGT_SampleCloudDensity(_WorldSpaceCameraPos - d.worldSpaceViewDir * _SGT_UnderwaterShadowRange, 10.0f);

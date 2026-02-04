@@ -16,6 +16,7 @@ MonoBehaviour:
     type: 3}
   shaderFiles:
   - {fileID: 10900000, guid: b3e8fc45341f0f444ba3ffa518ba9c4c, type: 3}
+  - {fileID: 10900000, guid: ed64468c4e24ed74faa0a23c544573d5, type: 3}
   - {fileID: 10900000, guid: acaddfbd47f143847b4b22488df2e884, type: 3}
   outputShader: {fileID: 4800000, guid: e864ddb4adc09af4ebb070cb33ee9838, type: 3}
   outputTitle: Space Graphics Toolkit/OceanRays

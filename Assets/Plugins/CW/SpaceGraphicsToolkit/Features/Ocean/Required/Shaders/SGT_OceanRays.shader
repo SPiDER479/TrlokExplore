@@ -5,6 +5,7 @@ Properties
 {
 
 
+
 	[HideInInspector] _SGT_WrapSize("", Vector) = (0,0,0,0)
 	[HideInInspector] _SGT_FadeData("", Vector) = (0,0,0,0)
 	[HideInInspector] _SGT_DataA("", Vector) = (0,0,0,0)
@@ -46,6 +47,7 @@ Tags
 
 
 
+
 Pass
 {
     Name "Universal Forward"
@@ -70,6 +72,8 @@ HLSLPROGRAM
 #define _SSS_PASS_UNIVERSAL_FORWARD 1
 
 #define _SSS_URP 1
+
+#define REQUIRE_DEPTH_TEXTURE
 
 
 // Pragmas
@@ -283,6 +287,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -452,6 +457,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -490,6 +496,7 @@ struct SSS_FragmentData
 
 	float3x3 TBNMatrix;
 	
+
 
 
 };
@@ -571,6 +578,172 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 	return color;
 }
+float3   _SGT_Offset;
+float    _SGT_Radius;
+float4x4 _SGT_ObjectToWorld;
+float4x4 _SGT_WorldToObject;
+
+float4   _SGT_Origins[128];
+float4   _SGT_PositionsA[128];
+float4   _SGT_PositionsB[128];
+float4   _SGT_PositionsC[128];
+float4x4 _SGT_CoordsX[128];
+float4x4 _SGT_CoordsY[128];
+float4x4 _SGT_CoordsZ[128];
+float4x4 _SGT_CoordsW[128];
+
+float4x4 _SGT_RipplesMatrixA;
+float4x4 _SGT_RipplesMatrixB;
+float    _SGT_RipplesBlend;
+
+float4x4 _SGT_ShoreMatrixA;
+float4x4 _SGT_ShoreMatrixB;
+float    _SGT_ShoreBlend;
+
+float4x4 _SGT_CausticsMatrixA;
+float4x4 _SGT_CausticsMatrixB;
+float    _SGT_CausticsBlend;
+
+float4    _SGT_WaveData;
+float4    _SGT_SurfaceTiling;
+
+sampler2D _SGT_RipplesTexture;
+sampler3D _SGT_NoiseTex;
+float4    _SGT_RipplesData;
+
+Texture2D _SGT_Volumetrics_OceanTex;
+SamplerState sampler_point_clamp;
+
+float2 _SGT_FadeOpacity;
+
+#if !defined(WAVE_SKIP)
+	#define WAVE_SKIP 3
+#endif
+
+void SGT_ComputeTangentFrame(float3 N, out float3 T, out float3 B)
+{
+	if (N.z < -0.9999)
+	{
+		T = float3(0, -1, 0);
+		B = float3(-1, 0, 0);
+	}
+	else
+	{
+		float a = 1.0 / (1.0 + N.z);
+		float b = -N.x * N.y * a;
+		T = float3(1.0 - N.x * N.x * a, b, -N.x);
+		B = float3(b, 1.0 - N.y * N.y * a, -N.y);
+	}
+}
+
+float4x4 _WaveMatrices[24];
+float4   _WaveData[24]; // x = scale, y = weight
+
+void SGT_ApplyWaves(
+	inout float3 vertex,
+	inout float3 normal,
+	inout float3 tangent,
+	inout float3 binormal,
+	float2 normalDetail,
+	float pixelSize)
+{
+	float3 displacement = 0, gradient = 0;
+	float3 N = normal, T = tangent, B = binormal;
+	
+	[unroll]
+	for (int i = 0; i < 24; i += WAVE_SKIP)
+	{
+		float3 scale = _WaveMatrices[i][0].xyz;
+		float2 pos   = mul(_WaveMatrices[i], float4(vertex, 1)).xy;
+		float  fade  = saturate(1.0 - (pixelSize * _WaveData[i].w));
+		
+		float s, c;
+		sincos(pos.x, s, c);
+		
+		float amp = _WaveData[i].z * fade;
+		
+		displacement += N * (s * amp);
+		gradient     += scale * (c * amp);
+	}
+	
+	float dhdT = dot(gradient, T) + normalDetail.x;
+	float dhdB = dot(gradient, B) + normalDetail.y;
+	
+	vertex  += displacement;
+	normal   = normalize(N - dhdT * T - dhdB * B);
+	tangent  = normalize(T + dhdT * N);
+	binormal = normalize(B + dhdB * N);
+}
+
+void SGT_GetOceanData(float2 uv, out float distance, out float3 normal)
+{
+	float4 data = _SGT_Volumetrics_OceanTex.Sample(sampler_point_clamp, uv);
+	
+	distance = data.w;
+	normal   = data.xyz;
+}
+
+float3 SGT_BlendNormals(float3 a, float3 b)
+{
+	return normalize(float3(a.xy + b.xy, a.z));
+}
+
+float HenyeyGreenstein(float cosTheta, float g)
+{
+	float g2 = g * g;
+	float denom = 1.0 + g2 - 2.0 * g * cosTheta;
+	return (1.0 - g2) / (4.0 * 3.14159265 * pow(max(denom, 0.0001), 1.5));
+}
+
+void GetOceanTransmittanceScatter(
+	out float3 transmittance,
+	out float3 scatter,
+	float  waterDepth,
+	float3 viewDir,
+	float3 sunDir,
+	float3 sunColor,
+	float3 ambientColor,
+	float  cameraDepth,
+	float3 waterColor, // The "Deep" convergence color
+	float  waterDensity)
+{
+	// 1. Artist-Friendly Absorption Profile
+	// Typical ocean water absorbs Red much faster than Blue.
+	// We use these coefficients to scale the extinction per channel.
+	// Higher value = color disappears faster with depth.
+	float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
+	
+	// 2. Derive Coefficients
+	// Extinction must be float3 for color shifting to happen.
+	float3 extinction = absorptionWeight * waterDensity;
+	
+	// To ensure convergence to waterColor at infinite depth, 
+	// the scattering/extinction ratio must equal waterColor.
+	float3 scatt = waterColor * extinction;
+	
+	// 3. Transmittance (The "Nice Shift" happens here)
+	// Red channel will drop to 0 much faster than Blue.
+	transmittance = exp(-extinction * waterDepth);
+	
+	float viewCos = abs(viewDir.y);
+	float sunCos = max(sunDir.y, 0.01);
+	
+	// 4. Sun Scattering
+	float3 sunExt = extinction * (1.0 + viewCos / sunCos);
+	float3 sunAtten = sunColor * exp(-extinction * cameraDepth / sunCos);
+	float  phase = HenyeyGreenstein(dot(viewDir, sunDir), 0.7);
+	
+	// Volume scattering formula with float3 coefficients
+	scatter = sunAtten * phase * (scatt / max(sunExt, 1e-4)) * (1.0 - exp(-sunExt * waterDepth));
+	
+	// 5. Ambient Scattering (Converges to waterColor when ambient=1)
+	float  geomFactor = (1.0 + viewCos * 2.0); 
+	float3 ambExt = extinction * geomFactor;
+	float3 ambAtten = ambientColor * exp(-extinction * cameraDepth * 2.0);
+	
+	// This term simplifies to (scatt / extinction) at infinite depth
+	scatter += ambAtten * (scatt * geomFactor / max(ambExt, 1e-4)) * (1.0 - exp(-ambExt * waterDepth));
+}
 
 
 
@@ -581,7 +754,6 @@ float4   _SGT_WrapSize; // Auto
 float4   _SGT_FadeData; // Auto
 float4   _SGT_DataA; // Auto
 float4   _SGT_DataB; // Auto
-float3   _SGT_Offset;
 float4   _SGT_FlickerData; // Auto
 float4   _SGT_StretchDirection; // Auto
 float    _SGT_UnderwaterBrightness; // Auto
@@ -629,6 +801,12 @@ void SSS_Vert(inout SSS_VertexData v)
 	float3 wcam_snap = wcam + frac((wcam - _SGT_Offset) * _SGT_WrapSize.y) * _SGT_WrapSize.x;
 	float3 ocam_snap = SSS_WorldToObject(wcam_snap);
 	v.position = frac(v.position - ocam_snap * _SGT_WrapSize.y + 0.5f) - 0.5f;
+	
+	// Calculate wrap fade (fades to 0 at wrap boundary)
+	float edgeDist = max(abs(v.position.x), max(abs(v.position.y), abs(v.position.z)));
+	float wrapFade = smoothstep(0.5, 0.3, edgeDist);
+	
+	// Scale up
 	v.position *= _SGT_WrapSize.x;
 	
 	// Drift
@@ -652,6 +830,7 @@ void SSS_Vert(inout SSS_VertexData v)
 	v.extraV2F0.x = lerp(_SGT_FlickerData.z, _SGT_FlickerData.w, flicker);
 	
 	v.extraV2F0.x *= length(up); // Fade out parallel rays
+	v.extraV2F0.x *= wrapFade;   // Fade out near wrap boundary
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -662,21 +841,29 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float  deepSharpness    = _SGT_DataA.y;
 	float  maxDepth         = _SGT_DataB.z;
 	
-	float camDist = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+	float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
 	
 	float3 localPos = mul(_SGT_WorldToLocal, float4(d.worldSpacePosition, 1.0f)).xyz;
 	
 	float depth = radius - length(localPos);
 	
-	finalColor *= saturate(1.0f - camDist * _SGT_FadeData.x);
+	finalColor *= saturate(1.0f - cameraDistance * _SGT_FadeData.x);
 	
-	finalColor *= 1.0f - pow(saturate(1.0f - depth / maxDepth), surfaceSharpness);
-	
-	finalColor *= 1.0f - pow(saturate(depth / maxDepth), deepSharpness);
+	finalColor *= 1.0f - saturate(depth - maxDepth);
 	
 	finalColor *= 1.0f - pow(saturate(length(d.texcoord0.xy)), 1.0f + 4.0f * d.texcoord0.w);
 	
 	finalColor *= _SGT_UnderwaterBrightness;
+	
+	// Fade with scene depth
+	float3 worldEyePos = SSS_GetSceneWorldPosition(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	finalColor *= saturate(distance(worldEyePos, d.worldSpacePosition));
+	
+	// Fade with ocean surface
+	float  surfaceDistance;
+	float3 surfaceNormal;
+	SGT_GetOceanData(d.screenUV, surfaceDistance, surfaceNormal);
+	finalColor *= saturate(sign(surfaceDistance) * (cameraDistance - abs(surfaceDistance)));
 	
 	#if _SGT_CLOUDS
 		float shadow2 = SGT_SampleCloudDensity(_WorldSpaceCameraPos - d.worldSpaceViewDir * _SGT_UnderwaterShadowRange, 10.0f);
@@ -841,6 +1028,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 	#pragma shader_feature_local _SGT_CLOUDS_OFF _SGT_CLOUDS
@@ -1053,6 +1241,8 @@ HLSLPROGRAM
 
 #define _SSS_URP 1
 
+#define REQUIRE_DEPTH_TEXTURE
+
 
 // Pragmas
 #pragma target 3.5
@@ -1251,6 +1441,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -1420,6 +1611,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -1458,6 +1650,7 @@ struct SSS_FragmentData
 
 	float3x3 TBNMatrix;
 	
+
 
 
 };
@@ -1539,6 +1732,172 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 	return color;
 }
+float3   _SGT_Offset;
+float    _SGT_Radius;
+float4x4 _SGT_ObjectToWorld;
+float4x4 _SGT_WorldToObject;
+
+float4   _SGT_Origins[128];
+float4   _SGT_PositionsA[128];
+float4   _SGT_PositionsB[128];
+float4   _SGT_PositionsC[128];
+float4x4 _SGT_CoordsX[128];
+float4x4 _SGT_CoordsY[128];
+float4x4 _SGT_CoordsZ[128];
+float4x4 _SGT_CoordsW[128];
+
+float4x4 _SGT_RipplesMatrixA;
+float4x4 _SGT_RipplesMatrixB;
+float    _SGT_RipplesBlend;
+
+float4x4 _SGT_ShoreMatrixA;
+float4x4 _SGT_ShoreMatrixB;
+float    _SGT_ShoreBlend;
+
+float4x4 _SGT_CausticsMatrixA;
+float4x4 _SGT_CausticsMatrixB;
+float    _SGT_CausticsBlend;
+
+float4    _SGT_WaveData;
+float4    _SGT_SurfaceTiling;
+
+sampler2D _SGT_RipplesTexture;
+sampler3D _SGT_NoiseTex;
+float4    _SGT_RipplesData;
+
+Texture2D _SGT_Volumetrics_OceanTex;
+SamplerState sampler_point_clamp;
+
+float2 _SGT_FadeOpacity;
+
+#if !defined(WAVE_SKIP)
+	#define WAVE_SKIP 3
+#endif
+
+void SGT_ComputeTangentFrame(float3 N, out float3 T, out float3 B)
+{
+	if (N.z < -0.9999)
+	{
+		T = float3(0, -1, 0);
+		B = float3(-1, 0, 0);
+	}
+	else
+	{
+		float a = 1.0 / (1.0 + N.z);
+		float b = -N.x * N.y * a;
+		T = float3(1.0 - N.x * N.x * a, b, -N.x);
+		B = float3(b, 1.0 - N.y * N.y * a, -N.y);
+	}
+}
+
+float4x4 _WaveMatrices[24];
+float4   _WaveData[24]; // x = scale, y = weight
+
+void SGT_ApplyWaves(
+	inout float3 vertex,
+	inout float3 normal,
+	inout float3 tangent,
+	inout float3 binormal,
+	float2 normalDetail,
+	float pixelSize)
+{
+	float3 displacement = 0, gradient = 0;
+	float3 N = normal, T = tangent, B = binormal;
+	
+	[unroll]
+	for (int i = 0; i < 24; i += WAVE_SKIP)
+	{
+		float3 scale = _WaveMatrices[i][0].xyz;
+		float2 pos   = mul(_WaveMatrices[i], float4(vertex, 1)).xy;
+		float  fade  = saturate(1.0 - (pixelSize * _WaveData[i].w));
+		
+		float s, c;
+		sincos(pos.x, s, c);
+		
+		float amp = _WaveData[i].z * fade;
+		
+		displacement += N * (s * amp);
+		gradient     += scale * (c * amp);
+	}
+	
+	float dhdT = dot(gradient, T) + normalDetail.x;
+	float dhdB = dot(gradient, B) + normalDetail.y;
+	
+	vertex  += displacement;
+	normal   = normalize(N - dhdT * T - dhdB * B);
+	tangent  = normalize(T + dhdT * N);
+	binormal = normalize(B + dhdB * N);
+}
+
+void SGT_GetOceanData(float2 uv, out float distance, out float3 normal)
+{
+	float4 data = _SGT_Volumetrics_OceanTex.Sample(sampler_point_clamp, uv);
+	
+	distance = data.w;
+	normal   = data.xyz;
+}
+
+float3 SGT_BlendNormals(float3 a, float3 b)
+{
+	return normalize(float3(a.xy + b.xy, a.z));
+}
+
+float HenyeyGreenstein(float cosTheta, float g)
+{
+	float g2 = g * g;
+	float denom = 1.0 + g2 - 2.0 * g * cosTheta;
+	return (1.0 - g2) / (4.0 * 3.14159265 * pow(max(denom, 0.0001), 1.5));
+}
+
+void GetOceanTransmittanceScatter(
+	out float3 transmittance,
+	out float3 scatter,
+	float  waterDepth,
+	float3 viewDir,
+	float3 sunDir,
+	float3 sunColor,
+	float3 ambientColor,
+	float  cameraDepth,
+	float3 waterColor, // The "Deep" convergence color
+	float  waterDensity)
+{
+	// 1. Artist-Friendly Absorption Profile
+	// Typical ocean water absorbs Red much faster than Blue.
+	// We use these coefficients to scale the extinction per channel.
+	// Higher value = color disappears faster with depth.
+	float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
+	
+	// 2. Derive Coefficients
+	// Extinction must be float3 for color shifting to happen.
+	float3 extinction = absorptionWeight * waterDensity;
+	
+	// To ensure convergence to waterColor at infinite depth, 
+	// the scattering/extinction ratio must equal waterColor.
+	float3 scatt = waterColor * extinction;
+	
+	// 3. Transmittance (The "Nice Shift" happens here)
+	// Red channel will drop to 0 much faster than Blue.
+	transmittance = exp(-extinction * waterDepth);
+	
+	float viewCos = abs(viewDir.y);
+	float sunCos = max(sunDir.y, 0.01);
+	
+	// 4. Sun Scattering
+	float3 sunExt = extinction * (1.0 + viewCos / sunCos);
+	float3 sunAtten = sunColor * exp(-extinction * cameraDepth / sunCos);
+	float  phase = HenyeyGreenstein(dot(viewDir, sunDir), 0.7);
+	
+	// Volume scattering formula with float3 coefficients
+	scatter = sunAtten * phase * (scatt / max(sunExt, 1e-4)) * (1.0 - exp(-sunExt * waterDepth));
+	
+	// 5. Ambient Scattering (Converges to waterColor when ambient=1)
+	float  geomFactor = (1.0 + viewCos * 2.0); 
+	float3 ambExt = extinction * geomFactor;
+	float3 ambAtten = ambientColor * exp(-extinction * cameraDepth * 2.0);
+	
+	// This term simplifies to (scatt / extinction) at infinite depth
+	scatter += ambAtten * (scatt * geomFactor / max(ambExt, 1e-4)) * (1.0 - exp(-ambExt * waterDepth));
+}
 
 
 
@@ -1549,7 +1908,6 @@ float4   _SGT_WrapSize; // Auto
 float4   _SGT_FadeData; // Auto
 float4   _SGT_DataA; // Auto
 float4   _SGT_DataB; // Auto
-float3   _SGT_Offset;
 float4   _SGT_FlickerData; // Auto
 float4   _SGT_StretchDirection; // Auto
 float    _SGT_UnderwaterBrightness; // Auto
@@ -1597,6 +1955,12 @@ void SSS_Vert(inout SSS_VertexData v)
 	float3 wcam_snap = wcam + frac((wcam - _SGT_Offset) * _SGT_WrapSize.y) * _SGT_WrapSize.x;
 	float3 ocam_snap = SSS_WorldToObject(wcam_snap);
 	v.position = frac(v.position - ocam_snap * _SGT_WrapSize.y + 0.5f) - 0.5f;
+	
+	// Calculate wrap fade (fades to 0 at wrap boundary)
+	float edgeDist = max(abs(v.position.x), max(abs(v.position.y), abs(v.position.z)));
+	float wrapFade = smoothstep(0.5, 0.3, edgeDist);
+	
+	// Scale up
 	v.position *= _SGT_WrapSize.x;
 	
 	// Drift
@@ -1620,6 +1984,7 @@ void SSS_Vert(inout SSS_VertexData v)
 	v.extraV2F0.x = lerp(_SGT_FlickerData.z, _SGT_FlickerData.w, flicker);
 	
 	v.extraV2F0.x *= length(up); // Fade out parallel rays
+	v.extraV2F0.x *= wrapFade;   // Fade out near wrap boundary
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -1630,21 +1995,29 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float  deepSharpness    = _SGT_DataA.y;
 	float  maxDepth         = _SGT_DataB.z;
 	
-	float camDist = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+	float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
 	
 	float3 localPos = mul(_SGT_WorldToLocal, float4(d.worldSpacePosition, 1.0f)).xyz;
 	
 	float depth = radius - length(localPos);
 	
-	finalColor *= saturate(1.0f - camDist * _SGT_FadeData.x);
+	finalColor *= saturate(1.0f - cameraDistance * _SGT_FadeData.x);
 	
-	finalColor *= 1.0f - pow(saturate(1.0f - depth / maxDepth), surfaceSharpness);
-	
-	finalColor *= 1.0f - pow(saturate(depth / maxDepth), deepSharpness);
+	finalColor *= 1.0f - saturate(depth - maxDepth);
 	
 	finalColor *= 1.0f - pow(saturate(length(d.texcoord0.xy)), 1.0f + 4.0f * d.texcoord0.w);
 	
 	finalColor *= _SGT_UnderwaterBrightness;
+	
+	// Fade with scene depth
+	float3 worldEyePos = SSS_GetSceneWorldPosition(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	finalColor *= saturate(distance(worldEyePos, d.worldSpacePosition));
+	
+	// Fade with ocean surface
+	float  surfaceDistance;
+	float3 surfaceNormal;
+	SGT_GetOceanData(d.screenUV, surfaceDistance, surfaceNormal);
+	finalColor *= saturate(sign(surfaceDistance) * (cameraDistance - abs(surfaceDistance)));
 	
 	#if _SGT_CLOUDS
 		float shadow2 = SGT_SampleCloudDensity(_WorldSpaceCameraPos - d.worldSpaceViewDir * _SGT_UnderwaterShadowRange, 10.0f);
@@ -1809,6 +2182,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 	#pragma shader_feature_local _SGT_CLOUDS_OFF _SGT_CLOUDS
@@ -2014,6 +2388,8 @@ HLSLPROGRAM
 
 #define _SSS_URP 1
 
+#define REQUIRE_DEPTH_TEXTURE
+
 
 // Pragmas
 #pragma target 2.0
@@ -2215,6 +2591,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -2384,6 +2761,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -2422,6 +2800,7 @@ struct SSS_FragmentData
 
 	float3x3 TBNMatrix;
 	
+
 
 
 };
@@ -2503,6 +2882,172 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 	return color;
 }
+float3   _SGT_Offset;
+float    _SGT_Radius;
+float4x4 _SGT_ObjectToWorld;
+float4x4 _SGT_WorldToObject;
+
+float4   _SGT_Origins[128];
+float4   _SGT_PositionsA[128];
+float4   _SGT_PositionsB[128];
+float4   _SGT_PositionsC[128];
+float4x4 _SGT_CoordsX[128];
+float4x4 _SGT_CoordsY[128];
+float4x4 _SGT_CoordsZ[128];
+float4x4 _SGT_CoordsW[128];
+
+float4x4 _SGT_RipplesMatrixA;
+float4x4 _SGT_RipplesMatrixB;
+float    _SGT_RipplesBlend;
+
+float4x4 _SGT_ShoreMatrixA;
+float4x4 _SGT_ShoreMatrixB;
+float    _SGT_ShoreBlend;
+
+float4x4 _SGT_CausticsMatrixA;
+float4x4 _SGT_CausticsMatrixB;
+float    _SGT_CausticsBlend;
+
+float4    _SGT_WaveData;
+float4    _SGT_SurfaceTiling;
+
+sampler2D _SGT_RipplesTexture;
+sampler3D _SGT_NoiseTex;
+float4    _SGT_RipplesData;
+
+Texture2D _SGT_Volumetrics_OceanTex;
+SamplerState sampler_point_clamp;
+
+float2 _SGT_FadeOpacity;
+
+#if !defined(WAVE_SKIP)
+	#define WAVE_SKIP 3
+#endif
+
+void SGT_ComputeTangentFrame(float3 N, out float3 T, out float3 B)
+{
+	if (N.z < -0.9999)
+	{
+		T = float3(0, -1, 0);
+		B = float3(-1, 0, 0);
+	}
+	else
+	{
+		float a = 1.0 / (1.0 + N.z);
+		float b = -N.x * N.y * a;
+		T = float3(1.0 - N.x * N.x * a, b, -N.x);
+		B = float3(b, 1.0 - N.y * N.y * a, -N.y);
+	}
+}
+
+float4x4 _WaveMatrices[24];
+float4   _WaveData[24]; // x = scale, y = weight
+
+void SGT_ApplyWaves(
+	inout float3 vertex,
+	inout float3 normal,
+	inout float3 tangent,
+	inout float3 binormal,
+	float2 normalDetail,
+	float pixelSize)
+{
+	float3 displacement = 0, gradient = 0;
+	float3 N = normal, T = tangent, B = binormal;
+	
+	[unroll]
+	for (int i = 0; i < 24; i += WAVE_SKIP)
+	{
+		float3 scale = _WaveMatrices[i][0].xyz;
+		float2 pos   = mul(_WaveMatrices[i], float4(vertex, 1)).xy;
+		float  fade  = saturate(1.0 - (pixelSize * _WaveData[i].w));
+		
+		float s, c;
+		sincos(pos.x, s, c);
+		
+		float amp = _WaveData[i].z * fade;
+		
+		displacement += N * (s * amp);
+		gradient     += scale * (c * amp);
+	}
+	
+	float dhdT = dot(gradient, T) + normalDetail.x;
+	float dhdB = dot(gradient, B) + normalDetail.y;
+	
+	vertex  += displacement;
+	normal   = normalize(N - dhdT * T - dhdB * B);
+	tangent  = normalize(T + dhdT * N);
+	binormal = normalize(B + dhdB * N);
+}
+
+void SGT_GetOceanData(float2 uv, out float distance, out float3 normal)
+{
+	float4 data = _SGT_Volumetrics_OceanTex.Sample(sampler_point_clamp, uv);
+	
+	distance = data.w;
+	normal   = data.xyz;
+}
+
+float3 SGT_BlendNormals(float3 a, float3 b)
+{
+	return normalize(float3(a.xy + b.xy, a.z));
+}
+
+float HenyeyGreenstein(float cosTheta, float g)
+{
+	float g2 = g * g;
+	float denom = 1.0 + g2 - 2.0 * g * cosTheta;
+	return (1.0 - g2) / (4.0 * 3.14159265 * pow(max(denom, 0.0001), 1.5));
+}
+
+void GetOceanTransmittanceScatter(
+	out float3 transmittance,
+	out float3 scatter,
+	float  waterDepth,
+	float3 viewDir,
+	float3 sunDir,
+	float3 sunColor,
+	float3 ambientColor,
+	float  cameraDepth,
+	float3 waterColor, // The "Deep" convergence color
+	float  waterDensity)
+{
+	// 1. Artist-Friendly Absorption Profile
+	// Typical ocean water absorbs Red much faster than Blue.
+	// We use these coefficients to scale the extinction per channel.
+	// Higher value = color disappears faster with depth.
+	float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
+	
+	// 2. Derive Coefficients
+	// Extinction must be float3 for color shifting to happen.
+	float3 extinction = absorptionWeight * waterDensity;
+	
+	// To ensure convergence to waterColor at infinite depth, 
+	// the scattering/extinction ratio must equal waterColor.
+	float3 scatt = waterColor * extinction;
+	
+	// 3. Transmittance (The "Nice Shift" happens here)
+	// Red channel will drop to 0 much faster than Blue.
+	transmittance = exp(-extinction * waterDepth);
+	
+	float viewCos = abs(viewDir.y);
+	float sunCos = max(sunDir.y, 0.01);
+	
+	// 4. Sun Scattering
+	float3 sunExt = extinction * (1.0 + viewCos / sunCos);
+	float3 sunAtten = sunColor * exp(-extinction * cameraDepth / sunCos);
+	float  phase = HenyeyGreenstein(dot(viewDir, sunDir), 0.7);
+	
+	// Volume scattering formula with float3 coefficients
+	scatter = sunAtten * phase * (scatt / max(sunExt, 1e-4)) * (1.0 - exp(-sunExt * waterDepth));
+	
+	// 5. Ambient Scattering (Converges to waterColor when ambient=1)
+	float  geomFactor = (1.0 + viewCos * 2.0); 
+	float3 ambExt = extinction * geomFactor;
+	float3 ambAtten = ambientColor * exp(-extinction * cameraDepth * 2.0);
+	
+	// This term simplifies to (scatt / extinction) at infinite depth
+	scatter += ambAtten * (scatt * geomFactor / max(ambExt, 1e-4)) * (1.0 - exp(-ambExt * waterDepth));
+}
 
 
 
@@ -2513,7 +3058,6 @@ float4   _SGT_WrapSize; // Auto
 float4   _SGT_FadeData; // Auto
 float4   _SGT_DataA; // Auto
 float4   _SGT_DataB; // Auto
-float3   _SGT_Offset;
 float4   _SGT_FlickerData; // Auto
 float4   _SGT_StretchDirection; // Auto
 float    _SGT_UnderwaterBrightness; // Auto
@@ -2561,6 +3105,12 @@ void SSS_Vert(inout SSS_VertexData v)
 	float3 wcam_snap = wcam + frac((wcam - _SGT_Offset) * _SGT_WrapSize.y) * _SGT_WrapSize.x;
 	float3 ocam_snap = SSS_WorldToObject(wcam_snap);
 	v.position = frac(v.position - ocam_snap * _SGT_WrapSize.y + 0.5f) - 0.5f;
+	
+	// Calculate wrap fade (fades to 0 at wrap boundary)
+	float edgeDist = max(abs(v.position.x), max(abs(v.position.y), abs(v.position.z)));
+	float wrapFade = smoothstep(0.5, 0.3, edgeDist);
+	
+	// Scale up
 	v.position *= _SGT_WrapSize.x;
 	
 	// Drift
@@ -2584,6 +3134,7 @@ void SSS_Vert(inout SSS_VertexData v)
 	v.extraV2F0.x = lerp(_SGT_FlickerData.z, _SGT_FlickerData.w, flicker);
 	
 	v.extraV2F0.x *= length(up); // Fade out parallel rays
+	v.extraV2F0.x *= wrapFade;   // Fade out near wrap boundary
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -2594,21 +3145,29 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float  deepSharpness    = _SGT_DataA.y;
 	float  maxDepth         = _SGT_DataB.z;
 	
-	float camDist = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+	float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
 	
 	float3 localPos = mul(_SGT_WorldToLocal, float4(d.worldSpacePosition, 1.0f)).xyz;
 	
 	float depth = radius - length(localPos);
 	
-	finalColor *= saturate(1.0f - camDist * _SGT_FadeData.x);
+	finalColor *= saturate(1.0f - cameraDistance * _SGT_FadeData.x);
 	
-	finalColor *= 1.0f - pow(saturate(1.0f - depth / maxDepth), surfaceSharpness);
-	
-	finalColor *= 1.0f - pow(saturate(depth / maxDepth), deepSharpness);
+	finalColor *= 1.0f - saturate(depth - maxDepth);
 	
 	finalColor *= 1.0f - pow(saturate(length(d.texcoord0.xy)), 1.0f + 4.0f * d.texcoord0.w);
 	
 	finalColor *= _SGT_UnderwaterBrightness;
+	
+	// Fade with scene depth
+	float3 worldEyePos = SSS_GetSceneWorldPosition(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	finalColor *= saturate(distance(worldEyePos, d.worldSpacePosition));
+	
+	// Fade with ocean surface
+	float  surfaceDistance;
+	float3 surfaceNormal;
+	SGT_GetOceanData(d.screenUV, surfaceDistance, surfaceNormal);
+	finalColor *= saturate(sign(surfaceDistance) * (cameraDistance - abs(surfaceDistance)));
 	
 	#if _SGT_CLOUDS
 		float shadow2 = SGT_SampleCloudDensity(_WorldSpaceCameraPos - d.worldSpaceViewDir * _SGT_UnderwaterShadowRange, 10.0f);
@@ -2773,6 +3332,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 	#pragma shader_feature_local _SGT_CLOUDS_OFF _SGT_CLOUDS
@@ -2982,6 +3542,8 @@ HLSLPROGRAM
 #define _SSS_PASS_GBUFFER 1
 
 #define _SSS_URP 1
+
+#define REQUIRE_DEPTH_TEXTURE
 
 
 // Pragmas
@@ -3215,6 +3777,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -3384,6 +3947,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -3422,6 +3986,7 @@ struct SSS_FragmentData
 
 	float3x3 TBNMatrix;
 	
+
 
 
 };
@@ -3503,6 +4068,172 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 	return color;
 }
+float3   _SGT_Offset;
+float    _SGT_Radius;
+float4x4 _SGT_ObjectToWorld;
+float4x4 _SGT_WorldToObject;
+
+float4   _SGT_Origins[128];
+float4   _SGT_PositionsA[128];
+float4   _SGT_PositionsB[128];
+float4   _SGT_PositionsC[128];
+float4x4 _SGT_CoordsX[128];
+float4x4 _SGT_CoordsY[128];
+float4x4 _SGT_CoordsZ[128];
+float4x4 _SGT_CoordsW[128];
+
+float4x4 _SGT_RipplesMatrixA;
+float4x4 _SGT_RipplesMatrixB;
+float    _SGT_RipplesBlend;
+
+float4x4 _SGT_ShoreMatrixA;
+float4x4 _SGT_ShoreMatrixB;
+float    _SGT_ShoreBlend;
+
+float4x4 _SGT_CausticsMatrixA;
+float4x4 _SGT_CausticsMatrixB;
+float    _SGT_CausticsBlend;
+
+float4    _SGT_WaveData;
+float4    _SGT_SurfaceTiling;
+
+sampler2D _SGT_RipplesTexture;
+sampler3D _SGT_NoiseTex;
+float4    _SGT_RipplesData;
+
+Texture2D _SGT_Volumetrics_OceanTex;
+SamplerState sampler_point_clamp;
+
+float2 _SGT_FadeOpacity;
+
+#if !defined(WAVE_SKIP)
+	#define WAVE_SKIP 3
+#endif
+
+void SGT_ComputeTangentFrame(float3 N, out float3 T, out float3 B)
+{
+	if (N.z < -0.9999)
+	{
+		T = float3(0, -1, 0);
+		B = float3(-1, 0, 0);
+	}
+	else
+	{
+		float a = 1.0 / (1.0 + N.z);
+		float b = -N.x * N.y * a;
+		T = float3(1.0 - N.x * N.x * a, b, -N.x);
+		B = float3(b, 1.0 - N.y * N.y * a, -N.y);
+	}
+}
+
+float4x4 _WaveMatrices[24];
+float4   _WaveData[24]; // x = scale, y = weight
+
+void SGT_ApplyWaves(
+	inout float3 vertex,
+	inout float3 normal,
+	inout float3 tangent,
+	inout float3 binormal,
+	float2 normalDetail,
+	float pixelSize)
+{
+	float3 displacement = 0, gradient = 0;
+	float3 N = normal, T = tangent, B = binormal;
+	
+	[unroll]
+	for (int i = 0; i < 24; i += WAVE_SKIP)
+	{
+		float3 scale = _WaveMatrices[i][0].xyz;
+		float2 pos   = mul(_WaveMatrices[i], float4(vertex, 1)).xy;
+		float  fade  = saturate(1.0 - (pixelSize * _WaveData[i].w));
+		
+		float s, c;
+		sincos(pos.x, s, c);
+		
+		float amp = _WaveData[i].z * fade;
+		
+		displacement += N * (s * amp);
+		gradient     += scale * (c * amp);
+	}
+	
+	float dhdT = dot(gradient, T) + normalDetail.x;
+	float dhdB = dot(gradient, B) + normalDetail.y;
+	
+	vertex  += displacement;
+	normal   = normalize(N - dhdT * T - dhdB * B);
+	tangent  = normalize(T + dhdT * N);
+	binormal = normalize(B + dhdB * N);
+}
+
+void SGT_GetOceanData(float2 uv, out float distance, out float3 normal)
+{
+	float4 data = _SGT_Volumetrics_OceanTex.Sample(sampler_point_clamp, uv);
+	
+	distance = data.w;
+	normal   = data.xyz;
+}
+
+float3 SGT_BlendNormals(float3 a, float3 b)
+{
+	return normalize(float3(a.xy + b.xy, a.z));
+}
+
+float HenyeyGreenstein(float cosTheta, float g)
+{
+	float g2 = g * g;
+	float denom = 1.0 + g2 - 2.0 * g * cosTheta;
+	return (1.0 - g2) / (4.0 * 3.14159265 * pow(max(denom, 0.0001), 1.5));
+}
+
+void GetOceanTransmittanceScatter(
+	out float3 transmittance,
+	out float3 scatter,
+	float  waterDepth,
+	float3 viewDir,
+	float3 sunDir,
+	float3 sunColor,
+	float3 ambientColor,
+	float  cameraDepth,
+	float3 waterColor, // The "Deep" convergence color
+	float  waterDensity)
+{
+	// 1. Artist-Friendly Absorption Profile
+	// Typical ocean water absorbs Red much faster than Blue.
+	// We use these coefficients to scale the extinction per channel.
+	// Higher value = color disappears faster with depth.
+	float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
+	
+	// 2. Derive Coefficients
+	// Extinction must be float3 for color shifting to happen.
+	float3 extinction = absorptionWeight * waterDensity;
+	
+	// To ensure convergence to waterColor at infinite depth, 
+	// the scattering/extinction ratio must equal waterColor.
+	float3 scatt = waterColor * extinction;
+	
+	// 3. Transmittance (The "Nice Shift" happens here)
+	// Red channel will drop to 0 much faster than Blue.
+	transmittance = exp(-extinction * waterDepth);
+	
+	float viewCos = abs(viewDir.y);
+	float sunCos = max(sunDir.y, 0.01);
+	
+	// 4. Sun Scattering
+	float3 sunExt = extinction * (1.0 + viewCos / sunCos);
+	float3 sunAtten = sunColor * exp(-extinction * cameraDepth / sunCos);
+	float  phase = HenyeyGreenstein(dot(viewDir, sunDir), 0.7);
+	
+	// Volume scattering formula with float3 coefficients
+	scatter = sunAtten * phase * (scatt / max(sunExt, 1e-4)) * (1.0 - exp(-sunExt * waterDepth));
+	
+	// 5. Ambient Scattering (Converges to waterColor when ambient=1)
+	float  geomFactor = (1.0 + viewCos * 2.0); 
+	float3 ambExt = extinction * geomFactor;
+	float3 ambAtten = ambientColor * exp(-extinction * cameraDepth * 2.0);
+	
+	// This term simplifies to (scatt / extinction) at infinite depth
+	scatter += ambAtten * (scatt * geomFactor / max(ambExt, 1e-4)) * (1.0 - exp(-ambExt * waterDepth));
+}
 
 
 
@@ -3513,7 +4244,6 @@ float4   _SGT_WrapSize; // Auto
 float4   _SGT_FadeData; // Auto
 float4   _SGT_DataA; // Auto
 float4   _SGT_DataB; // Auto
-float3   _SGT_Offset;
 float4   _SGT_FlickerData; // Auto
 float4   _SGT_StretchDirection; // Auto
 float    _SGT_UnderwaterBrightness; // Auto
@@ -3561,6 +4291,12 @@ void SSS_Vert(inout SSS_VertexData v)
 	float3 wcam_snap = wcam + frac((wcam - _SGT_Offset) * _SGT_WrapSize.y) * _SGT_WrapSize.x;
 	float3 ocam_snap = SSS_WorldToObject(wcam_snap);
 	v.position = frac(v.position - ocam_snap * _SGT_WrapSize.y + 0.5f) - 0.5f;
+	
+	// Calculate wrap fade (fades to 0 at wrap boundary)
+	float edgeDist = max(abs(v.position.x), max(abs(v.position.y), abs(v.position.z)));
+	float wrapFade = smoothstep(0.5, 0.3, edgeDist);
+	
+	// Scale up
 	v.position *= _SGT_WrapSize.x;
 	
 	// Drift
@@ -3584,6 +4320,7 @@ void SSS_Vert(inout SSS_VertexData v)
 	v.extraV2F0.x = lerp(_SGT_FlickerData.z, _SGT_FlickerData.w, flicker);
 	
 	v.extraV2F0.x *= length(up); // Fade out parallel rays
+	v.extraV2F0.x *= wrapFade;   // Fade out near wrap boundary
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -3594,21 +4331,29 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float  deepSharpness    = _SGT_DataA.y;
 	float  maxDepth         = _SGT_DataB.z;
 	
-	float camDist = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+	float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
 	
 	float3 localPos = mul(_SGT_WorldToLocal, float4(d.worldSpacePosition, 1.0f)).xyz;
 	
 	float depth = radius - length(localPos);
 	
-	finalColor *= saturate(1.0f - camDist * _SGT_FadeData.x);
+	finalColor *= saturate(1.0f - cameraDistance * _SGT_FadeData.x);
 	
-	finalColor *= 1.0f - pow(saturate(1.0f - depth / maxDepth), surfaceSharpness);
-	
-	finalColor *= 1.0f - pow(saturate(depth / maxDepth), deepSharpness);
+	finalColor *= 1.0f - saturate(depth - maxDepth);
 	
 	finalColor *= 1.0f - pow(saturate(length(d.texcoord0.xy)), 1.0f + 4.0f * d.texcoord0.w);
 	
 	finalColor *= _SGT_UnderwaterBrightness;
+	
+	// Fade with scene depth
+	float3 worldEyePos = SSS_GetSceneWorldPosition(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	finalColor *= saturate(distance(worldEyePos, d.worldSpacePosition));
+	
+	// Fade with ocean surface
+	float  surfaceDistance;
+	float3 surfaceNormal;
+	SGT_GetOceanData(d.screenUV, surfaceDistance, surfaceNormal);
+	finalColor *= saturate(sign(surfaceDistance) * (cameraDistance - abs(surfaceDistance)));
 	
 	#if _SGT_CLOUDS
 		float shadow2 = SGT_SampleCloudDensity(_WorldSpaceCameraPos - d.worldSpaceViewDir * _SGT_UnderwaterShadowRange, 10.0f);
@@ -3773,6 +4518,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 	#pragma shader_feature_local _SGT_CLOUDS_OFF _SGT_CLOUDS
@@ -3982,6 +4728,8 @@ HLSLPROGRAM
 
 #define _SSS_URP 1
 
+#define REQUIRE_DEPTH_TEXTURE
+
 
 // Pragmas
 #pragma target 2.0
@@ -4182,6 +4930,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -4351,6 +5100,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -4389,6 +5139,7 @@ struct SSS_FragmentData
 
 	float3x3 TBNMatrix;
 	
+
 
 
 };
@@ -4470,6 +5221,172 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 	return color;
 }
+float3   _SGT_Offset;
+float    _SGT_Radius;
+float4x4 _SGT_ObjectToWorld;
+float4x4 _SGT_WorldToObject;
+
+float4   _SGT_Origins[128];
+float4   _SGT_PositionsA[128];
+float4   _SGT_PositionsB[128];
+float4   _SGT_PositionsC[128];
+float4x4 _SGT_CoordsX[128];
+float4x4 _SGT_CoordsY[128];
+float4x4 _SGT_CoordsZ[128];
+float4x4 _SGT_CoordsW[128];
+
+float4x4 _SGT_RipplesMatrixA;
+float4x4 _SGT_RipplesMatrixB;
+float    _SGT_RipplesBlend;
+
+float4x4 _SGT_ShoreMatrixA;
+float4x4 _SGT_ShoreMatrixB;
+float    _SGT_ShoreBlend;
+
+float4x4 _SGT_CausticsMatrixA;
+float4x4 _SGT_CausticsMatrixB;
+float    _SGT_CausticsBlend;
+
+float4    _SGT_WaveData;
+float4    _SGT_SurfaceTiling;
+
+sampler2D _SGT_RipplesTexture;
+sampler3D _SGT_NoiseTex;
+float4    _SGT_RipplesData;
+
+Texture2D _SGT_Volumetrics_OceanTex;
+SamplerState sampler_point_clamp;
+
+float2 _SGT_FadeOpacity;
+
+#if !defined(WAVE_SKIP)
+	#define WAVE_SKIP 3
+#endif
+
+void SGT_ComputeTangentFrame(float3 N, out float3 T, out float3 B)
+{
+	if (N.z < -0.9999)
+	{
+		T = float3(0, -1, 0);
+		B = float3(-1, 0, 0);
+	}
+	else
+	{
+		float a = 1.0 / (1.0 + N.z);
+		float b = -N.x * N.y * a;
+		T = float3(1.0 - N.x * N.x * a, b, -N.x);
+		B = float3(b, 1.0 - N.y * N.y * a, -N.y);
+	}
+}
+
+float4x4 _WaveMatrices[24];
+float4   _WaveData[24]; // x = scale, y = weight
+
+void SGT_ApplyWaves(
+	inout float3 vertex,
+	inout float3 normal,
+	inout float3 tangent,
+	inout float3 binormal,
+	float2 normalDetail,
+	float pixelSize)
+{
+	float3 displacement = 0, gradient = 0;
+	float3 N = normal, T = tangent, B = binormal;
+	
+	[unroll]
+	for (int i = 0; i < 24; i += WAVE_SKIP)
+	{
+		float3 scale = _WaveMatrices[i][0].xyz;
+		float2 pos   = mul(_WaveMatrices[i], float4(vertex, 1)).xy;
+		float  fade  = saturate(1.0 - (pixelSize * _WaveData[i].w));
+		
+		float s, c;
+		sincos(pos.x, s, c);
+		
+		float amp = _WaveData[i].z * fade;
+		
+		displacement += N * (s * amp);
+		gradient     += scale * (c * amp);
+	}
+	
+	float dhdT = dot(gradient, T) + normalDetail.x;
+	float dhdB = dot(gradient, B) + normalDetail.y;
+	
+	vertex  += displacement;
+	normal   = normalize(N - dhdT * T - dhdB * B);
+	tangent  = normalize(T + dhdT * N);
+	binormal = normalize(B + dhdB * N);
+}
+
+void SGT_GetOceanData(float2 uv, out float distance, out float3 normal)
+{
+	float4 data = _SGT_Volumetrics_OceanTex.Sample(sampler_point_clamp, uv);
+	
+	distance = data.w;
+	normal   = data.xyz;
+}
+
+float3 SGT_BlendNormals(float3 a, float3 b)
+{
+	return normalize(float3(a.xy + b.xy, a.z));
+}
+
+float HenyeyGreenstein(float cosTheta, float g)
+{
+	float g2 = g * g;
+	float denom = 1.0 + g2 - 2.0 * g * cosTheta;
+	return (1.0 - g2) / (4.0 * 3.14159265 * pow(max(denom, 0.0001), 1.5));
+}
+
+void GetOceanTransmittanceScatter(
+	out float3 transmittance,
+	out float3 scatter,
+	float  waterDepth,
+	float3 viewDir,
+	float3 sunDir,
+	float3 sunColor,
+	float3 ambientColor,
+	float  cameraDepth,
+	float3 waterColor, // The "Deep" convergence color
+	float  waterDensity)
+{
+	// 1. Artist-Friendly Absorption Profile
+	// Typical ocean water absorbs Red much faster than Blue.
+	// We use these coefficients to scale the extinction per channel.
+	// Higher value = color disappears faster with depth.
+	float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
+	
+	// 2. Derive Coefficients
+	// Extinction must be float3 for color shifting to happen.
+	float3 extinction = absorptionWeight * waterDensity;
+	
+	// To ensure convergence to waterColor at infinite depth, 
+	// the scattering/extinction ratio must equal waterColor.
+	float3 scatt = waterColor * extinction;
+	
+	// 3. Transmittance (The "Nice Shift" happens here)
+	// Red channel will drop to 0 much faster than Blue.
+	transmittance = exp(-extinction * waterDepth);
+	
+	float viewCos = abs(viewDir.y);
+	float sunCos = max(sunDir.y, 0.01);
+	
+	// 4. Sun Scattering
+	float3 sunExt = extinction * (1.0 + viewCos / sunCos);
+	float3 sunAtten = sunColor * exp(-extinction * cameraDepth / sunCos);
+	float  phase = HenyeyGreenstein(dot(viewDir, sunDir), 0.7);
+	
+	// Volume scattering formula with float3 coefficients
+	scatter = sunAtten * phase * (scatt / max(sunExt, 1e-4)) * (1.0 - exp(-sunExt * waterDepth));
+	
+	// 5. Ambient Scattering (Converges to waterColor when ambient=1)
+	float  geomFactor = (1.0 + viewCos * 2.0); 
+	float3 ambExt = extinction * geomFactor;
+	float3 ambAtten = ambientColor * exp(-extinction * cameraDepth * 2.0);
+	
+	// This term simplifies to (scatt / extinction) at infinite depth
+	scatter += ambAtten * (scatt * geomFactor / max(ambExt, 1e-4)) * (1.0 - exp(-ambExt * waterDepth));
+}
 
 
 
@@ -4480,7 +5397,6 @@ float4   _SGT_WrapSize; // Auto
 float4   _SGT_FadeData; // Auto
 float4   _SGT_DataA; // Auto
 float4   _SGT_DataB; // Auto
-float3   _SGT_Offset;
 float4   _SGT_FlickerData; // Auto
 float4   _SGT_StretchDirection; // Auto
 float    _SGT_UnderwaterBrightness; // Auto
@@ -4528,6 +5444,12 @@ void SSS_Vert(inout SSS_VertexData v)
 	float3 wcam_snap = wcam + frac((wcam - _SGT_Offset) * _SGT_WrapSize.y) * _SGT_WrapSize.x;
 	float3 ocam_snap = SSS_WorldToObject(wcam_snap);
 	v.position = frac(v.position - ocam_snap * _SGT_WrapSize.y + 0.5f) - 0.5f;
+	
+	// Calculate wrap fade (fades to 0 at wrap boundary)
+	float edgeDist = max(abs(v.position.x), max(abs(v.position.y), abs(v.position.z)));
+	float wrapFade = smoothstep(0.5, 0.3, edgeDist);
+	
+	// Scale up
 	v.position *= _SGT_WrapSize.x;
 	
 	// Drift
@@ -4551,6 +5473,7 @@ void SSS_Vert(inout SSS_VertexData v)
 	v.extraV2F0.x = lerp(_SGT_FlickerData.z, _SGT_FlickerData.w, flicker);
 	
 	v.extraV2F0.x *= length(up); // Fade out parallel rays
+	v.extraV2F0.x *= wrapFade;   // Fade out near wrap boundary
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -4561,21 +5484,29 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float  deepSharpness    = _SGT_DataA.y;
 	float  maxDepth         = _SGT_DataB.z;
 	
-	float camDist = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+	float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
 	
 	float3 localPos = mul(_SGT_WorldToLocal, float4(d.worldSpacePosition, 1.0f)).xyz;
 	
 	float depth = radius - length(localPos);
 	
-	finalColor *= saturate(1.0f - camDist * _SGT_FadeData.x);
+	finalColor *= saturate(1.0f - cameraDistance * _SGT_FadeData.x);
 	
-	finalColor *= 1.0f - pow(saturate(1.0f - depth / maxDepth), surfaceSharpness);
-	
-	finalColor *= 1.0f - pow(saturate(depth / maxDepth), deepSharpness);
+	finalColor *= 1.0f - saturate(depth - maxDepth);
 	
 	finalColor *= 1.0f - pow(saturate(length(d.texcoord0.xy)), 1.0f + 4.0f * d.texcoord0.w);
 	
 	finalColor *= _SGT_UnderwaterBrightness;
+	
+	// Fade with scene depth
+	float3 worldEyePos = SSS_GetSceneWorldPosition(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	finalColor *= saturate(distance(worldEyePos, d.worldSpacePosition));
+	
+	// Fade with ocean surface
+	float  surfaceDistance;
+	float3 surfaceNormal;
+	SGT_GetOceanData(d.screenUV, surfaceDistance, surfaceNormal);
+	finalColor *= saturate(sign(surfaceDistance) * (cameraDistance - abs(surfaceDistance)));
 	
 	#if _SGT_CLOUDS
 		float shadow2 = SGT_SampleCloudDensity(_WorldSpaceCameraPos - d.worldSpaceViewDir * _SGT_UnderwaterShadowRange, 10.0f);
@@ -4740,6 +5671,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 	#pragma shader_feature_local _SGT_CLOUDS_OFF _SGT_CLOUDS
@@ -4947,6 +5879,8 @@ HLSLPROGRAM
 
 #define _SSS_URP 1
 
+#define REQUIRE_DEPTH_TEXTURE
+
 
 // Pragmas
 #pragma target 2.0
@@ -5147,6 +6081,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -5316,6 +6251,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -5354,6 +6290,7 @@ struct SSS_FragmentData
 
 	float3x3 TBNMatrix;
 	
+
 
 
 };
@@ -5435,6 +6372,172 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 	return color;
 }
+float3   _SGT_Offset;
+float    _SGT_Radius;
+float4x4 _SGT_ObjectToWorld;
+float4x4 _SGT_WorldToObject;
+
+float4   _SGT_Origins[128];
+float4   _SGT_PositionsA[128];
+float4   _SGT_PositionsB[128];
+float4   _SGT_PositionsC[128];
+float4x4 _SGT_CoordsX[128];
+float4x4 _SGT_CoordsY[128];
+float4x4 _SGT_CoordsZ[128];
+float4x4 _SGT_CoordsW[128];
+
+float4x4 _SGT_RipplesMatrixA;
+float4x4 _SGT_RipplesMatrixB;
+float    _SGT_RipplesBlend;
+
+float4x4 _SGT_ShoreMatrixA;
+float4x4 _SGT_ShoreMatrixB;
+float    _SGT_ShoreBlend;
+
+float4x4 _SGT_CausticsMatrixA;
+float4x4 _SGT_CausticsMatrixB;
+float    _SGT_CausticsBlend;
+
+float4    _SGT_WaveData;
+float4    _SGT_SurfaceTiling;
+
+sampler2D _SGT_RipplesTexture;
+sampler3D _SGT_NoiseTex;
+float4    _SGT_RipplesData;
+
+Texture2D _SGT_Volumetrics_OceanTex;
+SamplerState sampler_point_clamp;
+
+float2 _SGT_FadeOpacity;
+
+#if !defined(WAVE_SKIP)
+	#define WAVE_SKIP 3
+#endif
+
+void SGT_ComputeTangentFrame(float3 N, out float3 T, out float3 B)
+{
+	if (N.z < -0.9999)
+	{
+		T = float3(0, -1, 0);
+		B = float3(-1, 0, 0);
+	}
+	else
+	{
+		float a = 1.0 / (1.0 + N.z);
+		float b = -N.x * N.y * a;
+		T = float3(1.0 - N.x * N.x * a, b, -N.x);
+		B = float3(b, 1.0 - N.y * N.y * a, -N.y);
+	}
+}
+
+float4x4 _WaveMatrices[24];
+float4   _WaveData[24]; // x = scale, y = weight
+
+void SGT_ApplyWaves(
+	inout float3 vertex,
+	inout float3 normal,
+	inout float3 tangent,
+	inout float3 binormal,
+	float2 normalDetail,
+	float pixelSize)
+{
+	float3 displacement = 0, gradient = 0;
+	float3 N = normal, T = tangent, B = binormal;
+	
+	[unroll]
+	for (int i = 0; i < 24; i += WAVE_SKIP)
+	{
+		float3 scale = _WaveMatrices[i][0].xyz;
+		float2 pos   = mul(_WaveMatrices[i], float4(vertex, 1)).xy;
+		float  fade  = saturate(1.0 - (pixelSize * _WaveData[i].w));
+		
+		float s, c;
+		sincos(pos.x, s, c);
+		
+		float amp = _WaveData[i].z * fade;
+		
+		displacement += N * (s * amp);
+		gradient     += scale * (c * amp);
+	}
+	
+	float dhdT = dot(gradient, T) + normalDetail.x;
+	float dhdB = dot(gradient, B) + normalDetail.y;
+	
+	vertex  += displacement;
+	normal   = normalize(N - dhdT * T - dhdB * B);
+	tangent  = normalize(T + dhdT * N);
+	binormal = normalize(B + dhdB * N);
+}
+
+void SGT_GetOceanData(float2 uv, out float distance, out float3 normal)
+{
+	float4 data = _SGT_Volumetrics_OceanTex.Sample(sampler_point_clamp, uv);
+	
+	distance = data.w;
+	normal   = data.xyz;
+}
+
+float3 SGT_BlendNormals(float3 a, float3 b)
+{
+	return normalize(float3(a.xy + b.xy, a.z));
+}
+
+float HenyeyGreenstein(float cosTheta, float g)
+{
+	float g2 = g * g;
+	float denom = 1.0 + g2 - 2.0 * g * cosTheta;
+	return (1.0 - g2) / (4.0 * 3.14159265 * pow(max(denom, 0.0001), 1.5));
+}
+
+void GetOceanTransmittanceScatter(
+	out float3 transmittance,
+	out float3 scatter,
+	float  waterDepth,
+	float3 viewDir,
+	float3 sunDir,
+	float3 sunColor,
+	float3 ambientColor,
+	float  cameraDepth,
+	float3 waterColor, // The "Deep" convergence color
+	float  waterDensity)
+{
+	// 1. Artist-Friendly Absorption Profile
+	// Typical ocean water absorbs Red much faster than Blue.
+	// We use these coefficients to scale the extinction per channel.
+	// Higher value = color disappears faster with depth.
+	float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
+	
+	// 2. Derive Coefficients
+	// Extinction must be float3 for color shifting to happen.
+	float3 extinction = absorptionWeight * waterDensity;
+	
+	// To ensure convergence to waterColor at infinite depth, 
+	// the scattering/extinction ratio must equal waterColor.
+	float3 scatt = waterColor * extinction;
+	
+	// 3. Transmittance (The "Nice Shift" happens here)
+	// Red channel will drop to 0 much faster than Blue.
+	transmittance = exp(-extinction * waterDepth);
+	
+	float viewCos = abs(viewDir.y);
+	float sunCos = max(sunDir.y, 0.01);
+	
+	// 4. Sun Scattering
+	float3 sunExt = extinction * (1.0 + viewCos / sunCos);
+	float3 sunAtten = sunColor * exp(-extinction * cameraDepth / sunCos);
+	float  phase = HenyeyGreenstein(dot(viewDir, sunDir), 0.7);
+	
+	// Volume scattering formula with float3 coefficients
+	scatter = sunAtten * phase * (scatt / max(sunExt, 1e-4)) * (1.0 - exp(-sunExt * waterDepth));
+	
+	// 5. Ambient Scattering (Converges to waterColor when ambient=1)
+	float  geomFactor = (1.0 + viewCos * 2.0); 
+	float3 ambExt = extinction * geomFactor;
+	float3 ambAtten = ambientColor * exp(-extinction * cameraDepth * 2.0);
+	
+	// This term simplifies to (scatt / extinction) at infinite depth
+	scatter += ambAtten * (scatt * geomFactor / max(ambExt, 1e-4)) * (1.0 - exp(-ambExt * waterDepth));
+}
 
 
 
@@ -5445,7 +6548,6 @@ float4   _SGT_WrapSize; // Auto
 float4   _SGT_FadeData; // Auto
 float4   _SGT_DataA; // Auto
 float4   _SGT_DataB; // Auto
-float3   _SGT_Offset;
 float4   _SGT_FlickerData; // Auto
 float4   _SGT_StretchDirection; // Auto
 float    _SGT_UnderwaterBrightness; // Auto
@@ -5493,6 +6595,12 @@ void SSS_Vert(inout SSS_VertexData v)
 	float3 wcam_snap = wcam + frac((wcam - _SGT_Offset) * _SGT_WrapSize.y) * _SGT_WrapSize.x;
 	float3 ocam_snap = SSS_WorldToObject(wcam_snap);
 	v.position = frac(v.position - ocam_snap * _SGT_WrapSize.y + 0.5f) - 0.5f;
+	
+	// Calculate wrap fade (fades to 0 at wrap boundary)
+	float edgeDist = max(abs(v.position.x), max(abs(v.position.y), abs(v.position.z)));
+	float wrapFade = smoothstep(0.5, 0.3, edgeDist);
+	
+	// Scale up
 	v.position *= _SGT_WrapSize.x;
 	
 	// Drift
@@ -5516,6 +6624,7 @@ void SSS_Vert(inout SSS_VertexData v)
 	v.extraV2F0.x = lerp(_SGT_FlickerData.z, _SGT_FlickerData.w, flicker);
 	
 	v.extraV2F0.x *= length(up); // Fade out parallel rays
+	v.extraV2F0.x *= wrapFade;   // Fade out near wrap boundary
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -5526,21 +6635,29 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float  deepSharpness    = _SGT_DataA.y;
 	float  maxDepth         = _SGT_DataB.z;
 	
-	float camDist = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+	float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
 	
 	float3 localPos = mul(_SGT_WorldToLocal, float4(d.worldSpacePosition, 1.0f)).xyz;
 	
 	float depth = radius - length(localPos);
 	
-	finalColor *= saturate(1.0f - camDist * _SGT_FadeData.x);
+	finalColor *= saturate(1.0f - cameraDistance * _SGT_FadeData.x);
 	
-	finalColor *= 1.0f - pow(saturate(1.0f - depth / maxDepth), surfaceSharpness);
-	
-	finalColor *= 1.0f - pow(saturate(depth / maxDepth), deepSharpness);
+	finalColor *= 1.0f - saturate(depth - maxDepth);
 	
 	finalColor *= 1.0f - pow(saturate(length(d.texcoord0.xy)), 1.0f + 4.0f * d.texcoord0.w);
 	
 	finalColor *= _SGT_UnderwaterBrightness;
+	
+	// Fade with scene depth
+	float3 worldEyePos = SSS_GetSceneWorldPosition(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	finalColor *= saturate(distance(worldEyePos, d.worldSpacePosition));
+	
+	// Fade with ocean surface
+	float  surfaceDistance;
+	float3 surfaceNormal;
+	SGT_GetOceanData(d.screenUV, surfaceDistance, surfaceNormal);
+	finalColor *= saturate(sign(surfaceDistance) * (cameraDistance - abs(surfaceDistance)));
 	
 	#if _SGT_CLOUDS
 		float shadow2 = SGT_SampleCloudDensity(_WorldSpaceCameraPos - d.worldSpaceViewDir * _SGT_UnderwaterShadowRange, 10.0f);
@@ -5705,6 +6822,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 	#pragma shader_feature_local _SGT_CLOUDS_OFF _SGT_CLOUDS
@@ -5931,6 +7049,8 @@ HLSLPROGRAM
 
 #define _SSS_BIRP 1
 
+#define REQUIRE_DEPTH_TEXTURE
+
 
 // Pragmas
 #pragma target 3.0
@@ -6138,6 +7258,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 CBUFFER_END
 
 
@@ -6317,6 +7438,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -6355,6 +7477,7 @@ struct SSS_FragmentData
 
 	float3x3 TBNMatrix;
 	
+
 
 
 };
@@ -6436,6 +7559,172 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 	return color;
 }
+float3   _SGT_Offset;
+float    _SGT_Radius;
+float4x4 _SGT_ObjectToWorld;
+float4x4 _SGT_WorldToObject;
+
+float4   _SGT_Origins[128];
+float4   _SGT_PositionsA[128];
+float4   _SGT_PositionsB[128];
+float4   _SGT_PositionsC[128];
+float4x4 _SGT_CoordsX[128];
+float4x4 _SGT_CoordsY[128];
+float4x4 _SGT_CoordsZ[128];
+float4x4 _SGT_CoordsW[128];
+
+float4x4 _SGT_RipplesMatrixA;
+float4x4 _SGT_RipplesMatrixB;
+float    _SGT_RipplesBlend;
+
+float4x4 _SGT_ShoreMatrixA;
+float4x4 _SGT_ShoreMatrixB;
+float    _SGT_ShoreBlend;
+
+float4x4 _SGT_CausticsMatrixA;
+float4x4 _SGT_CausticsMatrixB;
+float    _SGT_CausticsBlend;
+
+float4    _SGT_WaveData;
+float4    _SGT_SurfaceTiling;
+
+sampler2D _SGT_RipplesTexture;
+sampler3D _SGT_NoiseTex;
+float4    _SGT_RipplesData;
+
+Texture2D _SGT_Volumetrics_OceanTex;
+SamplerState sampler_point_clamp;
+
+float2 _SGT_FadeOpacity;
+
+#if !defined(WAVE_SKIP)
+	#define WAVE_SKIP 3
+#endif
+
+void SGT_ComputeTangentFrame(float3 N, out float3 T, out float3 B)
+{
+	if (N.z < -0.9999)
+	{
+		T = float3(0, -1, 0);
+		B = float3(-1, 0, 0);
+	}
+	else
+	{
+		float a = 1.0 / (1.0 + N.z);
+		float b = -N.x * N.y * a;
+		T = float3(1.0 - N.x * N.x * a, b, -N.x);
+		B = float3(b, 1.0 - N.y * N.y * a, -N.y);
+	}
+}
+
+float4x4 _WaveMatrices[24];
+float4   _WaveData[24]; // x = scale, y = weight
+
+void SGT_ApplyWaves(
+	inout float3 vertex,
+	inout float3 normal,
+	inout float3 tangent,
+	inout float3 binormal,
+	float2 normalDetail,
+	float pixelSize)
+{
+	float3 displacement = 0, gradient = 0;
+	float3 N = normal, T = tangent, B = binormal;
+	
+	[unroll]
+	for (int i = 0; i < 24; i += WAVE_SKIP)
+	{
+		float3 scale = _WaveMatrices[i][0].xyz;
+		float2 pos   = mul(_WaveMatrices[i], float4(vertex, 1)).xy;
+		float  fade  = saturate(1.0 - (pixelSize * _WaveData[i].w));
+		
+		float s, c;
+		sincos(pos.x, s, c);
+		
+		float amp = _WaveData[i].z * fade;
+		
+		displacement += N * (s * amp);
+		gradient     += scale * (c * amp);
+	}
+	
+	float dhdT = dot(gradient, T) + normalDetail.x;
+	float dhdB = dot(gradient, B) + normalDetail.y;
+	
+	vertex  += displacement;
+	normal   = normalize(N - dhdT * T - dhdB * B);
+	tangent  = normalize(T + dhdT * N);
+	binormal = normalize(B + dhdB * N);
+}
+
+void SGT_GetOceanData(float2 uv, out float distance, out float3 normal)
+{
+	float4 data = _SGT_Volumetrics_OceanTex.Sample(sampler_point_clamp, uv);
+	
+	distance = data.w;
+	normal   = data.xyz;
+}
+
+float3 SGT_BlendNormals(float3 a, float3 b)
+{
+	return normalize(float3(a.xy + b.xy, a.z));
+}
+
+float HenyeyGreenstein(float cosTheta, float g)
+{
+	float g2 = g * g;
+	float denom = 1.0 + g2 - 2.0 * g * cosTheta;
+	return (1.0 - g2) / (4.0 * 3.14159265 * pow(max(denom, 0.0001), 1.5));
+}
+
+void GetOceanTransmittanceScatter(
+	out float3 transmittance,
+	out float3 scatter,
+	float  waterDepth,
+	float3 viewDir,
+	float3 sunDir,
+	float3 sunColor,
+	float3 ambientColor,
+	float  cameraDepth,
+	float3 waterColor, // The "Deep" convergence color
+	float  waterDensity)
+{
+	// 1. Artist-Friendly Absorption Profile
+	// Typical ocean water absorbs Red much faster than Blue.
+	// We use these coefficients to scale the extinction per channel.
+	// Higher value = color disappears faster with depth.
+	float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
+	
+	// 2. Derive Coefficients
+	// Extinction must be float3 for color shifting to happen.
+	float3 extinction = absorptionWeight * waterDensity;
+	
+	// To ensure convergence to waterColor at infinite depth, 
+	// the scattering/extinction ratio must equal waterColor.
+	float3 scatt = waterColor * extinction;
+	
+	// 3. Transmittance (The "Nice Shift" happens here)
+	// Red channel will drop to 0 much faster than Blue.
+	transmittance = exp(-extinction * waterDepth);
+	
+	float viewCos = abs(viewDir.y);
+	float sunCos = max(sunDir.y, 0.01);
+	
+	// 4. Sun Scattering
+	float3 sunExt = extinction * (1.0 + viewCos / sunCos);
+	float3 sunAtten = sunColor * exp(-extinction * cameraDepth / sunCos);
+	float  phase = HenyeyGreenstein(dot(viewDir, sunDir), 0.7);
+	
+	// Volume scattering formula with float3 coefficients
+	scatter = sunAtten * phase * (scatt / max(sunExt, 1e-4)) * (1.0 - exp(-sunExt * waterDepth));
+	
+	// 5. Ambient Scattering (Converges to waterColor when ambient=1)
+	float  geomFactor = (1.0 + viewCos * 2.0); 
+	float3 ambExt = extinction * geomFactor;
+	float3 ambAtten = ambientColor * exp(-extinction * cameraDepth * 2.0);
+	
+	// This term simplifies to (scatt / extinction) at infinite depth
+	scatter += ambAtten * (scatt * geomFactor / max(ambExt, 1e-4)) * (1.0 - exp(-ambExt * waterDepth));
+}
 
 
 
@@ -6446,7 +7735,6 @@ float4   _SGT_WrapSize; // Auto
 float4   _SGT_FadeData; // Auto
 float4   _SGT_DataA; // Auto
 float4   _SGT_DataB; // Auto
-float3   _SGT_Offset;
 float4   _SGT_FlickerData; // Auto
 float4   _SGT_StretchDirection; // Auto
 float    _SGT_UnderwaterBrightness; // Auto
@@ -6494,6 +7782,12 @@ void SSS_Vert(inout SSS_VertexData v)
 	float3 wcam_snap = wcam + frac((wcam - _SGT_Offset) * _SGT_WrapSize.y) * _SGT_WrapSize.x;
 	float3 ocam_snap = SSS_WorldToObject(wcam_snap);
 	v.position = frac(v.position - ocam_snap * _SGT_WrapSize.y + 0.5f) - 0.5f;
+	
+	// Calculate wrap fade (fades to 0 at wrap boundary)
+	float edgeDist = max(abs(v.position.x), max(abs(v.position.y), abs(v.position.z)));
+	float wrapFade = smoothstep(0.5, 0.3, edgeDist);
+	
+	// Scale up
 	v.position *= _SGT_WrapSize.x;
 	
 	// Drift
@@ -6517,6 +7811,7 @@ void SSS_Vert(inout SSS_VertexData v)
 	v.extraV2F0.x = lerp(_SGT_FlickerData.z, _SGT_FlickerData.w, flicker);
 	
 	v.extraV2F0.x *= length(up); // Fade out parallel rays
+	v.extraV2F0.x *= wrapFade;   // Fade out near wrap boundary
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -6527,21 +7822,29 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float  deepSharpness    = _SGT_DataA.y;
 	float  maxDepth         = _SGT_DataB.z;
 	
-	float camDist = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+	float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
 	
 	float3 localPos = mul(_SGT_WorldToLocal, float4(d.worldSpacePosition, 1.0f)).xyz;
 	
 	float depth = radius - length(localPos);
 	
-	finalColor *= saturate(1.0f - camDist * _SGT_FadeData.x);
+	finalColor *= saturate(1.0f - cameraDistance * _SGT_FadeData.x);
 	
-	finalColor *= 1.0f - pow(saturate(1.0f - depth / maxDepth), surfaceSharpness);
-	
-	finalColor *= 1.0f - pow(saturate(depth / maxDepth), deepSharpness);
+	finalColor *= 1.0f - saturate(depth - maxDepth);
 	
 	finalColor *= 1.0f - pow(saturate(length(d.texcoord0.xy)), 1.0f + 4.0f * d.texcoord0.w);
 	
 	finalColor *= _SGT_UnderwaterBrightness;
+	
+	// Fade with scene depth
+	float3 worldEyePos = SSS_GetSceneWorldPosition(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	finalColor *= saturate(distance(worldEyePos, d.worldSpacePosition));
+	
+	// Fade with ocean surface
+	float  surfaceDistance;
+	float3 surfaceNormal;
+	SGT_GetOceanData(d.screenUV, surfaceDistance, surfaceNormal);
+	finalColor *= saturate(sign(surfaceDistance) * (cameraDistance - abs(surfaceDistance)));
 	
 	#if _SGT_CLOUDS
 		float shadow2 = SGT_SampleCloudDensity(_WorldSpaceCameraPos - d.worldSpaceViewDir * _SGT_UnderwaterShadowRange, 10.0f);
@@ -6706,6 +8009,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 	#pragma shader_feature_local _SGT_CLOUDS_OFF _SGT_CLOUDS
@@ -6956,6 +8260,8 @@ HLSLPROGRAM
 
 #define _SSS_BIRP 1
 
+#define REQUIRE_DEPTH_TEXTURE
+
 
 // Pragmas
 #pragma target 3.0
@@ -7161,6 +8467,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 CBUFFER_END
 
 
@@ -7340,6 +8647,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -7378,6 +8686,7 @@ struct SSS_FragmentData
 
 	float3x3 TBNMatrix;
 	
+
 
 
 };
@@ -7459,6 +8768,172 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 	return color;
 }
+float3   _SGT_Offset;
+float    _SGT_Radius;
+float4x4 _SGT_ObjectToWorld;
+float4x4 _SGT_WorldToObject;
+
+float4   _SGT_Origins[128];
+float4   _SGT_PositionsA[128];
+float4   _SGT_PositionsB[128];
+float4   _SGT_PositionsC[128];
+float4x4 _SGT_CoordsX[128];
+float4x4 _SGT_CoordsY[128];
+float4x4 _SGT_CoordsZ[128];
+float4x4 _SGT_CoordsW[128];
+
+float4x4 _SGT_RipplesMatrixA;
+float4x4 _SGT_RipplesMatrixB;
+float    _SGT_RipplesBlend;
+
+float4x4 _SGT_ShoreMatrixA;
+float4x4 _SGT_ShoreMatrixB;
+float    _SGT_ShoreBlend;
+
+float4x4 _SGT_CausticsMatrixA;
+float4x4 _SGT_CausticsMatrixB;
+float    _SGT_CausticsBlend;
+
+float4    _SGT_WaveData;
+float4    _SGT_SurfaceTiling;
+
+sampler2D _SGT_RipplesTexture;
+sampler3D _SGT_NoiseTex;
+float4    _SGT_RipplesData;
+
+Texture2D _SGT_Volumetrics_OceanTex;
+SamplerState sampler_point_clamp;
+
+float2 _SGT_FadeOpacity;
+
+#if !defined(WAVE_SKIP)
+	#define WAVE_SKIP 3
+#endif
+
+void SGT_ComputeTangentFrame(float3 N, out float3 T, out float3 B)
+{
+	if (N.z < -0.9999)
+	{
+		T = float3(0, -1, 0);
+		B = float3(-1, 0, 0);
+	}
+	else
+	{
+		float a = 1.0 / (1.0 + N.z);
+		float b = -N.x * N.y * a;
+		T = float3(1.0 - N.x * N.x * a, b, -N.x);
+		B = float3(b, 1.0 - N.y * N.y * a, -N.y);
+	}
+}
+
+float4x4 _WaveMatrices[24];
+float4   _WaveData[24]; // x = scale, y = weight
+
+void SGT_ApplyWaves(
+	inout float3 vertex,
+	inout float3 normal,
+	inout float3 tangent,
+	inout float3 binormal,
+	float2 normalDetail,
+	float pixelSize)
+{
+	float3 displacement = 0, gradient = 0;
+	float3 N = normal, T = tangent, B = binormal;
+	
+	[unroll]
+	for (int i = 0; i < 24; i += WAVE_SKIP)
+	{
+		float3 scale = _WaveMatrices[i][0].xyz;
+		float2 pos   = mul(_WaveMatrices[i], float4(vertex, 1)).xy;
+		float  fade  = saturate(1.0 - (pixelSize * _WaveData[i].w));
+		
+		float s, c;
+		sincos(pos.x, s, c);
+		
+		float amp = _WaveData[i].z * fade;
+		
+		displacement += N * (s * amp);
+		gradient     += scale * (c * amp);
+	}
+	
+	float dhdT = dot(gradient, T) + normalDetail.x;
+	float dhdB = dot(gradient, B) + normalDetail.y;
+	
+	vertex  += displacement;
+	normal   = normalize(N - dhdT * T - dhdB * B);
+	tangent  = normalize(T + dhdT * N);
+	binormal = normalize(B + dhdB * N);
+}
+
+void SGT_GetOceanData(float2 uv, out float distance, out float3 normal)
+{
+	float4 data = _SGT_Volumetrics_OceanTex.Sample(sampler_point_clamp, uv);
+	
+	distance = data.w;
+	normal   = data.xyz;
+}
+
+float3 SGT_BlendNormals(float3 a, float3 b)
+{
+	return normalize(float3(a.xy + b.xy, a.z));
+}
+
+float HenyeyGreenstein(float cosTheta, float g)
+{
+	float g2 = g * g;
+	float denom = 1.0 + g2 - 2.0 * g * cosTheta;
+	return (1.0 - g2) / (4.0 * 3.14159265 * pow(max(denom, 0.0001), 1.5));
+}
+
+void GetOceanTransmittanceScatter(
+	out float3 transmittance,
+	out float3 scatter,
+	float  waterDepth,
+	float3 viewDir,
+	float3 sunDir,
+	float3 sunColor,
+	float3 ambientColor,
+	float  cameraDepth,
+	float3 waterColor, // The "Deep" convergence color
+	float  waterDensity)
+{
+	// 1. Artist-Friendly Absorption Profile
+	// Typical ocean water absorbs Red much faster than Blue.
+	// We use these coefficients to scale the extinction per channel.
+	// Higher value = color disappears faster with depth.
+	float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
+	
+	// 2. Derive Coefficients
+	// Extinction must be float3 for color shifting to happen.
+	float3 extinction = absorptionWeight * waterDensity;
+	
+	// To ensure convergence to waterColor at infinite depth, 
+	// the scattering/extinction ratio must equal waterColor.
+	float3 scatt = waterColor * extinction;
+	
+	// 3. Transmittance (The "Nice Shift" happens here)
+	// Red channel will drop to 0 much faster than Blue.
+	transmittance = exp(-extinction * waterDepth);
+	
+	float viewCos = abs(viewDir.y);
+	float sunCos = max(sunDir.y, 0.01);
+	
+	// 4. Sun Scattering
+	float3 sunExt = extinction * (1.0 + viewCos / sunCos);
+	float3 sunAtten = sunColor * exp(-extinction * cameraDepth / sunCos);
+	float  phase = HenyeyGreenstein(dot(viewDir, sunDir), 0.7);
+	
+	// Volume scattering formula with float3 coefficients
+	scatter = sunAtten * phase * (scatt / max(sunExt, 1e-4)) * (1.0 - exp(-sunExt * waterDepth));
+	
+	// 5. Ambient Scattering (Converges to waterColor when ambient=1)
+	float  geomFactor = (1.0 + viewCos * 2.0); 
+	float3 ambExt = extinction * geomFactor;
+	float3 ambAtten = ambientColor * exp(-extinction * cameraDepth * 2.0);
+	
+	// This term simplifies to (scatt / extinction) at infinite depth
+	scatter += ambAtten * (scatt * geomFactor / max(ambExt, 1e-4)) * (1.0 - exp(-ambExt * waterDepth));
+}
 
 
 
@@ -7469,7 +8944,6 @@ float4   _SGT_WrapSize; // Auto
 float4   _SGT_FadeData; // Auto
 float4   _SGT_DataA; // Auto
 float4   _SGT_DataB; // Auto
-float3   _SGT_Offset;
 float4   _SGT_FlickerData; // Auto
 float4   _SGT_StretchDirection; // Auto
 float    _SGT_UnderwaterBrightness; // Auto
@@ -7517,6 +8991,12 @@ void SSS_Vert(inout SSS_VertexData v)
 	float3 wcam_snap = wcam + frac((wcam - _SGT_Offset) * _SGT_WrapSize.y) * _SGT_WrapSize.x;
 	float3 ocam_snap = SSS_WorldToObject(wcam_snap);
 	v.position = frac(v.position - ocam_snap * _SGT_WrapSize.y + 0.5f) - 0.5f;
+	
+	// Calculate wrap fade (fades to 0 at wrap boundary)
+	float edgeDist = max(abs(v.position.x), max(abs(v.position.y), abs(v.position.z)));
+	float wrapFade = smoothstep(0.5, 0.3, edgeDist);
+	
+	// Scale up
 	v.position *= _SGT_WrapSize.x;
 	
 	// Drift
@@ -7540,6 +9020,7 @@ void SSS_Vert(inout SSS_VertexData v)
 	v.extraV2F0.x = lerp(_SGT_FlickerData.z, _SGT_FlickerData.w, flicker);
 	
 	v.extraV2F0.x *= length(up); // Fade out parallel rays
+	v.extraV2F0.x *= wrapFade;   // Fade out near wrap boundary
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -7550,21 +9031,29 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float  deepSharpness    = _SGT_DataA.y;
 	float  maxDepth         = _SGT_DataB.z;
 	
-	float camDist = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+	float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
 	
 	float3 localPos = mul(_SGT_WorldToLocal, float4(d.worldSpacePosition, 1.0f)).xyz;
 	
 	float depth = radius - length(localPos);
 	
-	finalColor *= saturate(1.0f - camDist * _SGT_FadeData.x);
+	finalColor *= saturate(1.0f - cameraDistance * _SGT_FadeData.x);
 	
-	finalColor *= 1.0f - pow(saturate(1.0f - depth / maxDepth), surfaceSharpness);
-	
-	finalColor *= 1.0f - pow(saturate(depth / maxDepth), deepSharpness);
+	finalColor *= 1.0f - saturate(depth - maxDepth);
 	
 	finalColor *= 1.0f - pow(saturate(length(d.texcoord0.xy)), 1.0f + 4.0f * d.texcoord0.w);
 	
 	finalColor *= _SGT_UnderwaterBrightness;
+	
+	// Fade with scene depth
+	float3 worldEyePos = SSS_GetSceneWorldPosition(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	finalColor *= saturate(distance(worldEyePos, d.worldSpacePosition));
+	
+	// Fade with ocean surface
+	float  surfaceDistance;
+	float3 surfaceNormal;
+	SGT_GetOceanData(d.screenUV, surfaceDistance, surfaceNormal);
+	finalColor *= saturate(sign(surfaceDistance) * (cameraDistance - abs(surfaceDistance)));
 	
 	#if _SGT_CLOUDS
 		float shadow2 = SGT_SampleCloudDensity(_WorldSpaceCameraPos - d.worldSpaceViewDir * _SGT_UnderwaterShadowRange, 10.0f);
@@ -7729,6 +9218,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 	#pragma shader_feature_local _SGT_CLOUDS_OFF _SGT_CLOUDS
@@ -7973,6 +9463,8 @@ HLSLPROGRAM
 
 #define _SSS_BIRP 1
 
+#define REQUIRE_DEPTH_TEXTURE
+
 
 // Pragmas
 #pragma target 3.0
@@ -8179,6 +9671,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 CBUFFER_END
 
 
@@ -8358,6 +9851,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -8396,6 +9890,7 @@ struct SSS_FragmentData
 
 	float3x3 TBNMatrix;
 	
+
 
 
 };
@@ -8477,6 +9972,172 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 	return color;
 }
+float3   _SGT_Offset;
+float    _SGT_Radius;
+float4x4 _SGT_ObjectToWorld;
+float4x4 _SGT_WorldToObject;
+
+float4   _SGT_Origins[128];
+float4   _SGT_PositionsA[128];
+float4   _SGT_PositionsB[128];
+float4   _SGT_PositionsC[128];
+float4x4 _SGT_CoordsX[128];
+float4x4 _SGT_CoordsY[128];
+float4x4 _SGT_CoordsZ[128];
+float4x4 _SGT_CoordsW[128];
+
+float4x4 _SGT_RipplesMatrixA;
+float4x4 _SGT_RipplesMatrixB;
+float    _SGT_RipplesBlend;
+
+float4x4 _SGT_ShoreMatrixA;
+float4x4 _SGT_ShoreMatrixB;
+float    _SGT_ShoreBlend;
+
+float4x4 _SGT_CausticsMatrixA;
+float4x4 _SGT_CausticsMatrixB;
+float    _SGT_CausticsBlend;
+
+float4    _SGT_WaveData;
+float4    _SGT_SurfaceTiling;
+
+sampler2D _SGT_RipplesTexture;
+sampler3D _SGT_NoiseTex;
+float4    _SGT_RipplesData;
+
+Texture2D _SGT_Volumetrics_OceanTex;
+SamplerState sampler_point_clamp;
+
+float2 _SGT_FadeOpacity;
+
+#if !defined(WAVE_SKIP)
+	#define WAVE_SKIP 3
+#endif
+
+void SGT_ComputeTangentFrame(float3 N, out float3 T, out float3 B)
+{
+	if (N.z < -0.9999)
+	{
+		T = float3(0, -1, 0);
+		B = float3(-1, 0, 0);
+	}
+	else
+	{
+		float a = 1.0 / (1.0 + N.z);
+		float b = -N.x * N.y * a;
+		T = float3(1.0 - N.x * N.x * a, b, -N.x);
+		B = float3(b, 1.0 - N.y * N.y * a, -N.y);
+	}
+}
+
+float4x4 _WaveMatrices[24];
+float4   _WaveData[24]; // x = scale, y = weight
+
+void SGT_ApplyWaves(
+	inout float3 vertex,
+	inout float3 normal,
+	inout float3 tangent,
+	inout float3 binormal,
+	float2 normalDetail,
+	float pixelSize)
+{
+	float3 displacement = 0, gradient = 0;
+	float3 N = normal, T = tangent, B = binormal;
+	
+	[unroll]
+	for (int i = 0; i < 24; i += WAVE_SKIP)
+	{
+		float3 scale = _WaveMatrices[i][0].xyz;
+		float2 pos   = mul(_WaveMatrices[i], float4(vertex, 1)).xy;
+		float  fade  = saturate(1.0 - (pixelSize * _WaveData[i].w));
+		
+		float s, c;
+		sincos(pos.x, s, c);
+		
+		float amp = _WaveData[i].z * fade;
+		
+		displacement += N * (s * amp);
+		gradient     += scale * (c * amp);
+	}
+	
+	float dhdT = dot(gradient, T) + normalDetail.x;
+	float dhdB = dot(gradient, B) + normalDetail.y;
+	
+	vertex  += displacement;
+	normal   = normalize(N - dhdT * T - dhdB * B);
+	tangent  = normalize(T + dhdT * N);
+	binormal = normalize(B + dhdB * N);
+}
+
+void SGT_GetOceanData(float2 uv, out float distance, out float3 normal)
+{
+	float4 data = _SGT_Volumetrics_OceanTex.Sample(sampler_point_clamp, uv);
+	
+	distance = data.w;
+	normal   = data.xyz;
+}
+
+float3 SGT_BlendNormals(float3 a, float3 b)
+{
+	return normalize(float3(a.xy + b.xy, a.z));
+}
+
+float HenyeyGreenstein(float cosTheta, float g)
+{
+	float g2 = g * g;
+	float denom = 1.0 + g2 - 2.0 * g * cosTheta;
+	return (1.0 - g2) / (4.0 * 3.14159265 * pow(max(denom, 0.0001), 1.5));
+}
+
+void GetOceanTransmittanceScatter(
+	out float3 transmittance,
+	out float3 scatter,
+	float  waterDepth,
+	float3 viewDir,
+	float3 sunDir,
+	float3 sunColor,
+	float3 ambientColor,
+	float  cameraDepth,
+	float3 waterColor, // The "Deep" convergence color
+	float  waterDensity)
+{
+	// 1. Artist-Friendly Absorption Profile
+	// Typical ocean water absorbs Red much faster than Blue.
+	// We use these coefficients to scale the extinction per channel.
+	// Higher value = color disappears faster with depth.
+	float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
+	
+	// 2. Derive Coefficients
+	// Extinction must be float3 for color shifting to happen.
+	float3 extinction = absorptionWeight * waterDensity;
+	
+	// To ensure convergence to waterColor at infinite depth, 
+	// the scattering/extinction ratio must equal waterColor.
+	float3 scatt = waterColor * extinction;
+	
+	// 3. Transmittance (The "Nice Shift" happens here)
+	// Red channel will drop to 0 much faster than Blue.
+	transmittance = exp(-extinction * waterDepth);
+	
+	float viewCos = abs(viewDir.y);
+	float sunCos = max(sunDir.y, 0.01);
+	
+	// 4. Sun Scattering
+	float3 sunExt = extinction * (1.0 + viewCos / sunCos);
+	float3 sunAtten = sunColor * exp(-extinction * cameraDepth / sunCos);
+	float  phase = HenyeyGreenstein(dot(viewDir, sunDir), 0.7);
+	
+	// Volume scattering formula with float3 coefficients
+	scatter = sunAtten * phase * (scatt / max(sunExt, 1e-4)) * (1.0 - exp(-sunExt * waterDepth));
+	
+	// 5. Ambient Scattering (Converges to waterColor when ambient=1)
+	float  geomFactor = (1.0 + viewCos * 2.0); 
+	float3 ambExt = extinction * geomFactor;
+	float3 ambAtten = ambientColor * exp(-extinction * cameraDepth * 2.0);
+	
+	// This term simplifies to (scatt / extinction) at infinite depth
+	scatter += ambAtten * (scatt * geomFactor / max(ambExt, 1e-4)) * (1.0 - exp(-ambExt * waterDepth));
+}
 
 
 
@@ -8487,7 +10148,6 @@ float4   _SGT_WrapSize; // Auto
 float4   _SGT_FadeData; // Auto
 float4   _SGT_DataA; // Auto
 float4   _SGT_DataB; // Auto
-float3   _SGT_Offset;
 float4   _SGT_FlickerData; // Auto
 float4   _SGT_StretchDirection; // Auto
 float    _SGT_UnderwaterBrightness; // Auto
@@ -8535,6 +10195,12 @@ void SSS_Vert(inout SSS_VertexData v)
 	float3 wcam_snap = wcam + frac((wcam - _SGT_Offset) * _SGT_WrapSize.y) * _SGT_WrapSize.x;
 	float3 ocam_snap = SSS_WorldToObject(wcam_snap);
 	v.position = frac(v.position - ocam_snap * _SGT_WrapSize.y + 0.5f) - 0.5f;
+	
+	// Calculate wrap fade (fades to 0 at wrap boundary)
+	float edgeDist = max(abs(v.position.x), max(abs(v.position.y), abs(v.position.z)));
+	float wrapFade = smoothstep(0.5, 0.3, edgeDist);
+	
+	// Scale up
 	v.position *= _SGT_WrapSize.x;
 	
 	// Drift
@@ -8558,6 +10224,7 @@ void SSS_Vert(inout SSS_VertexData v)
 	v.extraV2F0.x = lerp(_SGT_FlickerData.z, _SGT_FlickerData.w, flicker);
 	
 	v.extraV2F0.x *= length(up); // Fade out parallel rays
+	v.extraV2F0.x *= wrapFade;   // Fade out near wrap boundary
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -8568,21 +10235,29 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float  deepSharpness    = _SGT_DataA.y;
 	float  maxDepth         = _SGT_DataB.z;
 	
-	float camDist = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+	float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
 	
 	float3 localPos = mul(_SGT_WorldToLocal, float4(d.worldSpacePosition, 1.0f)).xyz;
 	
 	float depth = radius - length(localPos);
 	
-	finalColor *= saturate(1.0f - camDist * _SGT_FadeData.x);
+	finalColor *= saturate(1.0f - cameraDistance * _SGT_FadeData.x);
 	
-	finalColor *= 1.0f - pow(saturate(1.0f - depth / maxDepth), surfaceSharpness);
-	
-	finalColor *= 1.0f - pow(saturate(depth / maxDepth), deepSharpness);
+	finalColor *= 1.0f - saturate(depth - maxDepth);
 	
 	finalColor *= 1.0f - pow(saturate(length(d.texcoord0.xy)), 1.0f + 4.0f * d.texcoord0.w);
 	
 	finalColor *= _SGT_UnderwaterBrightness;
+	
+	// Fade with scene depth
+	float3 worldEyePos = SSS_GetSceneWorldPosition(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	finalColor *= saturate(distance(worldEyePos, d.worldSpacePosition));
+	
+	// Fade with ocean surface
+	float  surfaceDistance;
+	float3 surfaceNormal;
+	SGT_GetOceanData(d.screenUV, surfaceDistance, surfaceNormal);
+	finalColor *= saturate(sign(surfaceDistance) * (cameraDistance - abs(surfaceDistance)));
 	
 	#if _SGT_CLOUDS
 		float shadow2 = SGT_SampleCloudDensity(_WorldSpaceCameraPos - d.worldSpaceViewDir * _SGT_UnderwaterShadowRange, 10.0f);
@@ -8747,6 +10422,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 	#pragma shader_feature_local _SGT_CLOUDS_OFF _SGT_CLOUDS
@@ -8991,6 +10667,8 @@ HLSLPROGRAM
 
 #define _SSS_BIRP 1
 
+#define REQUIRE_DEPTH_TEXTURE
+
 
 // Pragmas
 #pragma target 3.0
@@ -9197,6 +10875,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 CBUFFER_END
 
 
@@ -9376,6 +11055,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -9414,6 +11094,7 @@ struct SSS_FragmentData
 
 	float3x3 TBNMatrix;
 	
+
 
 
 };
@@ -9495,6 +11176,172 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 	return color;
 }
+float3   _SGT_Offset;
+float    _SGT_Radius;
+float4x4 _SGT_ObjectToWorld;
+float4x4 _SGT_WorldToObject;
+
+float4   _SGT_Origins[128];
+float4   _SGT_PositionsA[128];
+float4   _SGT_PositionsB[128];
+float4   _SGT_PositionsC[128];
+float4x4 _SGT_CoordsX[128];
+float4x4 _SGT_CoordsY[128];
+float4x4 _SGT_CoordsZ[128];
+float4x4 _SGT_CoordsW[128];
+
+float4x4 _SGT_RipplesMatrixA;
+float4x4 _SGT_RipplesMatrixB;
+float    _SGT_RipplesBlend;
+
+float4x4 _SGT_ShoreMatrixA;
+float4x4 _SGT_ShoreMatrixB;
+float    _SGT_ShoreBlend;
+
+float4x4 _SGT_CausticsMatrixA;
+float4x4 _SGT_CausticsMatrixB;
+float    _SGT_CausticsBlend;
+
+float4    _SGT_WaveData;
+float4    _SGT_SurfaceTiling;
+
+sampler2D _SGT_RipplesTexture;
+sampler3D _SGT_NoiseTex;
+float4    _SGT_RipplesData;
+
+Texture2D _SGT_Volumetrics_OceanTex;
+SamplerState sampler_point_clamp;
+
+float2 _SGT_FadeOpacity;
+
+#if !defined(WAVE_SKIP)
+	#define WAVE_SKIP 3
+#endif
+
+void SGT_ComputeTangentFrame(float3 N, out float3 T, out float3 B)
+{
+	if (N.z < -0.9999)
+	{
+		T = float3(0, -1, 0);
+		B = float3(-1, 0, 0);
+	}
+	else
+	{
+		float a = 1.0 / (1.0 + N.z);
+		float b = -N.x * N.y * a;
+		T = float3(1.0 - N.x * N.x * a, b, -N.x);
+		B = float3(b, 1.0 - N.y * N.y * a, -N.y);
+	}
+}
+
+float4x4 _WaveMatrices[24];
+float4   _WaveData[24]; // x = scale, y = weight
+
+void SGT_ApplyWaves(
+	inout float3 vertex,
+	inout float3 normal,
+	inout float3 tangent,
+	inout float3 binormal,
+	float2 normalDetail,
+	float pixelSize)
+{
+	float3 displacement = 0, gradient = 0;
+	float3 N = normal, T = tangent, B = binormal;
+	
+	[unroll]
+	for (int i = 0; i < 24; i += WAVE_SKIP)
+	{
+		float3 scale = _WaveMatrices[i][0].xyz;
+		float2 pos   = mul(_WaveMatrices[i], float4(vertex, 1)).xy;
+		float  fade  = saturate(1.0 - (pixelSize * _WaveData[i].w));
+		
+		float s, c;
+		sincos(pos.x, s, c);
+		
+		float amp = _WaveData[i].z * fade;
+		
+		displacement += N * (s * amp);
+		gradient     += scale * (c * amp);
+	}
+	
+	float dhdT = dot(gradient, T) + normalDetail.x;
+	float dhdB = dot(gradient, B) + normalDetail.y;
+	
+	vertex  += displacement;
+	normal   = normalize(N - dhdT * T - dhdB * B);
+	tangent  = normalize(T + dhdT * N);
+	binormal = normalize(B + dhdB * N);
+}
+
+void SGT_GetOceanData(float2 uv, out float distance, out float3 normal)
+{
+	float4 data = _SGT_Volumetrics_OceanTex.Sample(sampler_point_clamp, uv);
+	
+	distance = data.w;
+	normal   = data.xyz;
+}
+
+float3 SGT_BlendNormals(float3 a, float3 b)
+{
+	return normalize(float3(a.xy + b.xy, a.z));
+}
+
+float HenyeyGreenstein(float cosTheta, float g)
+{
+	float g2 = g * g;
+	float denom = 1.0 + g2 - 2.0 * g * cosTheta;
+	return (1.0 - g2) / (4.0 * 3.14159265 * pow(max(denom, 0.0001), 1.5));
+}
+
+void GetOceanTransmittanceScatter(
+	out float3 transmittance,
+	out float3 scatter,
+	float  waterDepth,
+	float3 viewDir,
+	float3 sunDir,
+	float3 sunColor,
+	float3 ambientColor,
+	float  cameraDepth,
+	float3 waterColor, // The "Deep" convergence color
+	float  waterDensity)
+{
+	// 1. Artist-Friendly Absorption Profile
+	// Typical ocean water absorbs Red much faster than Blue.
+	// We use these coefficients to scale the extinction per channel.
+	// Higher value = color disappears faster with depth.
+	float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
+	
+	// 2. Derive Coefficients
+	// Extinction must be float3 for color shifting to happen.
+	float3 extinction = absorptionWeight * waterDensity;
+	
+	// To ensure convergence to waterColor at infinite depth, 
+	// the scattering/extinction ratio must equal waterColor.
+	float3 scatt = waterColor * extinction;
+	
+	// 3. Transmittance (The "Nice Shift" happens here)
+	// Red channel will drop to 0 much faster than Blue.
+	transmittance = exp(-extinction * waterDepth);
+	
+	float viewCos = abs(viewDir.y);
+	float sunCos = max(sunDir.y, 0.01);
+	
+	// 4. Sun Scattering
+	float3 sunExt = extinction * (1.0 + viewCos / sunCos);
+	float3 sunAtten = sunColor * exp(-extinction * cameraDepth / sunCos);
+	float  phase = HenyeyGreenstein(dot(viewDir, sunDir), 0.7);
+	
+	// Volume scattering formula with float3 coefficients
+	scatter = sunAtten * phase * (scatt / max(sunExt, 1e-4)) * (1.0 - exp(-sunExt * waterDepth));
+	
+	// 5. Ambient Scattering (Converges to waterColor when ambient=1)
+	float  geomFactor = (1.0 + viewCos * 2.0); 
+	float3 ambExt = extinction * geomFactor;
+	float3 ambAtten = ambientColor * exp(-extinction * cameraDepth * 2.0);
+	
+	// This term simplifies to (scatt / extinction) at infinite depth
+	scatter += ambAtten * (scatt * geomFactor / max(ambExt, 1e-4)) * (1.0 - exp(-ambExt * waterDepth));
+}
 
 
 
@@ -9505,7 +11352,6 @@ float4   _SGT_WrapSize; // Auto
 float4   _SGT_FadeData; // Auto
 float4   _SGT_DataA; // Auto
 float4   _SGT_DataB; // Auto
-float3   _SGT_Offset;
 float4   _SGT_FlickerData; // Auto
 float4   _SGT_StretchDirection; // Auto
 float    _SGT_UnderwaterBrightness; // Auto
@@ -9553,6 +11399,12 @@ void SSS_Vert(inout SSS_VertexData v)
 	float3 wcam_snap = wcam + frac((wcam - _SGT_Offset) * _SGT_WrapSize.y) * _SGT_WrapSize.x;
 	float3 ocam_snap = SSS_WorldToObject(wcam_snap);
 	v.position = frac(v.position - ocam_snap * _SGT_WrapSize.y + 0.5f) - 0.5f;
+	
+	// Calculate wrap fade (fades to 0 at wrap boundary)
+	float edgeDist = max(abs(v.position.x), max(abs(v.position.y), abs(v.position.z)));
+	float wrapFade = smoothstep(0.5, 0.3, edgeDist);
+	
+	// Scale up
 	v.position *= _SGT_WrapSize.x;
 	
 	// Drift
@@ -9576,6 +11428,7 @@ void SSS_Vert(inout SSS_VertexData v)
 	v.extraV2F0.x = lerp(_SGT_FlickerData.z, _SGT_FlickerData.w, flicker);
 	
 	v.extraV2F0.x *= length(up); // Fade out parallel rays
+	v.extraV2F0.x *= wrapFade;   // Fade out near wrap boundary
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -9586,21 +11439,29 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float  deepSharpness    = _SGT_DataA.y;
 	float  maxDepth         = _SGT_DataB.z;
 	
-	float camDist = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+	float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
 	
 	float3 localPos = mul(_SGT_WorldToLocal, float4(d.worldSpacePosition, 1.0f)).xyz;
 	
 	float depth = radius - length(localPos);
 	
-	finalColor *= saturate(1.0f - camDist * _SGT_FadeData.x);
+	finalColor *= saturate(1.0f - cameraDistance * _SGT_FadeData.x);
 	
-	finalColor *= 1.0f - pow(saturate(1.0f - depth / maxDepth), surfaceSharpness);
-	
-	finalColor *= 1.0f - pow(saturate(depth / maxDepth), deepSharpness);
+	finalColor *= 1.0f - saturate(depth - maxDepth);
 	
 	finalColor *= 1.0f - pow(saturate(length(d.texcoord0.xy)), 1.0f + 4.0f * d.texcoord0.w);
 	
 	finalColor *= _SGT_UnderwaterBrightness;
+	
+	// Fade with scene depth
+	float3 worldEyePos = SSS_GetSceneWorldPosition(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	finalColor *= saturate(distance(worldEyePos, d.worldSpacePosition));
+	
+	// Fade with ocean surface
+	float  surfaceDistance;
+	float3 surfaceNormal;
+	SGT_GetOceanData(d.screenUV, surfaceDistance, surfaceNormal);
+	finalColor *= saturate(sign(surfaceDistance) * (cameraDistance - abs(surfaceDistance)));
 	
 	#if _SGT_CLOUDS
 		float shadow2 = SGT_SampleCloudDensity(_WorldSpaceCameraPos - d.worldSpaceViewDir * _SGT_UnderwaterShadowRange, 10.0f);
@@ -9765,6 +11626,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 	#pragma shader_feature_local _SGT_CLOUDS_OFF _SGT_CLOUDS

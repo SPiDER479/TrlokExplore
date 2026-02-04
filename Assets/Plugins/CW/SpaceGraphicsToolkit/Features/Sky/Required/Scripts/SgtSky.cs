@@ -39,10 +39,6 @@ namespace SpaceGraphicsToolkit.Sky
 		/// <summary>This allows you to offset the camera distance in world space when rendering the atmosphere, giving you fine control over the render order.</summary>
 		public float CameraOffset { set { cameraOffset = value; } get { return cameraOffset; } } [SerializeField] private float cameraOffset = 0.1f;
 
-		/// <summary>The minimum radius the sky will consider when calculating opacity. This is useful if your planet mesh is at a low mesh resolution and the sky appears polygonal.
-		/// -1 = Use <b>InnerMeshRadius</b>.</summary>
-		public float ClipRadius { set { clipRadius = value; } get { return clipRadius; } } [SerializeField] private float clipRadius = -1.0f;
-
 		/// <summary>This allows you to control how fast the opacity of the sky increases as the camera descends.</summary>
 		public float DepthOpaque { set { depthOpaque = value; } get { return depthOpaque; } } [SerializeField] private float depthOpaque = 50.0f;
 
@@ -816,7 +812,17 @@ namespace SpaceGraphicsToolkit.Sky
 			return GetLocalDensity(localEye + localDir * mid);
 		}
 
-		public void ApplySettings(MaterialPropertyBlock properties)
+		/// <summary>This will tell you the +- altitude of the input worldPoint relative to the inner mesh radius.</summary>
+		public float CalculateWorldAltitude(Vector3 worldPoint)
+		{
+			var localPoint   = transform.InverseTransformPoint(worldPoint);
+			var localSurface = localPoint.normalized * innerMeshRadius;
+			var worldSurface = transform.TransformPoint(localSurface);
+
+			return Vector3.Distance(worldPoint, worldSurface) * Mathf.Sign(localPoint.magnitude - innerMeshRadius);
+		}
+
+		public void ApplySettings(MaterialPropertyBlock properties, Camera finalCamera)
 		{
 			var worldToSky = Matrix4x4.Scale(Vector3.one * 2.0f * sphereInflate) * model.transform.worldToLocalMatrix;
 
@@ -837,8 +843,9 @@ namespace SpaceGraphicsToolkit.Sky
 				properties.SetTexture(_SGT_SkyLightingTex, lightingLut);
 			}
 
-			var planetRadius  = innerMeshRadius / (double)(innerMeshRadius + height);
-			var clippedRadius = (clipRadius >= 0.0f ? clipRadius : innerMeshRadius) / (double)(innerMeshRadius + height);
+			var planetRadius   = innerMeshRadius / (double)(innerMeshRadius + height);
+			var adjustedRadius = math.min(innerMeshRadius, innerMeshRadius + CalculateWorldAltitude(finalCamera.transform.position) - 100.0f);
+			var clippedRadius  = adjustedRadius / (double)(innerMeshRadius + height);
 
 			properties.SetVector(_SGT_SkyRadius, new Vector4(innerMeshRadius, innerMeshRadius + height, (float)planetRadius, (float)clippedRadius));
 			properties.SetFloat(_SGT_SkyDepthOpaque, depthOpaque);
@@ -1099,13 +1106,15 @@ namespace SpaceGraphicsToolkit.Sky
 
 			UpdateSkyLut();
 
-			if (material != null)
+			var finalCamera = Camera.main;
+
+			if (material != null && finalCamera != null)
 			{
 				model.CachedMeshRenderer.sharedMaterial = material;
 
 				model.CachedMeshRenderer.GetPropertyBlock(properties);
 
-				ApplySettings(properties);
+				ApplySettings(properties, finalCamera);
 
 				model.CachedMeshRenderer.SetPropertyBlock(properties);
 			}
@@ -1172,7 +1181,6 @@ namespace SpaceGraphicsToolkit.Sky
 				Draw("density", ref markLutDirty, "This allows you to adjust the fog level of the atmosphere.");
 			EndError();
 			Draw("cameraOffset", "This allows you to offset the camera distance in world space when rendering the atmosphere, giving you fine control over the render order."); // Updated automatically
-			Draw("clipRadius", "The minimum radius the sky will consider when calculating opacity. This is useful if your planet mesh is at a low mesh resolution and the sky appears polygonal.\n\n-1 = Use <b>InnerMeshRadius</b>.");
 			Draw("depthOpaque", "This allows you to control how fast the opacity of the sky increases as the camera descends."); // Updated automatically
 
 			Separator();

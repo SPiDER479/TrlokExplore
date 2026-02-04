@@ -327,7 +327,7 @@ namespace SpaceGraphicsToolkit.Landscape
 		protected static readonly int _CwTopologyData  = Shader.PropertyToID("_CwTopologyData");
 		protected static readonly int _CwTopologyRange = Shader.PropertyToID("_CwTopologyRange");
 
-		protected static readonly int _SGT_OceanDistance       = Shader.PropertyToID("_SGT_OceanDistance");
+		protected static readonly int _SGT_OceanFade           = Shader.PropertyToID("_SGT_OceanFade");
 		protected static readonly int _SGT_OceanDensity        = Shader.PropertyToID("_SGT_OceanDensity");
 		protected static readonly int _SGT_OceanHeight         = Shader.PropertyToID("_SGT_OceanHeight");
 		protected static readonly int _SGT_OceanLightDirection = Shader.PropertyToID("_SGT_OceanLightDirection");

@@ -622,7 +622,8 @@ float4    _SGT_CloudShadowOpacity;
 float4x4  _SGT_CloudShadowMatrix;
 
 // OCEAN FADE
-float4 _SGT_OceanDistance;
+float  _SGT_OceanFade;
+float2 _SGT_OceanDensity;
 float4 _SGT_OceanColor;
 float  _SGT_OceanSmoothness;
 float4 _SGT_OceanLightDirection;
@@ -671,11 +672,6 @@ float SGT_SampleCloudDensity(float3 wpos)
 	return saturate(dot(tex2D(_SGT_CloudShadowTex, uv), _SGT_CloudShadowOpacity));
 }
 
-float SGT_InverseLerp(float a, float b, float v)
-{
-	return (v - a) / (b - a);
-}
-
 void SSS_Vert(inout SSS_VertexData v)
 {
 	float vertexIndex = v.position.x;
@@ -712,12 +708,16 @@ void SSS_Vert(inout SSS_VertexData v)
 	#endif
 	
 	#if _SGT_OCEAN_FADE
-		if (_SGT_OceanDistance.x > 0.5f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
+		if (_SGT_OceanFade > 0.0f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
 		{
-			float3 oceanPos = _CwOffset + normalize(position) * _SGT_OceanRadius;
-			
-			//v.position.xyz = lerp(v.position.xyz, oceanPos, _SGT_OceanDistance.x);
+			float3 N = normalize(position); // sphere normal
+			float3 V = normalize(_WorldSpaceCameraPos - v.position.xyz);
+			float  F = pow(1.0 - saturate(dot(N, V)), 2.0);
+
+			float3 oceanPos = _CwOffset + N * _SGT_OceanRadius;
+			v.position.xyz = lerp(v.position.xyz, oceanPos, F);
 		}
+
 	#endif
 	
 	// Calc UV
@@ -734,65 +734,48 @@ float3 SGT_GetColor(float3 wnormal, float3 wlight)
 	return saturate(dot(wnormal, wlight));
 }
 
+static const float WATER_DEPTH_SHALLOW = 30.0f;
+static const float WATER_DEPTH_MAX = 3000.0f;
+
 float SGT_DecodeWaterDepth(float encoded)
 {
-	return encoded * 30.0;
-}
-
-float SGT_DecodeWaterDepth2(float encoded)
-{
-    const float THRESHOLD = 30.0;
-    const float SHARP_KNEE = 5.0;
-    const float SMOOTH_KNEE = 100.0;
-    const float SCALE = (THRESHOLD + SHARP_KNEE) / THRESHOLD;
-    
-    float mask = step(0.5, encoded);
-    
-    float t1 = saturate(encoded * 2.0 / SCALE);
-    float sharp = t1 * SHARP_KNEE / (1.0 - t1 + 1e-6);
-    
-    float t2 = saturate((encoded - 0.5) * 2.0);
-    float smooth = THRESHOLD + t2 * SMOOTH_KNEE / (1.0 - t2 + 1e-6);
-    
-    return -lerp(sharp, smooth, mask);
+	float shallow = encoded * (WATER_DEPTH_SHALLOW * 2.0f);
+    float deep = WATER_DEPTH_SHALLOW + (encoded - 0.5f) * ((WATER_DEPTH_MAX - WATER_DEPTH_SHALLOW) * 2.0f);
+    float isDeep = step(0.5f, encoded);
+    return lerp(shallow, deep, isDeep);
 }
 
 float3 SGT_ApplyOceanColor(
-    float3 terrainColor, 
+    float3 terrainColor,
     float  waterDepth01,
-    float3 waterColor, 
-    float  waterDensity,
+    float3 waterColor,
+    float2 waterDensity,
+    float  waterBlend,
     float3 ambientColor)
 {
     float depth = SGT_DecodeWaterDepth(waterDepth01);
+    float3 w = float3(1.0, 0.2, 0.1);
 
-    float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
-    float3 extinction = absorptionWeight * waterDensity;
+    float3 e0 = w * waterDensity.x;
+    float3 e1 = w * waterDensity.y;
 
-    // 1. Terrain Transmittance (The path from floor to eye)
-    // In HQ, this uses the base extinction (factor of 1.0)
-    float3 floorT = exp(-extinction * depth);
+    float3 floorT0  = exp(-e0 * depth);
+    float3 volumeT0 = exp(-e0 * depth * 3.0);
 
-    // 2. Volume Transmittance (The "Ambient" path)
-    // In HQ, for a top-down view, this factor is (1.0 + viewCos * 2.0) = 3.0
-    float3 volumeT = exp(-extinction * depth * 3.0);
+    float3 floorT1  = exp(-e1 * depth);
+    float3 volumeT1 = exp(-e1 * depth * 3.0);
 
-    // 3. Composite (Matching the HQ math structure)
-    // HQ Result = (Floor * FloorT) + (Water * (1 - VolumeT))
-    float3 oceanFloor = terrainColor * floorT;
-    float3 volumeScatt = (waterColor * ambientColor) * (1.0 - volumeT);
+    float3 col0 = terrainColor * floorT0 + (waterColor * ambientColor) * (1.0 - volumeT0);
+    float3 col1 = terrainColor * floorT1 + (waterColor * ambientColor) * (1.0 - volumeT1);
 
-    return oceanFloor + volumeScatt;
+    return lerp(col0, col1, waterBlend);
 }
 
-sampler2D _SGT_BlueNoiseTex; // Global
-float     _SGT_Frame; // Global
-	
-float SGT_DitherBlue(float2 screenUV)
+float SGT_Bayer4x4(float2 screenPos)
 {
-	float2 pixel = floor(screenUV * _ScreenParams.xy);
-	float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
-	return frac(noise + _SGT_Frame / sqrt(0.5f));
+	int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+	float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
+	return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -812,9 +795,11 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
-		float fadeTransition = SGT_DitherBlue(d.screenUV) < _SGT_OceanDistance.x;
+		float fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
 	
-		float3 oceanColor = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, 1.0, 1.0);
+		float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+		float cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float3 oceanColor    = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
 	
 		float fade = saturate(dataA.w > 0) * fadeTransition;
 	
@@ -1756,7 +1741,8 @@ float4    _SGT_CloudShadowOpacity;
 float4x4  _SGT_CloudShadowMatrix;
 
 // OCEAN FADE
-float4 _SGT_OceanDistance;
+float  _SGT_OceanFade;
+float2 _SGT_OceanDensity;
 float4 _SGT_OceanColor;
 float  _SGT_OceanSmoothness;
 float4 _SGT_OceanLightDirection;
@@ -1805,11 +1791,6 @@ float SGT_SampleCloudDensity(float3 wpos)
 	return saturate(dot(tex2D(_SGT_CloudShadowTex, uv), _SGT_CloudShadowOpacity));
 }
 
-float SGT_InverseLerp(float a, float b, float v)
-{
-	return (v - a) / (b - a);
-}
-
 void SSS_Vert(inout SSS_VertexData v)
 {
 	float vertexIndex = v.position.x;
@@ -1846,12 +1827,16 @@ void SSS_Vert(inout SSS_VertexData v)
 	#endif
 	
 	#if _SGT_OCEAN_FADE
-		if (_SGT_OceanDistance.x > 0.5f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
+		if (_SGT_OceanFade > 0.0f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
 		{
-			float3 oceanPos = _CwOffset + normalize(position) * _SGT_OceanRadius;
-			
-			//v.position.xyz = lerp(v.position.xyz, oceanPos, _SGT_OceanDistance.x);
+			float3 N = normalize(position); // sphere normal
+			float3 V = normalize(_WorldSpaceCameraPos - v.position.xyz);
+			float  F = pow(1.0 - saturate(dot(N, V)), 2.0);
+
+			float3 oceanPos = _CwOffset + N * _SGT_OceanRadius;
+			v.position.xyz = lerp(v.position.xyz, oceanPos, F);
 		}
+
 	#endif
 	
 	// Calc UV
@@ -1868,65 +1853,48 @@ float3 SGT_GetColor(float3 wnormal, float3 wlight)
 	return saturate(dot(wnormal, wlight));
 }
 
+static const float WATER_DEPTH_SHALLOW = 30.0f;
+static const float WATER_DEPTH_MAX = 3000.0f;
+
 float SGT_DecodeWaterDepth(float encoded)
 {
-	return encoded * 30.0;
-}
-
-float SGT_DecodeWaterDepth2(float encoded)
-{
-    const float THRESHOLD = 30.0;
-    const float SHARP_KNEE = 5.0;
-    const float SMOOTH_KNEE = 100.0;
-    const float SCALE = (THRESHOLD + SHARP_KNEE) / THRESHOLD;
-    
-    float mask = step(0.5, encoded);
-    
-    float t1 = saturate(encoded * 2.0 / SCALE);
-    float sharp = t1 * SHARP_KNEE / (1.0 - t1 + 1e-6);
-    
-    float t2 = saturate((encoded - 0.5) * 2.0);
-    float smooth = THRESHOLD + t2 * SMOOTH_KNEE / (1.0 - t2 + 1e-6);
-    
-    return -lerp(sharp, smooth, mask);
+	float shallow = encoded * (WATER_DEPTH_SHALLOW * 2.0f);
+    float deep = WATER_DEPTH_SHALLOW + (encoded - 0.5f) * ((WATER_DEPTH_MAX - WATER_DEPTH_SHALLOW) * 2.0f);
+    float isDeep = step(0.5f, encoded);
+    return lerp(shallow, deep, isDeep);
 }
 
 float3 SGT_ApplyOceanColor(
-    float3 terrainColor, 
+    float3 terrainColor,
     float  waterDepth01,
-    float3 waterColor, 
-    float  waterDensity,
+    float3 waterColor,
+    float2 waterDensity,
+    float  waterBlend,
     float3 ambientColor)
 {
     float depth = SGT_DecodeWaterDepth(waterDepth01);
+    float3 w = float3(1.0, 0.2, 0.1);
 
-    float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
-    float3 extinction = absorptionWeight * waterDensity;
+    float3 e0 = w * waterDensity.x;
+    float3 e1 = w * waterDensity.y;
 
-    // 1. Terrain Transmittance (The path from floor to eye)
-    // In HQ, this uses the base extinction (factor of 1.0)
-    float3 floorT = exp(-extinction * depth);
+    float3 floorT0  = exp(-e0 * depth);
+    float3 volumeT0 = exp(-e0 * depth * 3.0);
 
-    // 2. Volume Transmittance (The "Ambient" path)
-    // In HQ, for a top-down view, this factor is (1.0 + viewCos * 2.0) = 3.0
-    float3 volumeT = exp(-extinction * depth * 3.0);
+    float3 floorT1  = exp(-e1 * depth);
+    float3 volumeT1 = exp(-e1 * depth * 3.0);
 
-    // 3. Composite (Matching the HQ math structure)
-    // HQ Result = (Floor * FloorT) + (Water * (1 - VolumeT))
-    float3 oceanFloor = terrainColor * floorT;
-    float3 volumeScatt = (waterColor * ambientColor) * (1.0 - volumeT);
+    float3 col0 = terrainColor * floorT0 + (waterColor * ambientColor) * (1.0 - volumeT0);
+    float3 col1 = terrainColor * floorT1 + (waterColor * ambientColor) * (1.0 - volumeT1);
 
-    return oceanFloor + volumeScatt;
+    return lerp(col0, col1, waterBlend);
 }
 
-sampler2D _SGT_BlueNoiseTex; // Global
-float     _SGT_Frame; // Global
-	
-float SGT_DitherBlue(float2 screenUV)
+float SGT_Bayer4x4(float2 screenPos)
 {
-	float2 pixel = floor(screenUV * _ScreenParams.xy);
-	float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
-	return frac(noise + _SGT_Frame / sqrt(0.5f));
+	int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+	float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
+	return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -1946,9 +1914,11 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
-		float fadeTransition = SGT_DitherBlue(d.screenUV) < _SGT_OceanDistance.x;
+		float fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
 	
-		float3 oceanColor = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, 1.0, 1.0);
+		float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+		float cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float3 oceanColor    = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
 	
 		float fade = saturate(dataA.w > 0) * fadeTransition;
 	
@@ -2768,7 +2738,8 @@ float4    _SGT_CloudShadowOpacity;
 float4x4  _SGT_CloudShadowMatrix;
 
 // OCEAN FADE
-float4 _SGT_OceanDistance;
+float  _SGT_OceanFade;
+float2 _SGT_OceanDensity;
 float4 _SGT_OceanColor;
 float  _SGT_OceanSmoothness;
 float4 _SGT_OceanLightDirection;
@@ -2817,11 +2788,6 @@ float SGT_SampleCloudDensity(float3 wpos)
 	return saturate(dot(tex2D(_SGT_CloudShadowTex, uv), _SGT_CloudShadowOpacity));
 }
 
-float SGT_InverseLerp(float a, float b, float v)
-{
-	return (v - a) / (b - a);
-}
-
 void SSS_Vert(inout SSS_VertexData v)
 {
 	float vertexIndex = v.position.x;
@@ -2858,12 +2824,16 @@ void SSS_Vert(inout SSS_VertexData v)
 	#endif
 	
 	#if _SGT_OCEAN_FADE
-		if (_SGT_OceanDistance.x > 0.5f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
+		if (_SGT_OceanFade > 0.0f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
 		{
-			float3 oceanPos = _CwOffset + normalize(position) * _SGT_OceanRadius;
-			
-			//v.position.xyz = lerp(v.position.xyz, oceanPos, _SGT_OceanDistance.x);
+			float3 N = normalize(position); // sphere normal
+			float3 V = normalize(_WorldSpaceCameraPos - v.position.xyz);
+			float  F = pow(1.0 - saturate(dot(N, V)), 2.0);
+
+			float3 oceanPos = _CwOffset + N * _SGT_OceanRadius;
+			v.position.xyz = lerp(v.position.xyz, oceanPos, F);
 		}
+
 	#endif
 	
 	// Calc UV
@@ -2880,65 +2850,48 @@ float3 SGT_GetColor(float3 wnormal, float3 wlight)
 	return saturate(dot(wnormal, wlight));
 }
 
+static const float WATER_DEPTH_SHALLOW = 30.0f;
+static const float WATER_DEPTH_MAX = 3000.0f;
+
 float SGT_DecodeWaterDepth(float encoded)
 {
-	return encoded * 30.0;
-}
-
-float SGT_DecodeWaterDepth2(float encoded)
-{
-    const float THRESHOLD = 30.0;
-    const float SHARP_KNEE = 5.0;
-    const float SMOOTH_KNEE = 100.0;
-    const float SCALE = (THRESHOLD + SHARP_KNEE) / THRESHOLD;
-    
-    float mask = step(0.5, encoded);
-    
-    float t1 = saturate(encoded * 2.0 / SCALE);
-    float sharp = t1 * SHARP_KNEE / (1.0 - t1 + 1e-6);
-    
-    float t2 = saturate((encoded - 0.5) * 2.0);
-    float smooth = THRESHOLD + t2 * SMOOTH_KNEE / (1.0 - t2 + 1e-6);
-    
-    return -lerp(sharp, smooth, mask);
+	float shallow = encoded * (WATER_DEPTH_SHALLOW * 2.0f);
+    float deep = WATER_DEPTH_SHALLOW + (encoded - 0.5f) * ((WATER_DEPTH_MAX - WATER_DEPTH_SHALLOW) * 2.0f);
+    float isDeep = step(0.5f, encoded);
+    return lerp(shallow, deep, isDeep);
 }
 
 float3 SGT_ApplyOceanColor(
-    float3 terrainColor, 
+    float3 terrainColor,
     float  waterDepth01,
-    float3 waterColor, 
-    float  waterDensity,
+    float3 waterColor,
+    float2 waterDensity,
+    float  waterBlend,
     float3 ambientColor)
 {
     float depth = SGT_DecodeWaterDepth(waterDepth01);
+    float3 w = float3(1.0, 0.2, 0.1);
 
-    float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
-    float3 extinction = absorptionWeight * waterDensity;
+    float3 e0 = w * waterDensity.x;
+    float3 e1 = w * waterDensity.y;
 
-    // 1. Terrain Transmittance (The path from floor to eye)
-    // In HQ, this uses the base extinction (factor of 1.0)
-    float3 floorT = exp(-extinction * depth);
+    float3 floorT0  = exp(-e0 * depth);
+    float3 volumeT0 = exp(-e0 * depth * 3.0);
 
-    // 2. Volume Transmittance (The "Ambient" path)
-    // In HQ, for a top-down view, this factor is (1.0 + viewCos * 2.0) = 3.0
-    float3 volumeT = exp(-extinction * depth * 3.0);
+    float3 floorT1  = exp(-e1 * depth);
+    float3 volumeT1 = exp(-e1 * depth * 3.0);
 
-    // 3. Composite (Matching the HQ math structure)
-    // HQ Result = (Floor * FloorT) + (Water * (1 - VolumeT))
-    float3 oceanFloor = terrainColor * floorT;
-    float3 volumeScatt = (waterColor * ambientColor) * (1.0 - volumeT);
+    float3 col0 = terrainColor * floorT0 + (waterColor * ambientColor) * (1.0 - volumeT0);
+    float3 col1 = terrainColor * floorT1 + (waterColor * ambientColor) * (1.0 - volumeT1);
 
-    return oceanFloor + volumeScatt;
+    return lerp(col0, col1, waterBlend);
 }
 
-sampler2D _SGT_BlueNoiseTex; // Global
-float     _SGT_Frame; // Global
-	
-float SGT_DitherBlue(float2 screenUV)
+float SGT_Bayer4x4(float2 screenPos)
 {
-	float2 pixel = floor(screenUV * _ScreenParams.xy);
-	float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
-	return frac(noise + _SGT_Frame / sqrt(0.5f));
+	int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+	float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
+	return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -2958,9 +2911,11 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
-		float fadeTransition = SGT_DitherBlue(d.screenUV) < _SGT_OceanDistance.x;
+		float fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
 	
-		float3 oceanColor = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, 1.0, 1.0);
+		float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+		float cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float3 oceanColor    = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
 	
 		float fade = saturate(dataA.w > 0) * fadeTransition;
 	
@@ -3734,7 +3689,8 @@ float4    _SGT_CloudShadowOpacity;
 float4x4  _SGT_CloudShadowMatrix;
 
 // OCEAN FADE
-float4 _SGT_OceanDistance;
+float  _SGT_OceanFade;
+float2 _SGT_OceanDensity;
 float4 _SGT_OceanColor;
 float  _SGT_OceanSmoothness;
 float4 _SGT_OceanLightDirection;
@@ -3783,11 +3739,6 @@ float SGT_SampleCloudDensity(float3 wpos)
 	return saturate(dot(tex2D(_SGT_CloudShadowTex, uv), _SGT_CloudShadowOpacity));
 }
 
-float SGT_InverseLerp(float a, float b, float v)
-{
-	return (v - a) / (b - a);
-}
-
 void SSS_Vert(inout SSS_VertexData v)
 {
 	float vertexIndex = v.position.x;
@@ -3824,12 +3775,16 @@ void SSS_Vert(inout SSS_VertexData v)
 	#endif
 	
 	#if _SGT_OCEAN_FADE
-		if (_SGT_OceanDistance.x > 0.5f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
+		if (_SGT_OceanFade > 0.0f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
 		{
-			float3 oceanPos = _CwOffset + normalize(position) * _SGT_OceanRadius;
-			
-			//v.position.xyz = lerp(v.position.xyz, oceanPos, _SGT_OceanDistance.x);
+			float3 N = normalize(position); // sphere normal
+			float3 V = normalize(_WorldSpaceCameraPos - v.position.xyz);
+			float  F = pow(1.0 - saturate(dot(N, V)), 2.0);
+
+			float3 oceanPos = _CwOffset + N * _SGT_OceanRadius;
+			v.position.xyz = lerp(v.position.xyz, oceanPos, F);
 		}
+
 	#endif
 	
 	// Calc UV
@@ -3846,65 +3801,48 @@ float3 SGT_GetColor(float3 wnormal, float3 wlight)
 	return saturate(dot(wnormal, wlight));
 }
 
+static const float WATER_DEPTH_SHALLOW = 30.0f;
+static const float WATER_DEPTH_MAX = 3000.0f;
+
 float SGT_DecodeWaterDepth(float encoded)
 {
-	return encoded * 30.0;
-}
-
-float SGT_DecodeWaterDepth2(float encoded)
-{
-    const float THRESHOLD = 30.0;
-    const float SHARP_KNEE = 5.0;
-    const float SMOOTH_KNEE = 100.0;
-    const float SCALE = (THRESHOLD + SHARP_KNEE) / THRESHOLD;
-    
-    float mask = step(0.5, encoded);
-    
-    float t1 = saturate(encoded * 2.0 / SCALE);
-    float sharp = t1 * SHARP_KNEE / (1.0 - t1 + 1e-6);
-    
-    float t2 = saturate((encoded - 0.5) * 2.0);
-    float smooth = THRESHOLD + t2 * SMOOTH_KNEE / (1.0 - t2 + 1e-6);
-    
-    return -lerp(sharp, smooth, mask);
+	float shallow = encoded * (WATER_DEPTH_SHALLOW * 2.0f);
+    float deep = WATER_DEPTH_SHALLOW + (encoded - 0.5f) * ((WATER_DEPTH_MAX - WATER_DEPTH_SHALLOW) * 2.0f);
+    float isDeep = step(0.5f, encoded);
+    return lerp(shallow, deep, isDeep);
 }
 
 float3 SGT_ApplyOceanColor(
-    float3 terrainColor, 
+    float3 terrainColor,
     float  waterDepth01,
-    float3 waterColor, 
-    float  waterDensity,
+    float3 waterColor,
+    float2 waterDensity,
+    float  waterBlend,
     float3 ambientColor)
 {
     float depth = SGT_DecodeWaterDepth(waterDepth01);
+    float3 w = float3(1.0, 0.2, 0.1);
 
-    float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
-    float3 extinction = absorptionWeight * waterDensity;
+    float3 e0 = w * waterDensity.x;
+    float3 e1 = w * waterDensity.y;
 
-    // 1. Terrain Transmittance (The path from floor to eye)
-    // In HQ, this uses the base extinction (factor of 1.0)
-    float3 floorT = exp(-extinction * depth);
+    float3 floorT0  = exp(-e0 * depth);
+    float3 volumeT0 = exp(-e0 * depth * 3.0);
 
-    // 2. Volume Transmittance (The "Ambient" path)
-    // In HQ, for a top-down view, this factor is (1.0 + viewCos * 2.0) = 3.0
-    float3 volumeT = exp(-extinction * depth * 3.0);
+    float3 floorT1  = exp(-e1 * depth);
+    float3 volumeT1 = exp(-e1 * depth * 3.0);
 
-    // 3. Composite (Matching the HQ math structure)
-    // HQ Result = (Floor * FloorT) + (Water * (1 - VolumeT))
-    float3 oceanFloor = terrainColor * floorT;
-    float3 volumeScatt = (waterColor * ambientColor) * (1.0 - volumeT);
+    float3 col0 = terrainColor * floorT0 + (waterColor * ambientColor) * (1.0 - volumeT0);
+    float3 col1 = terrainColor * floorT1 + (waterColor * ambientColor) * (1.0 - volumeT1);
 
-    return oceanFloor + volumeScatt;
+    return lerp(col0, col1, waterBlend);
 }
 
-sampler2D _SGT_BlueNoiseTex; // Global
-float     _SGT_Frame; // Global
-	
-float SGT_DitherBlue(float2 screenUV)
+float SGT_Bayer4x4(float2 screenPos)
 {
-	float2 pixel = floor(screenUV * _ScreenParams.xy);
-	float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
-	return frac(noise + _SGT_Frame / sqrt(0.5f));
+	int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+	float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
+	return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -3924,9 +3862,11 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
-		float fadeTransition = SGT_DitherBlue(d.screenUV) < _SGT_OceanDistance.x;
+		float fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
 	
-		float3 oceanColor = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, 1.0, 1.0);
+		float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+		float cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float3 oceanColor    = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
 	
 		float fade = saturate(dataA.w > 0) * fadeTransition;
 	
@@ -4697,7 +4637,8 @@ float4    _SGT_CloudShadowOpacity;
 float4x4  _SGT_CloudShadowMatrix;
 
 // OCEAN FADE
-float4 _SGT_OceanDistance;
+float  _SGT_OceanFade;
+float2 _SGT_OceanDensity;
 float4 _SGT_OceanColor;
 float  _SGT_OceanSmoothness;
 float4 _SGT_OceanLightDirection;
@@ -4746,11 +4687,6 @@ float SGT_SampleCloudDensity(float3 wpos)
 	return saturate(dot(tex2D(_SGT_CloudShadowTex, uv), _SGT_CloudShadowOpacity));
 }
 
-float SGT_InverseLerp(float a, float b, float v)
-{
-	return (v - a) / (b - a);
-}
-
 void SSS_Vert(inout SSS_VertexData v)
 {
 	float vertexIndex = v.position.x;
@@ -4787,12 +4723,16 @@ void SSS_Vert(inout SSS_VertexData v)
 	#endif
 	
 	#if _SGT_OCEAN_FADE
-		if (_SGT_OceanDistance.x > 0.5f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
+		if (_SGT_OceanFade > 0.0f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
 		{
-			float3 oceanPos = _CwOffset + normalize(position) * _SGT_OceanRadius;
-			
-			//v.position.xyz = lerp(v.position.xyz, oceanPos, _SGT_OceanDistance.x);
+			float3 N = normalize(position); // sphere normal
+			float3 V = normalize(_WorldSpaceCameraPos - v.position.xyz);
+			float  F = pow(1.0 - saturate(dot(N, V)), 2.0);
+
+			float3 oceanPos = _CwOffset + N * _SGT_OceanRadius;
+			v.position.xyz = lerp(v.position.xyz, oceanPos, F);
 		}
+
 	#endif
 	
 	// Calc UV
@@ -4809,65 +4749,48 @@ float3 SGT_GetColor(float3 wnormal, float3 wlight)
 	return saturate(dot(wnormal, wlight));
 }
 
+static const float WATER_DEPTH_SHALLOW = 30.0f;
+static const float WATER_DEPTH_MAX = 3000.0f;
+
 float SGT_DecodeWaterDepth(float encoded)
 {
-	return encoded * 30.0;
-}
-
-float SGT_DecodeWaterDepth2(float encoded)
-{
-    const float THRESHOLD = 30.0;
-    const float SHARP_KNEE = 5.0;
-    const float SMOOTH_KNEE = 100.0;
-    const float SCALE = (THRESHOLD + SHARP_KNEE) / THRESHOLD;
-    
-    float mask = step(0.5, encoded);
-    
-    float t1 = saturate(encoded * 2.0 / SCALE);
-    float sharp = t1 * SHARP_KNEE / (1.0 - t1 + 1e-6);
-    
-    float t2 = saturate((encoded - 0.5) * 2.0);
-    float smooth = THRESHOLD + t2 * SMOOTH_KNEE / (1.0 - t2 + 1e-6);
-    
-    return -lerp(sharp, smooth, mask);
+	float shallow = encoded * (WATER_DEPTH_SHALLOW * 2.0f);
+    float deep = WATER_DEPTH_SHALLOW + (encoded - 0.5f) * ((WATER_DEPTH_MAX - WATER_DEPTH_SHALLOW) * 2.0f);
+    float isDeep = step(0.5f, encoded);
+    return lerp(shallow, deep, isDeep);
 }
 
 float3 SGT_ApplyOceanColor(
-    float3 terrainColor, 
+    float3 terrainColor,
     float  waterDepth01,
-    float3 waterColor, 
-    float  waterDensity,
+    float3 waterColor,
+    float2 waterDensity,
+    float  waterBlend,
     float3 ambientColor)
 {
     float depth = SGT_DecodeWaterDepth(waterDepth01);
+    float3 w = float3(1.0, 0.2, 0.1);
 
-    float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
-    float3 extinction = absorptionWeight * waterDensity;
+    float3 e0 = w * waterDensity.x;
+    float3 e1 = w * waterDensity.y;
 
-    // 1. Terrain Transmittance (The path from floor to eye)
-    // In HQ, this uses the base extinction (factor of 1.0)
-    float3 floorT = exp(-extinction * depth);
+    float3 floorT0  = exp(-e0 * depth);
+    float3 volumeT0 = exp(-e0 * depth * 3.0);
 
-    // 2. Volume Transmittance (The "Ambient" path)
-    // In HQ, for a top-down view, this factor is (1.0 + viewCos * 2.0) = 3.0
-    float3 volumeT = exp(-extinction * depth * 3.0);
+    float3 floorT1  = exp(-e1 * depth);
+    float3 volumeT1 = exp(-e1 * depth * 3.0);
 
-    // 3. Composite (Matching the HQ math structure)
-    // HQ Result = (Floor * FloorT) + (Water * (1 - VolumeT))
-    float3 oceanFloor = terrainColor * floorT;
-    float3 volumeScatt = (waterColor * ambientColor) * (1.0 - volumeT);
+    float3 col0 = terrainColor * floorT0 + (waterColor * ambientColor) * (1.0 - volumeT0);
+    float3 col1 = terrainColor * floorT1 + (waterColor * ambientColor) * (1.0 - volumeT1);
 
-    return oceanFloor + volumeScatt;
+    return lerp(col0, col1, waterBlend);
 }
 
-sampler2D _SGT_BlueNoiseTex; // Global
-float     _SGT_Frame; // Global
-	
-float SGT_DitherBlue(float2 screenUV)
+float SGT_Bayer4x4(float2 screenPos)
 {
-	float2 pixel = floor(screenUV * _ScreenParams.xy);
-	float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
-	return frac(noise + _SGT_Frame / sqrt(0.5f));
+	int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+	float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
+	return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -4887,9 +4810,11 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
-		float fadeTransition = SGT_DitherBlue(d.screenUV) < _SGT_OceanDistance.x;
+		float fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
 	
-		float3 oceanColor = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, 1.0, 1.0);
+		float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+		float cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float3 oceanColor    = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
 	
 		float fade = saturate(dataA.w > 0) * fadeTransition;
 	
@@ -5702,7 +5627,8 @@ float4    _SGT_CloudShadowOpacity;
 float4x4  _SGT_CloudShadowMatrix;
 
 // OCEAN FADE
-float4 _SGT_OceanDistance;
+float  _SGT_OceanFade;
+float2 _SGT_OceanDensity;
 float4 _SGT_OceanColor;
 float  _SGT_OceanSmoothness;
 float4 _SGT_OceanLightDirection;
@@ -5751,11 +5677,6 @@ float SGT_SampleCloudDensity(float3 wpos)
 	return saturate(dot(tex2D(_SGT_CloudShadowTex, uv), _SGT_CloudShadowOpacity));
 }
 
-float SGT_InverseLerp(float a, float b, float v)
-{
-	return (v - a) / (b - a);
-}
-
 void SSS_Vert(inout SSS_VertexData v)
 {
 	float vertexIndex = v.position.x;
@@ -5792,12 +5713,16 @@ void SSS_Vert(inout SSS_VertexData v)
 	#endif
 	
 	#if _SGT_OCEAN_FADE
-		if (_SGT_OceanDistance.x > 0.5f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
+		if (_SGT_OceanFade > 0.0f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
 		{
-			float3 oceanPos = _CwOffset + normalize(position) * _SGT_OceanRadius;
-			
-			//v.position.xyz = lerp(v.position.xyz, oceanPos, _SGT_OceanDistance.x);
+			float3 N = normalize(position); // sphere normal
+			float3 V = normalize(_WorldSpaceCameraPos - v.position.xyz);
+			float  F = pow(1.0 - saturate(dot(N, V)), 2.0);
+
+			float3 oceanPos = _CwOffset + N * _SGT_OceanRadius;
+			v.position.xyz = lerp(v.position.xyz, oceanPos, F);
 		}
+
 	#endif
 	
 	// Calc UV
@@ -5814,65 +5739,48 @@ float3 SGT_GetColor(float3 wnormal, float3 wlight)
 	return saturate(dot(wnormal, wlight));
 }
 
+static const float WATER_DEPTH_SHALLOW = 30.0f;
+static const float WATER_DEPTH_MAX = 3000.0f;
+
 float SGT_DecodeWaterDepth(float encoded)
 {
-	return encoded * 30.0;
-}
-
-float SGT_DecodeWaterDepth2(float encoded)
-{
-    const float THRESHOLD = 30.0;
-    const float SHARP_KNEE = 5.0;
-    const float SMOOTH_KNEE = 100.0;
-    const float SCALE = (THRESHOLD + SHARP_KNEE) / THRESHOLD;
-    
-    float mask = step(0.5, encoded);
-    
-    float t1 = saturate(encoded * 2.0 / SCALE);
-    float sharp = t1 * SHARP_KNEE / (1.0 - t1 + 1e-6);
-    
-    float t2 = saturate((encoded - 0.5) * 2.0);
-    float smooth = THRESHOLD + t2 * SMOOTH_KNEE / (1.0 - t2 + 1e-6);
-    
-    return -lerp(sharp, smooth, mask);
+	float shallow = encoded * (WATER_DEPTH_SHALLOW * 2.0f);
+    float deep = WATER_DEPTH_SHALLOW + (encoded - 0.5f) * ((WATER_DEPTH_MAX - WATER_DEPTH_SHALLOW) * 2.0f);
+    float isDeep = step(0.5f, encoded);
+    return lerp(shallow, deep, isDeep);
 }
 
 float3 SGT_ApplyOceanColor(
-    float3 terrainColor, 
+    float3 terrainColor,
     float  waterDepth01,
-    float3 waterColor, 
-    float  waterDensity,
+    float3 waterColor,
+    float2 waterDensity,
+    float  waterBlend,
     float3 ambientColor)
 {
     float depth = SGT_DecodeWaterDepth(waterDepth01);
+    float3 w = float3(1.0, 0.2, 0.1);
 
-    float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
-    float3 extinction = absorptionWeight * waterDensity;
+    float3 e0 = w * waterDensity.x;
+    float3 e1 = w * waterDensity.y;
 
-    // 1. Terrain Transmittance (The path from floor to eye)
-    // In HQ, this uses the base extinction (factor of 1.0)
-    float3 floorT = exp(-extinction * depth);
+    float3 floorT0  = exp(-e0 * depth);
+    float3 volumeT0 = exp(-e0 * depth * 3.0);
 
-    // 2. Volume Transmittance (The "Ambient" path)
-    // In HQ, for a top-down view, this factor is (1.0 + viewCos * 2.0) = 3.0
-    float3 volumeT = exp(-extinction * depth * 3.0);
+    float3 floorT1  = exp(-e1 * depth);
+    float3 volumeT1 = exp(-e1 * depth * 3.0);
 
-    // 3. Composite (Matching the HQ math structure)
-    // HQ Result = (Floor * FloorT) + (Water * (1 - VolumeT))
-    float3 oceanFloor = terrainColor * floorT;
-    float3 volumeScatt = (waterColor * ambientColor) * (1.0 - volumeT);
+    float3 col0 = terrainColor * floorT0 + (waterColor * ambientColor) * (1.0 - volumeT0);
+    float3 col1 = terrainColor * floorT1 + (waterColor * ambientColor) * (1.0 - volumeT1);
 
-    return oceanFloor + volumeScatt;
+    return lerp(col0, col1, waterBlend);
 }
 
-sampler2D _SGT_BlueNoiseTex; // Global
-float     _SGT_Frame; // Global
-	
-float SGT_DitherBlue(float2 screenUV)
+float SGT_Bayer4x4(float2 screenPos)
 {
-	float2 pixel = floor(screenUV * _ScreenParams.xy);
-	float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
-	return frac(noise + _SGT_Frame / sqrt(0.5f));
+	int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+	float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
+	return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -5892,9 +5800,11 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
-		float fadeTransition = SGT_DitherBlue(d.screenUV) < _SGT_OceanDistance.x;
+		float fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
 	
-		float3 oceanColor = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, 1.0, 1.0);
+		float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+		float cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float3 oceanColor    = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
 	
 		float fade = saturate(dataA.w > 0) * fadeTransition;
 	
@@ -6737,7 +6647,8 @@ float4    _SGT_CloudShadowOpacity;
 float4x4  _SGT_CloudShadowMatrix;
 
 // OCEAN FADE
-float4 _SGT_OceanDistance;
+float  _SGT_OceanFade;
+float2 _SGT_OceanDensity;
 float4 _SGT_OceanColor;
 float  _SGT_OceanSmoothness;
 float4 _SGT_OceanLightDirection;
@@ -6786,11 +6697,6 @@ float SGT_SampleCloudDensity(float3 wpos)
 	return saturate(dot(tex2D(_SGT_CloudShadowTex, uv), _SGT_CloudShadowOpacity));
 }
 
-float SGT_InverseLerp(float a, float b, float v)
-{
-	return (v - a) / (b - a);
-}
-
 void SSS_Vert(inout SSS_VertexData v)
 {
 	float vertexIndex = v.position.x;
@@ -6827,12 +6733,16 @@ void SSS_Vert(inout SSS_VertexData v)
 	#endif
 	
 	#if _SGT_OCEAN_FADE
-		if (_SGT_OceanDistance.x > 0.5f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
+		if (_SGT_OceanFade > 0.0f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
 		{
-			float3 oceanPos = _CwOffset + normalize(position) * _SGT_OceanRadius;
-			
-			//v.position.xyz = lerp(v.position.xyz, oceanPos, _SGT_OceanDistance.x);
+			float3 N = normalize(position); // sphere normal
+			float3 V = normalize(_WorldSpaceCameraPos - v.position.xyz);
+			float  F = pow(1.0 - saturate(dot(N, V)), 2.0);
+
+			float3 oceanPos = _CwOffset + N * _SGT_OceanRadius;
+			v.position.xyz = lerp(v.position.xyz, oceanPos, F);
 		}
+
 	#endif
 	
 	// Calc UV
@@ -6849,65 +6759,48 @@ float3 SGT_GetColor(float3 wnormal, float3 wlight)
 	return saturate(dot(wnormal, wlight));
 }
 
+static const float WATER_DEPTH_SHALLOW = 30.0f;
+static const float WATER_DEPTH_MAX = 3000.0f;
+
 float SGT_DecodeWaterDepth(float encoded)
 {
-	return encoded * 30.0;
-}
-
-float SGT_DecodeWaterDepth2(float encoded)
-{
-    const float THRESHOLD = 30.0;
-    const float SHARP_KNEE = 5.0;
-    const float SMOOTH_KNEE = 100.0;
-    const float SCALE = (THRESHOLD + SHARP_KNEE) / THRESHOLD;
-    
-    float mask = step(0.5, encoded);
-    
-    float t1 = saturate(encoded * 2.0 / SCALE);
-    float sharp = t1 * SHARP_KNEE / (1.0 - t1 + 1e-6);
-    
-    float t2 = saturate((encoded - 0.5) * 2.0);
-    float smooth = THRESHOLD + t2 * SMOOTH_KNEE / (1.0 - t2 + 1e-6);
-    
-    return -lerp(sharp, smooth, mask);
+	float shallow = encoded * (WATER_DEPTH_SHALLOW * 2.0f);
+    float deep = WATER_DEPTH_SHALLOW + (encoded - 0.5f) * ((WATER_DEPTH_MAX - WATER_DEPTH_SHALLOW) * 2.0f);
+    float isDeep = step(0.5f, encoded);
+    return lerp(shallow, deep, isDeep);
 }
 
 float3 SGT_ApplyOceanColor(
-    float3 terrainColor, 
+    float3 terrainColor,
     float  waterDepth01,
-    float3 waterColor, 
-    float  waterDensity,
+    float3 waterColor,
+    float2 waterDensity,
+    float  waterBlend,
     float3 ambientColor)
 {
     float depth = SGT_DecodeWaterDepth(waterDepth01);
+    float3 w = float3(1.0, 0.2, 0.1);
 
-    float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
-    float3 extinction = absorptionWeight * waterDensity;
+    float3 e0 = w * waterDensity.x;
+    float3 e1 = w * waterDensity.y;
 
-    // 1. Terrain Transmittance (The path from floor to eye)
-    // In HQ, this uses the base extinction (factor of 1.0)
-    float3 floorT = exp(-extinction * depth);
+    float3 floorT0  = exp(-e0 * depth);
+    float3 volumeT0 = exp(-e0 * depth * 3.0);
 
-    // 2. Volume Transmittance (The "Ambient" path)
-    // In HQ, for a top-down view, this factor is (1.0 + viewCos * 2.0) = 3.0
-    float3 volumeT = exp(-extinction * depth * 3.0);
+    float3 floorT1  = exp(-e1 * depth);
+    float3 volumeT1 = exp(-e1 * depth * 3.0);
 
-    // 3. Composite (Matching the HQ math structure)
-    // HQ Result = (Floor * FloorT) + (Water * (1 - VolumeT))
-    float3 oceanFloor = terrainColor * floorT;
-    float3 volumeScatt = (waterColor * ambientColor) * (1.0 - volumeT);
+    float3 col0 = terrainColor * floorT0 + (waterColor * ambientColor) * (1.0 - volumeT0);
+    float3 col1 = terrainColor * floorT1 + (waterColor * ambientColor) * (1.0 - volumeT1);
 
-    return oceanFloor + volumeScatt;
+    return lerp(col0, col1, waterBlend);
 }
 
-sampler2D _SGT_BlueNoiseTex; // Global
-float     _SGT_Frame; // Global
-	
-float SGT_DitherBlue(float2 screenUV)
+float SGT_Bayer4x4(float2 screenPos)
 {
-	float2 pixel = floor(screenUV * _ScreenParams.xy);
-	float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
-	return frac(noise + _SGT_Frame / sqrt(0.5f));
+	int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+	float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
+	return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -6927,9 +6820,11 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
-		float fadeTransition = SGT_DitherBlue(d.screenUV) < _SGT_OceanDistance.x;
+		float fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
 	
-		float3 oceanColor = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, 1.0, 1.0);
+		float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+		float cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float3 oceanColor    = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
 	
 		float fade = saturate(dataA.w > 0) * fadeTransition;
 	
@@ -7732,7 +7627,8 @@ float4    _SGT_CloudShadowOpacity;
 float4x4  _SGT_CloudShadowMatrix;
 
 // OCEAN FADE
-float4 _SGT_OceanDistance;
+float  _SGT_OceanFade;
+float2 _SGT_OceanDensity;
 float4 _SGT_OceanColor;
 float  _SGT_OceanSmoothness;
 float4 _SGT_OceanLightDirection;
@@ -7781,11 +7677,6 @@ float SGT_SampleCloudDensity(float3 wpos)
 	return saturate(dot(tex2D(_SGT_CloudShadowTex, uv), _SGT_CloudShadowOpacity));
 }
 
-float SGT_InverseLerp(float a, float b, float v)
-{
-	return (v - a) / (b - a);
-}
-
 void SSS_Vert(inout SSS_VertexData v)
 {
 	float vertexIndex = v.position.x;
@@ -7822,12 +7713,16 @@ void SSS_Vert(inout SSS_VertexData v)
 	#endif
 	
 	#if _SGT_OCEAN_FADE
-		if (_SGT_OceanDistance.x > 0.5f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
+		if (_SGT_OceanFade > 0.0f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
 		{
-			float3 oceanPos = _CwOffset + normalize(position) * _SGT_OceanRadius;
-			
-			//v.position.xyz = lerp(v.position.xyz, oceanPos, _SGT_OceanDistance.x);
+			float3 N = normalize(position); // sphere normal
+			float3 V = normalize(_WorldSpaceCameraPos - v.position.xyz);
+			float  F = pow(1.0 - saturate(dot(N, V)), 2.0);
+
+			float3 oceanPos = _CwOffset + N * _SGT_OceanRadius;
+			v.position.xyz = lerp(v.position.xyz, oceanPos, F);
 		}
+
 	#endif
 	
 	// Calc UV
@@ -7844,65 +7739,48 @@ float3 SGT_GetColor(float3 wnormal, float3 wlight)
 	return saturate(dot(wnormal, wlight));
 }
 
+static const float WATER_DEPTH_SHALLOW = 30.0f;
+static const float WATER_DEPTH_MAX = 3000.0f;
+
 float SGT_DecodeWaterDepth(float encoded)
 {
-	return encoded * 30.0;
-}
-
-float SGT_DecodeWaterDepth2(float encoded)
-{
-    const float THRESHOLD = 30.0;
-    const float SHARP_KNEE = 5.0;
-    const float SMOOTH_KNEE = 100.0;
-    const float SCALE = (THRESHOLD + SHARP_KNEE) / THRESHOLD;
-    
-    float mask = step(0.5, encoded);
-    
-    float t1 = saturate(encoded * 2.0 / SCALE);
-    float sharp = t1 * SHARP_KNEE / (1.0 - t1 + 1e-6);
-    
-    float t2 = saturate((encoded - 0.5) * 2.0);
-    float smooth = THRESHOLD + t2 * SMOOTH_KNEE / (1.0 - t2 + 1e-6);
-    
-    return -lerp(sharp, smooth, mask);
+	float shallow = encoded * (WATER_DEPTH_SHALLOW * 2.0f);
+    float deep = WATER_DEPTH_SHALLOW + (encoded - 0.5f) * ((WATER_DEPTH_MAX - WATER_DEPTH_SHALLOW) * 2.0f);
+    float isDeep = step(0.5f, encoded);
+    return lerp(shallow, deep, isDeep);
 }
 
 float3 SGT_ApplyOceanColor(
-    float3 terrainColor, 
+    float3 terrainColor,
     float  waterDepth01,
-    float3 waterColor, 
-    float  waterDensity,
+    float3 waterColor,
+    float2 waterDensity,
+    float  waterBlend,
     float3 ambientColor)
 {
     float depth = SGT_DecodeWaterDepth(waterDepth01);
+    float3 w = float3(1.0, 0.2, 0.1);
 
-    float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
-    float3 extinction = absorptionWeight * waterDensity;
+    float3 e0 = w * waterDensity.x;
+    float3 e1 = w * waterDensity.y;
 
-    // 1. Terrain Transmittance (The path from floor to eye)
-    // In HQ, this uses the base extinction (factor of 1.0)
-    float3 floorT = exp(-extinction * depth);
+    float3 floorT0  = exp(-e0 * depth);
+    float3 volumeT0 = exp(-e0 * depth * 3.0);
 
-    // 2. Volume Transmittance (The "Ambient" path)
-    // In HQ, for a top-down view, this factor is (1.0 + viewCos * 2.0) = 3.0
-    float3 volumeT = exp(-extinction * depth * 3.0);
+    float3 floorT1  = exp(-e1 * depth);
+    float3 volumeT1 = exp(-e1 * depth * 3.0);
 
-    // 3. Composite (Matching the HQ math structure)
-    // HQ Result = (Floor * FloorT) + (Water * (1 - VolumeT))
-    float3 oceanFloor = terrainColor * floorT;
-    float3 volumeScatt = (waterColor * ambientColor) * (1.0 - volumeT);
+    float3 col0 = terrainColor * floorT0 + (waterColor * ambientColor) * (1.0 - volumeT0);
+    float3 col1 = terrainColor * floorT1 + (waterColor * ambientColor) * (1.0 - volumeT1);
 
-    return oceanFloor + volumeScatt;
+    return lerp(col0, col1, waterBlend);
 }
 
-sampler2D _SGT_BlueNoiseTex; // Global
-float     _SGT_Frame; // Global
-	
-float SGT_DitherBlue(float2 screenUV)
+float SGT_Bayer4x4(float2 screenPos)
 {
-	float2 pixel = floor(screenUV * _ScreenParams.xy);
-	float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
-	return frac(noise + _SGT_Frame / sqrt(0.5f));
+	int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+	float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
+	return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -7922,9 +7800,11 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
-		float fadeTransition = SGT_DitherBlue(d.screenUV) < _SGT_OceanDistance.x;
+		float fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
 	
-		float3 oceanColor = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, 1.0, 1.0);
+		float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+		float cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float3 oceanColor    = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
 	
 		float fade = saturate(dataA.w > 0) * fadeTransition;
 	
@@ -8734,7 +8614,8 @@ float4    _SGT_CloudShadowOpacity;
 float4x4  _SGT_CloudShadowMatrix;
 
 // OCEAN FADE
-float4 _SGT_OceanDistance;
+float  _SGT_OceanFade;
+float2 _SGT_OceanDensity;
 float4 _SGT_OceanColor;
 float  _SGT_OceanSmoothness;
 float4 _SGT_OceanLightDirection;
@@ -8783,11 +8664,6 @@ float SGT_SampleCloudDensity(float3 wpos)
 	return saturate(dot(tex2D(_SGT_CloudShadowTex, uv), _SGT_CloudShadowOpacity));
 }
 
-float SGT_InverseLerp(float a, float b, float v)
-{
-	return (v - a) / (b - a);
-}
-
 void SSS_Vert(inout SSS_VertexData v)
 {
 	float vertexIndex = v.position.x;
@@ -8824,12 +8700,16 @@ void SSS_Vert(inout SSS_VertexData v)
 	#endif
 	
 	#if _SGT_OCEAN_FADE
-		if (_SGT_OceanDistance.x > 0.5f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
+		if (_SGT_OceanFade > 0.0f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
 		{
-			float3 oceanPos = _CwOffset + normalize(position) * _SGT_OceanRadius;
-			
-			//v.position.xyz = lerp(v.position.xyz, oceanPos, _SGT_OceanDistance.x);
+			float3 N = normalize(position); // sphere normal
+			float3 V = normalize(_WorldSpaceCameraPos - v.position.xyz);
+			float  F = pow(1.0 - saturate(dot(N, V)), 2.0);
+
+			float3 oceanPos = _CwOffset + N * _SGT_OceanRadius;
+			v.position.xyz = lerp(v.position.xyz, oceanPos, F);
 		}
+
 	#endif
 	
 	// Calc UV
@@ -8846,65 +8726,48 @@ float3 SGT_GetColor(float3 wnormal, float3 wlight)
 	return saturate(dot(wnormal, wlight));
 }
 
+static const float WATER_DEPTH_SHALLOW = 30.0f;
+static const float WATER_DEPTH_MAX = 3000.0f;
+
 float SGT_DecodeWaterDepth(float encoded)
 {
-	return encoded * 30.0;
-}
-
-float SGT_DecodeWaterDepth2(float encoded)
-{
-    const float THRESHOLD = 30.0;
-    const float SHARP_KNEE = 5.0;
-    const float SMOOTH_KNEE = 100.0;
-    const float SCALE = (THRESHOLD + SHARP_KNEE) / THRESHOLD;
-    
-    float mask = step(0.5, encoded);
-    
-    float t1 = saturate(encoded * 2.0 / SCALE);
-    float sharp = t1 * SHARP_KNEE / (1.0 - t1 + 1e-6);
-    
-    float t2 = saturate((encoded - 0.5) * 2.0);
-    float smooth = THRESHOLD + t2 * SMOOTH_KNEE / (1.0 - t2 + 1e-6);
-    
-    return -lerp(sharp, smooth, mask);
+	float shallow = encoded * (WATER_DEPTH_SHALLOW * 2.0f);
+    float deep = WATER_DEPTH_SHALLOW + (encoded - 0.5f) * ((WATER_DEPTH_MAX - WATER_DEPTH_SHALLOW) * 2.0f);
+    float isDeep = step(0.5f, encoded);
+    return lerp(shallow, deep, isDeep);
 }
 
 float3 SGT_ApplyOceanColor(
-    float3 terrainColor, 
+    float3 terrainColor,
     float  waterDepth01,
-    float3 waterColor, 
-    float  waterDensity,
+    float3 waterColor,
+    float2 waterDensity,
+    float  waterBlend,
     float3 ambientColor)
 {
     float depth = SGT_DecodeWaterDepth(waterDepth01);
+    float3 w = float3(1.0, 0.2, 0.1);
 
-    float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
-    float3 extinction = absorptionWeight * waterDensity;
+    float3 e0 = w * waterDensity.x;
+    float3 e1 = w * waterDensity.y;
 
-    // 1. Terrain Transmittance (The path from floor to eye)
-    // In HQ, this uses the base extinction (factor of 1.0)
-    float3 floorT = exp(-extinction * depth);
+    float3 floorT0  = exp(-e0 * depth);
+    float3 volumeT0 = exp(-e0 * depth * 3.0);
 
-    // 2. Volume Transmittance (The "Ambient" path)
-    // In HQ, for a top-down view, this factor is (1.0 + viewCos * 2.0) = 3.0
-    float3 volumeT = exp(-extinction * depth * 3.0);
+    float3 floorT1  = exp(-e1 * depth);
+    float3 volumeT1 = exp(-e1 * depth * 3.0);
 
-    // 3. Composite (Matching the HQ math structure)
-    // HQ Result = (Floor * FloorT) + (Water * (1 - VolumeT))
-    float3 oceanFloor = terrainColor * floorT;
-    float3 volumeScatt = (waterColor * ambientColor) * (1.0 - volumeT);
+    float3 col0 = terrainColor * floorT0 + (waterColor * ambientColor) * (1.0 - volumeT0);
+    float3 col1 = terrainColor * floorT1 + (waterColor * ambientColor) * (1.0 - volumeT1);
 
-    return oceanFloor + volumeScatt;
+    return lerp(col0, col1, waterBlend);
 }
 
-sampler2D _SGT_BlueNoiseTex; // Global
-float     _SGT_Frame; // Global
-	
-float SGT_DitherBlue(float2 screenUV)
+float SGT_Bayer4x4(float2 screenPos)
 {
-	float2 pixel = floor(screenUV * _ScreenParams.xy);
-	float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
-	return frac(noise + _SGT_Frame / sqrt(0.5f));
+	int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+	float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
+	return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -8924,9 +8787,11 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
-		float fadeTransition = SGT_DitherBlue(d.screenUV) < _SGT_OceanDistance.x;
+		float fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
 	
-		float3 oceanColor = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, 1.0, 1.0);
+		float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+		float cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float3 oceanColor    = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
 	
 		float fade = saturate(dataA.w > 0) * fadeTransition;
 	
@@ -9764,7 +9629,8 @@ float4    _SGT_CloudShadowOpacity;
 float4x4  _SGT_CloudShadowMatrix;
 
 // OCEAN FADE
-float4 _SGT_OceanDistance;
+float  _SGT_OceanFade;
+float2 _SGT_OceanDensity;
 float4 _SGT_OceanColor;
 float  _SGT_OceanSmoothness;
 float4 _SGT_OceanLightDirection;
@@ -9813,11 +9679,6 @@ float SGT_SampleCloudDensity(float3 wpos)
 	return saturate(dot(tex2D(_SGT_CloudShadowTex, uv), _SGT_CloudShadowOpacity));
 }
 
-float SGT_InverseLerp(float a, float b, float v)
-{
-	return (v - a) / (b - a);
-}
-
 void SSS_Vert(inout SSS_VertexData v)
 {
 	float vertexIndex = v.position.x;
@@ -9854,12 +9715,16 @@ void SSS_Vert(inout SSS_VertexData v)
 	#endif
 	
 	#if _SGT_OCEAN_FADE
-		if (_SGT_OceanDistance.x > 0.5f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
+		if (_SGT_OceanFade > 0.0f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
 		{
-			float3 oceanPos = _CwOffset + normalize(position) * _SGT_OceanRadius;
-			
-			//v.position.xyz = lerp(v.position.xyz, oceanPos, _SGT_OceanDistance.x);
+			float3 N = normalize(position); // sphere normal
+			float3 V = normalize(_WorldSpaceCameraPos - v.position.xyz);
+			float  F = pow(1.0 - saturate(dot(N, V)), 2.0);
+
+			float3 oceanPos = _CwOffset + N * _SGT_OceanRadius;
+			v.position.xyz = lerp(v.position.xyz, oceanPos, F);
 		}
+
 	#endif
 	
 	// Calc UV
@@ -9876,65 +9741,48 @@ float3 SGT_GetColor(float3 wnormal, float3 wlight)
 	return saturate(dot(wnormal, wlight));
 }
 
+static const float WATER_DEPTH_SHALLOW = 30.0f;
+static const float WATER_DEPTH_MAX = 3000.0f;
+
 float SGT_DecodeWaterDepth(float encoded)
 {
-	return encoded * 30.0;
-}
-
-float SGT_DecodeWaterDepth2(float encoded)
-{
-    const float THRESHOLD = 30.0;
-    const float SHARP_KNEE = 5.0;
-    const float SMOOTH_KNEE = 100.0;
-    const float SCALE = (THRESHOLD + SHARP_KNEE) / THRESHOLD;
-    
-    float mask = step(0.5, encoded);
-    
-    float t1 = saturate(encoded * 2.0 / SCALE);
-    float sharp = t1 * SHARP_KNEE / (1.0 - t1 + 1e-6);
-    
-    float t2 = saturate((encoded - 0.5) * 2.0);
-    float smooth = THRESHOLD + t2 * SMOOTH_KNEE / (1.0 - t2 + 1e-6);
-    
-    return -lerp(sharp, smooth, mask);
+	float shallow = encoded * (WATER_DEPTH_SHALLOW * 2.0f);
+    float deep = WATER_DEPTH_SHALLOW + (encoded - 0.5f) * ((WATER_DEPTH_MAX - WATER_DEPTH_SHALLOW) * 2.0f);
+    float isDeep = step(0.5f, encoded);
+    return lerp(shallow, deep, isDeep);
 }
 
 float3 SGT_ApplyOceanColor(
-    float3 terrainColor, 
+    float3 terrainColor,
     float  waterDepth01,
-    float3 waterColor, 
-    float  waterDensity,
+    float3 waterColor,
+    float2 waterDensity,
+    float  waterBlend,
     float3 ambientColor)
 {
     float depth = SGT_DecodeWaterDepth(waterDepth01);
+    float3 w = float3(1.0, 0.2, 0.1);
 
-    float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
-    float3 extinction = absorptionWeight * waterDensity;
+    float3 e0 = w * waterDensity.x;
+    float3 e1 = w * waterDensity.y;
 
-    // 1. Terrain Transmittance (The path from floor to eye)
-    // In HQ, this uses the base extinction (factor of 1.0)
-    float3 floorT = exp(-extinction * depth);
+    float3 floorT0  = exp(-e0 * depth);
+    float3 volumeT0 = exp(-e0 * depth * 3.0);
 
-    // 2. Volume Transmittance (The "Ambient" path)
-    // In HQ, for a top-down view, this factor is (1.0 + viewCos * 2.0) = 3.0
-    float3 volumeT = exp(-extinction * depth * 3.0);
+    float3 floorT1  = exp(-e1 * depth);
+    float3 volumeT1 = exp(-e1 * depth * 3.0);
 
-    // 3. Composite (Matching the HQ math structure)
-    // HQ Result = (Floor * FloorT) + (Water * (1 - VolumeT))
-    float3 oceanFloor = terrainColor * floorT;
-    float3 volumeScatt = (waterColor * ambientColor) * (1.0 - volumeT);
+    float3 col0 = terrainColor * floorT0 + (waterColor * ambientColor) * (1.0 - volumeT0);
+    float3 col1 = terrainColor * floorT1 + (waterColor * ambientColor) * (1.0 - volumeT1);
 
-    return oceanFloor + volumeScatt;
+    return lerp(col0, col1, waterBlend);
 }
 
-sampler2D _SGT_BlueNoiseTex; // Global
-float     _SGT_Frame; // Global
-	
-float SGT_DitherBlue(float2 screenUV)
+float SGT_Bayer4x4(float2 screenPos)
 {
-	float2 pixel = floor(screenUV * _ScreenParams.xy);
-	float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
-	return frac(noise + _SGT_Frame / sqrt(0.5f));
+	int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+	float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
+	return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -9954,9 +9802,11 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
-		float fadeTransition = SGT_DitherBlue(d.screenUV) < _SGT_OceanDistance.x;
+		float fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
 	
-		float3 oceanColor = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, 1.0, 1.0);
+		float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+		float cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float3 oceanColor    = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
 	
 		float fade = saturate(dataA.w > 0) * fadeTransition;
 	
@@ -10868,7 +10718,8 @@ float4    _SGT_CloudShadowOpacity;
 float4x4  _SGT_CloudShadowMatrix;
 
 // OCEAN FADE
-float4 _SGT_OceanDistance;
+float  _SGT_OceanFade;
+float2 _SGT_OceanDensity;
 float4 _SGT_OceanColor;
 float  _SGT_OceanSmoothness;
 float4 _SGT_OceanLightDirection;
@@ -10917,11 +10768,6 @@ float SGT_SampleCloudDensity(float3 wpos)
 	return saturate(dot(tex2D(_SGT_CloudShadowTex, uv), _SGT_CloudShadowOpacity));
 }
 
-float SGT_InverseLerp(float a, float b, float v)
-{
-	return (v - a) / (b - a);
-}
-
 void SSS_Vert(inout SSS_VertexData v)
 {
 	float vertexIndex = v.position.x;
@@ -10958,12 +10804,16 @@ void SSS_Vert(inout SSS_VertexData v)
 	#endif
 	
 	#if _SGT_OCEAN_FADE
-		if (_SGT_OceanDistance.x > 0.5f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
+		if (_SGT_OceanFade > 0.0f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
 		{
-			float3 oceanPos = _CwOffset + normalize(position) * _SGT_OceanRadius;
-			
-			//v.position.xyz = lerp(v.position.xyz, oceanPos, _SGT_OceanDistance.x);
+			float3 N = normalize(position); // sphere normal
+			float3 V = normalize(_WorldSpaceCameraPos - v.position.xyz);
+			float  F = pow(1.0 - saturate(dot(N, V)), 2.0);
+
+			float3 oceanPos = _CwOffset + N * _SGT_OceanRadius;
+			v.position.xyz = lerp(v.position.xyz, oceanPos, F);
 		}
+
 	#endif
 	
 	// Calc UV
@@ -10980,65 +10830,48 @@ float3 SGT_GetColor(float3 wnormal, float3 wlight)
 	return saturate(dot(wnormal, wlight));
 }
 
+static const float WATER_DEPTH_SHALLOW = 30.0f;
+static const float WATER_DEPTH_MAX = 3000.0f;
+
 float SGT_DecodeWaterDepth(float encoded)
 {
-	return encoded * 30.0;
-}
-
-float SGT_DecodeWaterDepth2(float encoded)
-{
-    const float THRESHOLD = 30.0;
-    const float SHARP_KNEE = 5.0;
-    const float SMOOTH_KNEE = 100.0;
-    const float SCALE = (THRESHOLD + SHARP_KNEE) / THRESHOLD;
-    
-    float mask = step(0.5, encoded);
-    
-    float t1 = saturate(encoded * 2.0 / SCALE);
-    float sharp = t1 * SHARP_KNEE / (1.0 - t1 + 1e-6);
-    
-    float t2 = saturate((encoded - 0.5) * 2.0);
-    float smooth = THRESHOLD + t2 * SMOOTH_KNEE / (1.0 - t2 + 1e-6);
-    
-    return -lerp(sharp, smooth, mask);
+	float shallow = encoded * (WATER_DEPTH_SHALLOW * 2.0f);
+    float deep = WATER_DEPTH_SHALLOW + (encoded - 0.5f) * ((WATER_DEPTH_MAX - WATER_DEPTH_SHALLOW) * 2.0f);
+    float isDeep = step(0.5f, encoded);
+    return lerp(shallow, deep, isDeep);
 }
 
 float3 SGT_ApplyOceanColor(
-    float3 terrainColor, 
+    float3 terrainColor,
     float  waterDepth01,
-    float3 waterColor, 
-    float  waterDensity,
+    float3 waterColor,
+    float2 waterDensity,
+    float  waterBlend,
     float3 ambientColor)
 {
     float depth = SGT_DecodeWaterDepth(waterDepth01);
+    float3 w = float3(1.0, 0.2, 0.1);
 
-    float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
-    float3 extinction = absorptionWeight * waterDensity;
+    float3 e0 = w * waterDensity.x;
+    float3 e1 = w * waterDensity.y;
 
-    // 1. Terrain Transmittance (The path from floor to eye)
-    // In HQ, this uses the base extinction (factor of 1.0)
-    float3 floorT = exp(-extinction * depth);
+    float3 floorT0  = exp(-e0 * depth);
+    float3 volumeT0 = exp(-e0 * depth * 3.0);
 
-    // 2. Volume Transmittance (The "Ambient" path)
-    // In HQ, for a top-down view, this factor is (1.0 + viewCos * 2.0) = 3.0
-    float3 volumeT = exp(-extinction * depth * 3.0);
+    float3 floorT1  = exp(-e1 * depth);
+    float3 volumeT1 = exp(-e1 * depth * 3.0);
 
-    // 3. Composite (Matching the HQ math structure)
-    // HQ Result = (Floor * FloorT) + (Water * (1 - VolumeT))
-    float3 oceanFloor = terrainColor * floorT;
-    float3 volumeScatt = (waterColor * ambientColor) * (1.0 - volumeT);
+    float3 col0 = terrainColor * floorT0 + (waterColor * ambientColor) * (1.0 - volumeT0);
+    float3 col1 = terrainColor * floorT1 + (waterColor * ambientColor) * (1.0 - volumeT1);
 
-    return oceanFloor + volumeScatt;
+    return lerp(col0, col1, waterBlend);
 }
 
-sampler2D _SGT_BlueNoiseTex; // Global
-float     _SGT_Frame; // Global
-	
-float SGT_DitherBlue(float2 screenUV)
+float SGT_Bayer4x4(float2 screenPos)
 {
-	float2 pixel = floor(screenUV * _ScreenParams.xy);
-	float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
-	return frac(noise + _SGT_Frame / sqrt(0.5f));
+	int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+	float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
+	return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -11058,9 +10891,11 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
-		float fadeTransition = SGT_DitherBlue(d.screenUV) < _SGT_OceanDistance.x;
+		float fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
 	
-		float3 oceanColor = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, 1.0, 1.0);
+		float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+		float cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float3 oceanColor    = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
 	
 		float fade = saturate(dataA.w > 0) * fadeTransition;
 	
@@ -12011,7 +11846,8 @@ float4    _SGT_CloudShadowOpacity;
 float4x4  _SGT_CloudShadowMatrix;
 
 // OCEAN FADE
-float4 _SGT_OceanDistance;
+float  _SGT_OceanFade;
+float2 _SGT_OceanDensity;
 float4 _SGT_OceanColor;
 float  _SGT_OceanSmoothness;
 float4 _SGT_OceanLightDirection;
@@ -12060,11 +11896,6 @@ float SGT_SampleCloudDensity(float3 wpos)
 	return saturate(dot(tex2D(_SGT_CloudShadowTex, uv), _SGT_CloudShadowOpacity));
 }
 
-float SGT_InverseLerp(float a, float b, float v)
-{
-	return (v - a) / (b - a);
-}
-
 void SSS_Vert(inout SSS_VertexData v)
 {
 	float vertexIndex = v.position.x;
@@ -12101,12 +11932,16 @@ void SSS_Vert(inout SSS_VertexData v)
 	#endif
 	
 	#if _SGT_OCEAN_FADE
-		if (_SGT_OceanDistance.x > 0.5f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
+		if (_SGT_OceanFade > 0.0f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
 		{
-			float3 oceanPos = _CwOffset + normalize(position) * _SGT_OceanRadius;
-			
-			//v.position.xyz = lerp(v.position.xyz, oceanPos, _SGT_OceanDistance.x);
+			float3 N = normalize(position); // sphere normal
+			float3 V = normalize(_WorldSpaceCameraPos - v.position.xyz);
+			float  F = pow(1.0 - saturate(dot(N, V)), 2.0);
+
+			float3 oceanPos = _CwOffset + N * _SGT_OceanRadius;
+			v.position.xyz = lerp(v.position.xyz, oceanPos, F);
 		}
+
 	#endif
 	
 	// Calc UV
@@ -12123,65 +11958,48 @@ float3 SGT_GetColor(float3 wnormal, float3 wlight)
 	return saturate(dot(wnormal, wlight));
 }
 
+static const float WATER_DEPTH_SHALLOW = 30.0f;
+static const float WATER_DEPTH_MAX = 3000.0f;
+
 float SGT_DecodeWaterDepth(float encoded)
 {
-	return encoded * 30.0;
-}
-
-float SGT_DecodeWaterDepth2(float encoded)
-{
-    const float THRESHOLD = 30.0;
-    const float SHARP_KNEE = 5.0;
-    const float SMOOTH_KNEE = 100.0;
-    const float SCALE = (THRESHOLD + SHARP_KNEE) / THRESHOLD;
-    
-    float mask = step(0.5, encoded);
-    
-    float t1 = saturate(encoded * 2.0 / SCALE);
-    float sharp = t1 * SHARP_KNEE / (1.0 - t1 + 1e-6);
-    
-    float t2 = saturate((encoded - 0.5) * 2.0);
-    float smooth = THRESHOLD + t2 * SMOOTH_KNEE / (1.0 - t2 + 1e-6);
-    
-    return -lerp(sharp, smooth, mask);
+	float shallow = encoded * (WATER_DEPTH_SHALLOW * 2.0f);
+    float deep = WATER_DEPTH_SHALLOW + (encoded - 0.5f) * ((WATER_DEPTH_MAX - WATER_DEPTH_SHALLOW) * 2.0f);
+    float isDeep = step(0.5f, encoded);
+    return lerp(shallow, deep, isDeep);
 }
 
 float3 SGT_ApplyOceanColor(
-    float3 terrainColor, 
+    float3 terrainColor,
     float  waterDepth01,
-    float3 waterColor, 
-    float  waterDensity,
+    float3 waterColor,
+    float2 waterDensity,
+    float  waterBlend,
     float3 ambientColor)
 {
     float depth = SGT_DecodeWaterDepth(waterDepth01);
+    float3 w = float3(1.0, 0.2, 0.1);
 
-    float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
-    float3 extinction = absorptionWeight * waterDensity;
+    float3 e0 = w * waterDensity.x;
+    float3 e1 = w * waterDensity.y;
 
-    // 1. Terrain Transmittance (The path from floor to eye)
-    // In HQ, this uses the base extinction (factor of 1.0)
-    float3 floorT = exp(-extinction * depth);
+    float3 floorT0  = exp(-e0 * depth);
+    float3 volumeT0 = exp(-e0 * depth * 3.0);
 
-    // 2. Volume Transmittance (The "Ambient" path)
-    // In HQ, for a top-down view, this factor is (1.0 + viewCos * 2.0) = 3.0
-    float3 volumeT = exp(-extinction * depth * 3.0);
+    float3 floorT1  = exp(-e1 * depth);
+    float3 volumeT1 = exp(-e1 * depth * 3.0);
 
-    // 3. Composite (Matching the HQ math structure)
-    // HQ Result = (Floor * FloorT) + (Water * (1 - VolumeT))
-    float3 oceanFloor = terrainColor * floorT;
-    float3 volumeScatt = (waterColor * ambientColor) * (1.0 - volumeT);
+    float3 col0 = terrainColor * floorT0 + (waterColor * ambientColor) * (1.0 - volumeT0);
+    float3 col1 = terrainColor * floorT1 + (waterColor * ambientColor) * (1.0 - volumeT1);
 
-    return oceanFloor + volumeScatt;
+    return lerp(col0, col1, waterBlend);
 }
 
-sampler2D _SGT_BlueNoiseTex; // Global
-float     _SGT_Frame; // Global
-	
-float SGT_DitherBlue(float2 screenUV)
+float SGT_Bayer4x4(float2 screenPos)
 {
-	float2 pixel = floor(screenUV * _ScreenParams.xy);
-	float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
-	return frac(noise + _SGT_Frame / sqrt(0.5f));
+	int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+	float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
+	return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -12201,9 +12019,11 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
-		float fadeTransition = SGT_DitherBlue(d.screenUV) < _SGT_OceanDistance.x;
+		float fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
 	
-		float3 oceanColor = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, 1.0, 1.0);
+		float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+		float cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float3 oceanColor    = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
 	
 		float fade = saturate(dataA.w > 0) * fadeTransition;
 	
@@ -13153,7 +12973,8 @@ float4    _SGT_CloudShadowOpacity;
 float4x4  _SGT_CloudShadowMatrix;
 
 // OCEAN FADE
-float4 _SGT_OceanDistance;
+float  _SGT_OceanFade;
+float2 _SGT_OceanDensity;
 float4 _SGT_OceanColor;
 float  _SGT_OceanSmoothness;
 float4 _SGT_OceanLightDirection;
@@ -13202,11 +13023,6 @@ float SGT_SampleCloudDensity(float3 wpos)
 	return saturate(dot(tex2D(_SGT_CloudShadowTex, uv), _SGT_CloudShadowOpacity));
 }
 
-float SGT_InverseLerp(float a, float b, float v)
-{
-	return (v - a) / (b - a);
-}
-
 void SSS_Vert(inout SSS_VertexData v)
 {
 	float vertexIndex = v.position.x;
@@ -13243,12 +13059,16 @@ void SSS_Vert(inout SSS_VertexData v)
 	#endif
 	
 	#if _SGT_OCEAN_FADE
-		if (_SGT_OceanDistance.x > 0.5f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
+		if (_SGT_OceanFade > 0.0f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
 		{
-			float3 oceanPos = _CwOffset + normalize(position) * _SGT_OceanRadius;
-			
-			//v.position.xyz = lerp(v.position.xyz, oceanPos, _SGT_OceanDistance.x);
+			float3 N = normalize(position); // sphere normal
+			float3 V = normalize(_WorldSpaceCameraPos - v.position.xyz);
+			float  F = pow(1.0 - saturate(dot(N, V)), 2.0);
+
+			float3 oceanPos = _CwOffset + N * _SGT_OceanRadius;
+			v.position.xyz = lerp(v.position.xyz, oceanPos, F);
 		}
+
 	#endif
 	
 	// Calc UV
@@ -13265,65 +13085,48 @@ float3 SGT_GetColor(float3 wnormal, float3 wlight)
 	return saturate(dot(wnormal, wlight));
 }
 
+static const float WATER_DEPTH_SHALLOW = 30.0f;
+static const float WATER_DEPTH_MAX = 3000.0f;
+
 float SGT_DecodeWaterDepth(float encoded)
 {
-	return encoded * 30.0;
-}
-
-float SGT_DecodeWaterDepth2(float encoded)
-{
-    const float THRESHOLD = 30.0;
-    const float SHARP_KNEE = 5.0;
-    const float SMOOTH_KNEE = 100.0;
-    const float SCALE = (THRESHOLD + SHARP_KNEE) / THRESHOLD;
-    
-    float mask = step(0.5, encoded);
-    
-    float t1 = saturate(encoded * 2.0 / SCALE);
-    float sharp = t1 * SHARP_KNEE / (1.0 - t1 + 1e-6);
-    
-    float t2 = saturate((encoded - 0.5) * 2.0);
-    float smooth = THRESHOLD + t2 * SMOOTH_KNEE / (1.0 - t2 + 1e-6);
-    
-    return -lerp(sharp, smooth, mask);
+	float shallow = encoded * (WATER_DEPTH_SHALLOW * 2.0f);
+    float deep = WATER_DEPTH_SHALLOW + (encoded - 0.5f) * ((WATER_DEPTH_MAX - WATER_DEPTH_SHALLOW) * 2.0f);
+    float isDeep = step(0.5f, encoded);
+    return lerp(shallow, deep, isDeep);
 }
 
 float3 SGT_ApplyOceanColor(
-    float3 terrainColor, 
+    float3 terrainColor,
     float  waterDepth01,
-    float3 waterColor, 
-    float  waterDensity,
+    float3 waterColor,
+    float2 waterDensity,
+    float  waterBlend,
     float3 ambientColor)
 {
     float depth = SGT_DecodeWaterDepth(waterDepth01);
+    float3 w = float3(1.0, 0.2, 0.1);
 
-    float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
-    float3 extinction = absorptionWeight * waterDensity;
+    float3 e0 = w * waterDensity.x;
+    float3 e1 = w * waterDensity.y;
 
-    // 1. Terrain Transmittance (The path from floor to eye)
-    // In HQ, this uses the base extinction (factor of 1.0)
-    float3 floorT = exp(-extinction * depth);
+    float3 floorT0  = exp(-e0 * depth);
+    float3 volumeT0 = exp(-e0 * depth * 3.0);
 
-    // 2. Volume Transmittance (The "Ambient" path)
-    // In HQ, for a top-down view, this factor is (1.0 + viewCos * 2.0) = 3.0
-    float3 volumeT = exp(-extinction * depth * 3.0);
+    float3 floorT1  = exp(-e1 * depth);
+    float3 volumeT1 = exp(-e1 * depth * 3.0);
 
-    // 3. Composite (Matching the HQ math structure)
-    // HQ Result = (Floor * FloorT) + (Water * (1 - VolumeT))
-    float3 oceanFloor = terrainColor * floorT;
-    float3 volumeScatt = (waterColor * ambientColor) * (1.0 - volumeT);
+    float3 col0 = terrainColor * floorT0 + (waterColor * ambientColor) * (1.0 - volumeT0);
+    float3 col1 = terrainColor * floorT1 + (waterColor * ambientColor) * (1.0 - volumeT1);
 
-    return oceanFloor + volumeScatt;
+    return lerp(col0, col1, waterBlend);
 }
 
-sampler2D _SGT_BlueNoiseTex; // Global
-float     _SGT_Frame; // Global
-	
-float SGT_DitherBlue(float2 screenUV)
+float SGT_Bayer4x4(float2 screenPos)
 {
-	float2 pixel = floor(screenUV * _ScreenParams.xy);
-	float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
-	return frac(noise + _SGT_Frame / sqrt(0.5f));
+	int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+	float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
+	return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -13343,9 +13146,11 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
-		float fadeTransition = SGT_DitherBlue(d.screenUV) < _SGT_OceanDistance.x;
+		float fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
 	
-		float3 oceanColor = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, 1.0, 1.0);
+		float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+		float cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float3 oceanColor    = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
 	
 		float fade = saturate(dataA.w > 0) * fadeTransition;
 	
@@ -14218,7 +14023,8 @@ float4    _SGT_CloudShadowOpacity;
 float4x4  _SGT_CloudShadowMatrix;
 
 // OCEAN FADE
-float4 _SGT_OceanDistance;
+float  _SGT_OceanFade;
+float2 _SGT_OceanDensity;
 float4 _SGT_OceanColor;
 float  _SGT_OceanSmoothness;
 float4 _SGT_OceanLightDirection;
@@ -14267,11 +14073,6 @@ float SGT_SampleCloudDensity(float3 wpos)
 	return saturate(dot(tex2D(_SGT_CloudShadowTex, uv), _SGT_CloudShadowOpacity));
 }
 
-float SGT_InverseLerp(float a, float b, float v)
-{
-	return (v - a) / (b - a);
-}
-
 void SSS_Vert(inout SSS_VertexData v)
 {
 	float vertexIndex = v.position.x;
@@ -14308,12 +14109,16 @@ void SSS_Vert(inout SSS_VertexData v)
 	#endif
 	
 	#if _SGT_OCEAN_FADE
-		if (_SGT_OceanDistance.x > 0.5f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
+		if (_SGT_OceanFade > 0.0f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
 		{
-			float3 oceanPos = _CwOffset + normalize(position) * _SGT_OceanRadius;
-			
-			//v.position.xyz = lerp(v.position.xyz, oceanPos, _SGT_OceanDistance.x);
+			float3 N = normalize(position); // sphere normal
+			float3 V = normalize(_WorldSpaceCameraPos - v.position.xyz);
+			float  F = pow(1.0 - saturate(dot(N, V)), 2.0);
+
+			float3 oceanPos = _CwOffset + N * _SGT_OceanRadius;
+			v.position.xyz = lerp(v.position.xyz, oceanPos, F);
 		}
+
 	#endif
 	
 	// Calc UV
@@ -14330,65 +14135,48 @@ float3 SGT_GetColor(float3 wnormal, float3 wlight)
 	return saturate(dot(wnormal, wlight));
 }
 
+static const float WATER_DEPTH_SHALLOW = 30.0f;
+static const float WATER_DEPTH_MAX = 3000.0f;
+
 float SGT_DecodeWaterDepth(float encoded)
 {
-	return encoded * 30.0;
-}
-
-float SGT_DecodeWaterDepth2(float encoded)
-{
-    const float THRESHOLD = 30.0;
-    const float SHARP_KNEE = 5.0;
-    const float SMOOTH_KNEE = 100.0;
-    const float SCALE = (THRESHOLD + SHARP_KNEE) / THRESHOLD;
-    
-    float mask = step(0.5, encoded);
-    
-    float t1 = saturate(encoded * 2.0 / SCALE);
-    float sharp = t1 * SHARP_KNEE / (1.0 - t1 + 1e-6);
-    
-    float t2 = saturate((encoded - 0.5) * 2.0);
-    float smooth = THRESHOLD + t2 * SMOOTH_KNEE / (1.0 - t2 + 1e-6);
-    
-    return -lerp(sharp, smooth, mask);
+	float shallow = encoded * (WATER_DEPTH_SHALLOW * 2.0f);
+    float deep = WATER_DEPTH_SHALLOW + (encoded - 0.5f) * ((WATER_DEPTH_MAX - WATER_DEPTH_SHALLOW) * 2.0f);
+    float isDeep = step(0.5f, encoded);
+    return lerp(shallow, deep, isDeep);
 }
 
 float3 SGT_ApplyOceanColor(
-    float3 terrainColor, 
+    float3 terrainColor,
     float  waterDepth01,
-    float3 waterColor, 
-    float  waterDensity,
+    float3 waterColor,
+    float2 waterDensity,
+    float  waterBlend,
     float3 ambientColor)
 {
     float depth = SGT_DecodeWaterDepth(waterDepth01);
+    float3 w = float3(1.0, 0.2, 0.1);
 
-    float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
-    float3 extinction = absorptionWeight * waterDensity;
+    float3 e0 = w * waterDensity.x;
+    float3 e1 = w * waterDensity.y;
 
-    // 1. Terrain Transmittance (The path from floor to eye)
-    // In HQ, this uses the base extinction (factor of 1.0)
-    float3 floorT = exp(-extinction * depth);
+    float3 floorT0  = exp(-e0 * depth);
+    float3 volumeT0 = exp(-e0 * depth * 3.0);
 
-    // 2. Volume Transmittance (The "Ambient" path)
-    // In HQ, for a top-down view, this factor is (1.0 + viewCos * 2.0) = 3.0
-    float3 volumeT = exp(-extinction * depth * 3.0);
+    float3 floorT1  = exp(-e1 * depth);
+    float3 volumeT1 = exp(-e1 * depth * 3.0);
 
-    // 3. Composite (Matching the HQ math structure)
-    // HQ Result = (Floor * FloorT) + (Water * (1 - VolumeT))
-    float3 oceanFloor = terrainColor * floorT;
-    float3 volumeScatt = (waterColor * ambientColor) * (1.0 - volumeT);
+    float3 col0 = terrainColor * floorT0 + (waterColor * ambientColor) * (1.0 - volumeT0);
+    float3 col1 = terrainColor * floorT1 + (waterColor * ambientColor) * (1.0 - volumeT1);
 
-    return oceanFloor + volumeScatt;
+    return lerp(col0, col1, waterBlend);
 }
 
-sampler2D _SGT_BlueNoiseTex; // Global
-float     _SGT_Frame; // Global
-	
-float SGT_DitherBlue(float2 screenUV)
+float SGT_Bayer4x4(float2 screenPos)
 {
-	float2 pixel = floor(screenUV * _ScreenParams.xy);
-	float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
-	return frac(noise + _SGT_Frame / sqrt(0.5f));
+	int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+	float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
+	return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -14408,9 +14196,11 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
-		float fadeTransition = SGT_DitherBlue(d.screenUV) < _SGT_OceanDistance.x;
+		float fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
 	
-		float3 oceanColor = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, 1.0, 1.0);
+		float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+		float cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float3 oceanColor    = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
 	
 		float fade = saturate(dataA.w > 0) * fadeTransition;
 	
@@ -15234,7 +15024,8 @@ float4    _SGT_CloudShadowOpacity;
 float4x4  _SGT_CloudShadowMatrix;
 
 // OCEAN FADE
-float4 _SGT_OceanDistance;
+float  _SGT_OceanFade;
+float2 _SGT_OceanDensity;
 float4 _SGT_OceanColor;
 float  _SGT_OceanSmoothness;
 float4 _SGT_OceanLightDirection;
@@ -15283,11 +15074,6 @@ float SGT_SampleCloudDensity(float3 wpos)
 	return saturate(dot(tex2D(_SGT_CloudShadowTex, uv), _SGT_CloudShadowOpacity));
 }
 
-float SGT_InverseLerp(float a, float b, float v)
-{
-	return (v - a) / (b - a);
-}
-
 void SSS_Vert(inout SSS_VertexData v)
 {
 	float vertexIndex = v.position.x;
@@ -15324,12 +15110,16 @@ void SSS_Vert(inout SSS_VertexData v)
 	#endif
 	
 	#if _SGT_OCEAN_FADE
-		if (_SGT_OceanDistance.x > 0.5f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
+		if (_SGT_OceanFade > 0.0f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
 		{
-			float3 oceanPos = _CwOffset + normalize(position) * _SGT_OceanRadius;
-			
-			//v.position.xyz = lerp(v.position.xyz, oceanPos, _SGT_OceanDistance.x);
+			float3 N = normalize(position); // sphere normal
+			float3 V = normalize(_WorldSpaceCameraPos - v.position.xyz);
+			float  F = pow(1.0 - saturate(dot(N, V)), 2.0);
+
+			float3 oceanPos = _CwOffset + N * _SGT_OceanRadius;
+			v.position.xyz = lerp(v.position.xyz, oceanPos, F);
 		}
+
 	#endif
 	
 	// Calc UV
@@ -15346,65 +15136,48 @@ float3 SGT_GetColor(float3 wnormal, float3 wlight)
 	return saturate(dot(wnormal, wlight));
 }
 
+static const float WATER_DEPTH_SHALLOW = 30.0f;
+static const float WATER_DEPTH_MAX = 3000.0f;
+
 float SGT_DecodeWaterDepth(float encoded)
 {
-	return encoded * 30.0;
-}
-
-float SGT_DecodeWaterDepth2(float encoded)
-{
-    const float THRESHOLD = 30.0;
-    const float SHARP_KNEE = 5.0;
-    const float SMOOTH_KNEE = 100.0;
-    const float SCALE = (THRESHOLD + SHARP_KNEE) / THRESHOLD;
-    
-    float mask = step(0.5, encoded);
-    
-    float t1 = saturate(encoded * 2.0 / SCALE);
-    float sharp = t1 * SHARP_KNEE / (1.0 - t1 + 1e-6);
-    
-    float t2 = saturate((encoded - 0.5) * 2.0);
-    float smooth = THRESHOLD + t2 * SMOOTH_KNEE / (1.0 - t2 + 1e-6);
-    
-    return -lerp(sharp, smooth, mask);
+	float shallow = encoded * (WATER_DEPTH_SHALLOW * 2.0f);
+    float deep = WATER_DEPTH_SHALLOW + (encoded - 0.5f) * ((WATER_DEPTH_MAX - WATER_DEPTH_SHALLOW) * 2.0f);
+    float isDeep = step(0.5f, encoded);
+    return lerp(shallow, deep, isDeep);
 }
 
 float3 SGT_ApplyOceanColor(
-    float3 terrainColor, 
+    float3 terrainColor,
     float  waterDepth01,
-    float3 waterColor, 
-    float  waterDensity,
+    float3 waterColor,
+    float2 waterDensity,
+    float  waterBlend,
     float3 ambientColor)
 {
     float depth = SGT_DecodeWaterDepth(waterDepth01);
+    float3 w = float3(1.0, 0.2, 0.1);
 
-    float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
-    float3 extinction = absorptionWeight * waterDensity;
+    float3 e0 = w * waterDensity.x;
+    float3 e1 = w * waterDensity.y;
 
-    // 1. Terrain Transmittance (The path from floor to eye)
-    // In HQ, this uses the base extinction (factor of 1.0)
-    float3 floorT = exp(-extinction * depth);
+    float3 floorT0  = exp(-e0 * depth);
+    float3 volumeT0 = exp(-e0 * depth * 3.0);
 
-    // 2. Volume Transmittance (The "Ambient" path)
-    // In HQ, for a top-down view, this factor is (1.0 + viewCos * 2.0) = 3.0
-    float3 volumeT = exp(-extinction * depth * 3.0);
+    float3 floorT1  = exp(-e1 * depth);
+    float3 volumeT1 = exp(-e1 * depth * 3.0);
 
-    // 3. Composite (Matching the HQ math structure)
-    // HQ Result = (Floor * FloorT) + (Water * (1 - VolumeT))
-    float3 oceanFloor = terrainColor * floorT;
-    float3 volumeScatt = (waterColor * ambientColor) * (1.0 - volumeT);
+    float3 col0 = terrainColor * floorT0 + (waterColor * ambientColor) * (1.0 - volumeT0);
+    float3 col1 = terrainColor * floorT1 + (waterColor * ambientColor) * (1.0 - volumeT1);
 
-    return oceanFloor + volumeScatt;
+    return lerp(col0, col1, waterBlend);
 }
 
-sampler2D _SGT_BlueNoiseTex; // Global
-float     _SGT_Frame; // Global
-	
-float SGT_DitherBlue(float2 screenUV)
+float SGT_Bayer4x4(float2 screenPos)
 {
-	float2 pixel = floor(screenUV * _ScreenParams.xy);
-	float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
-	return frac(noise + _SGT_Frame / sqrt(0.5f));
+	int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+	float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
+	return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -15424,9 +15197,11 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
-		float fadeTransition = SGT_DitherBlue(d.screenUV) < _SGT_OceanDistance.x;
+		float fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
 	
-		float3 oceanColor = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, 1.0, 1.0);
+		float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+		float cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float3 oceanColor    = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
 	
 		float fade = saturate(dataA.w > 0) * fadeTransition;
 	
@@ -16282,7 +16057,8 @@ float4    _SGT_CloudShadowOpacity;
 float4x4  _SGT_CloudShadowMatrix;
 
 // OCEAN FADE
-float4 _SGT_OceanDistance;
+float  _SGT_OceanFade;
+float2 _SGT_OceanDensity;
 float4 _SGT_OceanColor;
 float  _SGT_OceanSmoothness;
 float4 _SGT_OceanLightDirection;
@@ -16331,11 +16107,6 @@ float SGT_SampleCloudDensity(float3 wpos)
 	return saturate(dot(tex2D(_SGT_CloudShadowTex, uv), _SGT_CloudShadowOpacity));
 }
 
-float SGT_InverseLerp(float a, float b, float v)
-{
-	return (v - a) / (b - a);
-}
-
 void SSS_Vert(inout SSS_VertexData v)
 {
 	float vertexIndex = v.position.x;
@@ -16372,12 +16143,16 @@ void SSS_Vert(inout SSS_VertexData v)
 	#endif
 	
 	#if _SGT_OCEAN_FADE
-		if (_SGT_OceanDistance.x > 0.5f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
+		if (_SGT_OceanFade > 0.0f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
 		{
-			float3 oceanPos = _CwOffset + normalize(position) * _SGT_OceanRadius;
-			
-			//v.position.xyz = lerp(v.position.xyz, oceanPos, _SGT_OceanDistance.x);
+			float3 N = normalize(position); // sphere normal
+			float3 V = normalize(_WorldSpaceCameraPos - v.position.xyz);
+			float  F = pow(1.0 - saturate(dot(N, V)), 2.0);
+
+			float3 oceanPos = _CwOffset + N * _SGT_OceanRadius;
+			v.position.xyz = lerp(v.position.xyz, oceanPos, F);
 		}
+
 	#endif
 	
 	// Calc UV
@@ -16394,65 +16169,48 @@ float3 SGT_GetColor(float3 wnormal, float3 wlight)
 	return saturate(dot(wnormal, wlight));
 }
 
+static const float WATER_DEPTH_SHALLOW = 30.0f;
+static const float WATER_DEPTH_MAX = 3000.0f;
+
 float SGT_DecodeWaterDepth(float encoded)
 {
-	return encoded * 30.0;
-}
-
-float SGT_DecodeWaterDepth2(float encoded)
-{
-    const float THRESHOLD = 30.0;
-    const float SHARP_KNEE = 5.0;
-    const float SMOOTH_KNEE = 100.0;
-    const float SCALE = (THRESHOLD + SHARP_KNEE) / THRESHOLD;
-    
-    float mask = step(0.5, encoded);
-    
-    float t1 = saturate(encoded * 2.0 / SCALE);
-    float sharp = t1 * SHARP_KNEE / (1.0 - t1 + 1e-6);
-    
-    float t2 = saturate((encoded - 0.5) * 2.0);
-    float smooth = THRESHOLD + t2 * SMOOTH_KNEE / (1.0 - t2 + 1e-6);
-    
-    return -lerp(sharp, smooth, mask);
+	float shallow = encoded * (WATER_DEPTH_SHALLOW * 2.0f);
+    float deep = WATER_DEPTH_SHALLOW + (encoded - 0.5f) * ((WATER_DEPTH_MAX - WATER_DEPTH_SHALLOW) * 2.0f);
+    float isDeep = step(0.5f, encoded);
+    return lerp(shallow, deep, isDeep);
 }
 
 float3 SGT_ApplyOceanColor(
-    float3 terrainColor, 
+    float3 terrainColor,
     float  waterDepth01,
-    float3 waterColor, 
-    float  waterDensity,
+    float3 waterColor,
+    float2 waterDensity,
+    float  waterBlend,
     float3 ambientColor)
 {
     float depth = SGT_DecodeWaterDepth(waterDepth01);
+    float3 w = float3(1.0, 0.2, 0.1);
 
-    float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
-    float3 extinction = absorptionWeight * waterDensity;
+    float3 e0 = w * waterDensity.x;
+    float3 e1 = w * waterDensity.y;
 
-    // 1. Terrain Transmittance (The path from floor to eye)
-    // In HQ, this uses the base extinction (factor of 1.0)
-    float3 floorT = exp(-extinction * depth);
+    float3 floorT0  = exp(-e0 * depth);
+    float3 volumeT0 = exp(-e0 * depth * 3.0);
 
-    // 2. Volume Transmittance (The "Ambient" path)
-    // In HQ, for a top-down view, this factor is (1.0 + viewCos * 2.0) = 3.0
-    float3 volumeT = exp(-extinction * depth * 3.0);
+    float3 floorT1  = exp(-e1 * depth);
+    float3 volumeT1 = exp(-e1 * depth * 3.0);
 
-    // 3. Composite (Matching the HQ math structure)
-    // HQ Result = (Floor * FloorT) + (Water * (1 - VolumeT))
-    float3 oceanFloor = terrainColor * floorT;
-    float3 volumeScatt = (waterColor * ambientColor) * (1.0 - volumeT);
+    float3 col0 = terrainColor * floorT0 + (waterColor * ambientColor) * (1.0 - volumeT0);
+    float3 col1 = terrainColor * floorT1 + (waterColor * ambientColor) * (1.0 - volumeT1);
 
-    return oceanFloor + volumeScatt;
+    return lerp(col0, col1, waterBlend);
 }
 
-sampler2D _SGT_BlueNoiseTex; // Global
-float     _SGT_Frame; // Global
-	
-float SGT_DitherBlue(float2 screenUV)
+float SGT_Bayer4x4(float2 screenPos)
 {
-	float2 pixel = floor(screenUV * _ScreenParams.xy);
-	float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
-	return frac(noise + _SGT_Frame / sqrt(0.5f));
+	int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+	float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
+	return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -16472,9 +16230,11 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
-		float fadeTransition = SGT_DitherBlue(d.screenUV) < _SGT_OceanDistance.x;
+		float fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
 	
-		float3 oceanColor = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, 1.0, 1.0);
+		float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+		float cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float3 oceanColor    = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
 	
 		float fade = saturate(dataA.w > 0) * fadeTransition;
 	
@@ -17329,7 +17089,8 @@ float4    _SGT_CloudShadowOpacity;
 float4x4  _SGT_CloudShadowMatrix;
 
 // OCEAN FADE
-float4 _SGT_OceanDistance;
+float  _SGT_OceanFade;
+float2 _SGT_OceanDensity;
 float4 _SGT_OceanColor;
 float  _SGT_OceanSmoothness;
 float4 _SGT_OceanLightDirection;
@@ -17378,11 +17139,6 @@ float SGT_SampleCloudDensity(float3 wpos)
 	return saturate(dot(tex2D(_SGT_CloudShadowTex, uv), _SGT_CloudShadowOpacity));
 }
 
-float SGT_InverseLerp(float a, float b, float v)
-{
-	return (v - a) / (b - a);
-}
-
 void SSS_Vert(inout SSS_VertexData v)
 {
 	float vertexIndex = v.position.x;
@@ -17419,12 +17175,16 @@ void SSS_Vert(inout SSS_VertexData v)
 	#endif
 	
 	#if _SGT_OCEAN_FADE
-		if (_SGT_OceanDistance.x > 0.5f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
+		if (_SGT_OceanFade > 0.0f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
 		{
-			float3 oceanPos = _CwOffset + normalize(position) * _SGT_OceanRadius;
-			
-			//v.position.xyz = lerp(v.position.xyz, oceanPos, _SGT_OceanDistance.x);
+			float3 N = normalize(position); // sphere normal
+			float3 V = normalize(_WorldSpaceCameraPos - v.position.xyz);
+			float  F = pow(1.0 - saturate(dot(N, V)), 2.0);
+
+			float3 oceanPos = _CwOffset + N * _SGT_OceanRadius;
+			v.position.xyz = lerp(v.position.xyz, oceanPos, F);
 		}
+
 	#endif
 	
 	// Calc UV
@@ -17441,65 +17201,48 @@ float3 SGT_GetColor(float3 wnormal, float3 wlight)
 	return saturate(dot(wnormal, wlight));
 }
 
+static const float WATER_DEPTH_SHALLOW = 30.0f;
+static const float WATER_DEPTH_MAX = 3000.0f;
+
 float SGT_DecodeWaterDepth(float encoded)
 {
-	return encoded * 30.0;
-}
-
-float SGT_DecodeWaterDepth2(float encoded)
-{
-    const float THRESHOLD = 30.0;
-    const float SHARP_KNEE = 5.0;
-    const float SMOOTH_KNEE = 100.0;
-    const float SCALE = (THRESHOLD + SHARP_KNEE) / THRESHOLD;
-    
-    float mask = step(0.5, encoded);
-    
-    float t1 = saturate(encoded * 2.0 / SCALE);
-    float sharp = t1 * SHARP_KNEE / (1.0 - t1 + 1e-6);
-    
-    float t2 = saturate((encoded - 0.5) * 2.0);
-    float smooth = THRESHOLD + t2 * SMOOTH_KNEE / (1.0 - t2 + 1e-6);
-    
-    return -lerp(sharp, smooth, mask);
+	float shallow = encoded * (WATER_DEPTH_SHALLOW * 2.0f);
+    float deep = WATER_DEPTH_SHALLOW + (encoded - 0.5f) * ((WATER_DEPTH_MAX - WATER_DEPTH_SHALLOW) * 2.0f);
+    float isDeep = step(0.5f, encoded);
+    return lerp(shallow, deep, isDeep);
 }
 
 float3 SGT_ApplyOceanColor(
-    float3 terrainColor, 
+    float3 terrainColor,
     float  waterDepth01,
-    float3 waterColor, 
-    float  waterDensity,
+    float3 waterColor,
+    float2 waterDensity,
+    float  waterBlend,
     float3 ambientColor)
 {
     float depth = SGT_DecodeWaterDepth(waterDepth01);
+    float3 w = float3(1.0, 0.2, 0.1);
 
-    float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
-    float3 extinction = absorptionWeight * waterDensity;
+    float3 e0 = w * waterDensity.x;
+    float3 e1 = w * waterDensity.y;
 
-    // 1. Terrain Transmittance (The path from floor to eye)
-    // In HQ, this uses the base extinction (factor of 1.0)
-    float3 floorT = exp(-extinction * depth);
+    float3 floorT0  = exp(-e0 * depth);
+    float3 volumeT0 = exp(-e0 * depth * 3.0);
 
-    // 2. Volume Transmittance (The "Ambient" path)
-    // In HQ, for a top-down view, this factor is (1.0 + viewCos * 2.0) = 3.0
-    float3 volumeT = exp(-extinction * depth * 3.0);
+    float3 floorT1  = exp(-e1 * depth);
+    float3 volumeT1 = exp(-e1 * depth * 3.0);
 
-    // 3. Composite (Matching the HQ math structure)
-    // HQ Result = (Floor * FloorT) + (Water * (1 - VolumeT))
-    float3 oceanFloor = terrainColor * floorT;
-    float3 volumeScatt = (waterColor * ambientColor) * (1.0 - volumeT);
+    float3 col0 = terrainColor * floorT0 + (waterColor * ambientColor) * (1.0 - volumeT0);
+    float3 col1 = terrainColor * floorT1 + (waterColor * ambientColor) * (1.0 - volumeT1);
 
-    return oceanFloor + volumeScatt;
+    return lerp(col0, col1, waterBlend);
 }
 
-sampler2D _SGT_BlueNoiseTex; // Global
-float     _SGT_Frame; // Global
-	
-float SGT_DitherBlue(float2 screenUV)
+float SGT_Bayer4x4(float2 screenPos)
 {
-	float2 pixel = floor(screenUV * _ScreenParams.xy);
-	float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
-	return frac(noise + _SGT_Frame / sqrt(0.5f));
+	int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+	float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
+	return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -17519,9 +17262,11 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
-		float fadeTransition = SGT_DitherBlue(d.screenUV) < _SGT_OceanDistance.x;
+		float fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
 	
-		float3 oceanColor = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, 1.0, 1.0);
+		float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+		float cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float3 oceanColor    = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
 	
 		float fade = saturate(dataA.w > 0) * fadeTransition;
 	
@@ -18342,7 +18087,8 @@ float4    _SGT_CloudShadowOpacity;
 float4x4  _SGT_CloudShadowMatrix;
 
 // OCEAN FADE
-float4 _SGT_OceanDistance;
+float  _SGT_OceanFade;
+float2 _SGT_OceanDensity;
 float4 _SGT_OceanColor;
 float  _SGT_OceanSmoothness;
 float4 _SGT_OceanLightDirection;
@@ -18391,11 +18137,6 @@ float SGT_SampleCloudDensity(float3 wpos)
 	return saturate(dot(tex2D(_SGT_CloudShadowTex, uv), _SGT_CloudShadowOpacity));
 }
 
-float SGT_InverseLerp(float a, float b, float v)
-{
-	return (v - a) / (b - a);
-}
-
 void SSS_Vert(inout SSS_VertexData v)
 {
 	float vertexIndex = v.position.x;
@@ -18432,12 +18173,16 @@ void SSS_Vert(inout SSS_VertexData v)
 	#endif
 	
 	#if _SGT_OCEAN_FADE
-		if (_SGT_OceanDistance.x > 0.5f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
+		if (_SGT_OceanFade > 0.0f && length(v.position.xyz - _CwOffset) < _SGT_OceanRadius)
 		{
-			float3 oceanPos = _CwOffset + normalize(position) * _SGT_OceanRadius;
-			
-			//v.position.xyz = lerp(v.position.xyz, oceanPos, _SGT_OceanDistance.x);
+			float3 N = normalize(position); // sphere normal
+			float3 V = normalize(_WorldSpaceCameraPos - v.position.xyz);
+			float  F = pow(1.0 - saturate(dot(N, V)), 2.0);
+
+			float3 oceanPos = _CwOffset + N * _SGT_OceanRadius;
+			v.position.xyz = lerp(v.position.xyz, oceanPos, F);
 		}
+
 	#endif
 	
 	// Calc UV
@@ -18454,65 +18199,48 @@ float3 SGT_GetColor(float3 wnormal, float3 wlight)
 	return saturate(dot(wnormal, wlight));
 }
 
+static const float WATER_DEPTH_SHALLOW = 30.0f;
+static const float WATER_DEPTH_MAX = 3000.0f;
+
 float SGT_DecodeWaterDepth(float encoded)
 {
-	return encoded * 30.0;
-}
-
-float SGT_DecodeWaterDepth2(float encoded)
-{
-    const float THRESHOLD = 30.0;
-    const float SHARP_KNEE = 5.0;
-    const float SMOOTH_KNEE = 100.0;
-    const float SCALE = (THRESHOLD + SHARP_KNEE) / THRESHOLD;
-    
-    float mask = step(0.5, encoded);
-    
-    float t1 = saturate(encoded * 2.0 / SCALE);
-    float sharp = t1 * SHARP_KNEE / (1.0 - t1 + 1e-6);
-    
-    float t2 = saturate((encoded - 0.5) * 2.0);
-    float smooth = THRESHOLD + t2 * SMOOTH_KNEE / (1.0 - t2 + 1e-6);
-    
-    return -lerp(sharp, smooth, mask);
+	float shallow = encoded * (WATER_DEPTH_SHALLOW * 2.0f);
+    float deep = WATER_DEPTH_SHALLOW + (encoded - 0.5f) * ((WATER_DEPTH_MAX - WATER_DEPTH_SHALLOW) * 2.0f);
+    float isDeep = step(0.5f, encoded);
+    return lerp(shallow, deep, isDeep);
 }
 
 float3 SGT_ApplyOceanColor(
-    float3 terrainColor, 
+    float3 terrainColor,
     float  waterDepth01,
-    float3 waterColor, 
-    float  waterDensity,
+    float3 waterColor,
+    float2 waterDensity,
+    float  waterBlend,
     float3 ambientColor)
 {
     float depth = SGT_DecodeWaterDepth(waterDepth01);
+    float3 w = float3(1.0, 0.2, 0.1);
 
-    float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
-    float3 extinction = absorptionWeight * waterDensity;
+    float3 e0 = w * waterDensity.x;
+    float3 e1 = w * waterDensity.y;
 
-    // 1. Terrain Transmittance (The path from floor to eye)
-    // In HQ, this uses the base extinction (factor of 1.0)
-    float3 floorT = exp(-extinction * depth);
+    float3 floorT0  = exp(-e0 * depth);
+    float3 volumeT0 = exp(-e0 * depth * 3.0);
 
-    // 2. Volume Transmittance (The "Ambient" path)
-    // In HQ, for a top-down view, this factor is (1.0 + viewCos * 2.0) = 3.0
-    float3 volumeT = exp(-extinction * depth * 3.0);
+    float3 floorT1  = exp(-e1 * depth);
+    float3 volumeT1 = exp(-e1 * depth * 3.0);
 
-    // 3. Composite (Matching the HQ math structure)
-    // HQ Result = (Floor * FloorT) + (Water * (1 - VolumeT))
-    float3 oceanFloor = terrainColor * floorT;
-    float3 volumeScatt = (waterColor * ambientColor) * (1.0 - volumeT);
+    float3 col0 = terrainColor * floorT0 + (waterColor * ambientColor) * (1.0 - volumeT0);
+    float3 col1 = terrainColor * floorT1 + (waterColor * ambientColor) * (1.0 - volumeT1);
 
-    return oceanFloor + volumeScatt;
+    return lerp(col0, col1, waterBlend);
 }
 
-sampler2D _SGT_BlueNoiseTex; // Global
-float     _SGT_Frame; // Global
-	
-float SGT_DitherBlue(float2 screenUV)
+float SGT_Bayer4x4(float2 screenPos)
 {
-	float2 pixel = floor(screenUV * _ScreenParams.xy);
-	float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
-	return frac(noise + _SGT_Frame / sqrt(0.5f));
+	int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+	float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
+	return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
@@ -18532,9 +18260,11 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
-		float fadeTransition = SGT_DitherBlue(d.screenUV) < _SGT_OceanDistance.x;
+		float fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
 	
-		float3 oceanColor = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, 1.0, 1.0);
+		float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+		float cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float3 oceanColor    = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
 	
 		float fade = saturate(dataA.w > 0) * fadeTransition;
 	

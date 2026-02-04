@@ -324,6 +324,14 @@ MonoBehaviour:
     globalSize: 50
     localTiling: {x: 1, y: 1}
     strata: 0.2
+  - enabled: 1
+    displace: 0
+    heightIndex: 1
+    heightMidpoint: 0.5
+    heightRange: 0.02
+    globalSize: 1
+    localTiling: {x: 1, y: 1}
+    strata: 0.9
 --- !u!1 &458462713
 GameObject:
   m_ObjectHideFlags: 0
@@ -411,7 +419,6 @@ MonoBehaviour:
   height: 100000
   density: 3
   cameraOffset: 5
-  clipRadius: 4987402.5
   depthOpaque: 50
   rayleighColor: {r: 0.17522, g: 0.4078, b: 1, a: 1}
   rayleighMultiplier: 285
@@ -588,7 +595,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   material: {fileID: 2100000, guid: 9be9fc2d7cdb25148b94a2097786a3ff, type: 2}
   coverageTex: {fileID: 2800000, guid: e9fd3e4a1881b624791f5a92ead96c67, type: 3}
-  outerRadius: 5008000
+  outerRadius: 5007000
   innerRadius: 5006000
   cullStrength: 128
   sortOffset: 0.01
@@ -721,17 +728,17 @@ PrefabInstance:
     - target: {fileID: 4458438687575116855, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: -1.6348006
       objectReference: {fileID: 0}
     - target: {fileID: 4458438687575116855, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 1.8168738
       objectReference: {fileID: 0}
     - target: {fileID: 4458438687575116855, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 9.589159
       objectReference: {fileID: 0}
     - target: {fileID: 4458438687575116855, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
@@ -776,32 +783,32 @@ PrefabInstance:
     - target: {fileID: 4458438687637886519, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.8100274
+      value: 0.98928446
       objectReference: {fileID: 0}
     - target: {fileID: 4458438687637886519, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.20046149
+      value: 0.09003191
       objectReference: {fileID: 0}
     - target: {fileID: 4458438687637886519, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.5349263
+      value: 0.11446409
       objectReference: {fileID: 0}
     - target: {fileID: 4458438687637886519, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.13238086
+      value: -0.010417045
       objectReference: {fileID: 0}
     - target: {fileID: 4458438687637886519, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 27.8
+      value: 10.4
       objectReference: {fileID: 0}
     - target: {fileID: 4458438687637886519, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 66.88
+      value: 13.2
       objectReference: {fileID: 0}
     - target: {fileID: 4522210901365020762, guid: 878ce59f73abbb44ab69db81db47def7,
         type: 3}
@@ -1053,23 +1060,22 @@ MonoBehaviour:
   cloudShadow: {fileID: 1283754079}
   observer: {fileID: 0}
   cameraOffset: 6
-  surfaceColor: {r: 0, g: 0.2666119, b: 0.3679245, a: 1}
-  surfaceScattering: {r: 0.19, g: 0.84, b: 0.78, a: 0.5}
+  surfaceColor: {r: 0, g: 0.32394356, b: 0.4339623, a: 1}
+  surfaceScattering: {r: 0, g: 0.9150943, b: 0.7053212, a: 1}
   surfaceDensity: 1
   surfaceSmoothness: 0.9
   underwaterLightingSharpness: 5
   underwaterShadowRange: 10
-  wavesDisplacement: 0.2
-  wavesScale: 0.2
-  wavesSteepness: 0.5
-  wavesSpeed: 1.5
+  wavesDisplacement: 2
+  wavesScale: 1
+  wavesSpeed: 1
   wavesQuality: 3
   shoreScale: 1
   shoreSpeed: 0.75
   ripples: 1
-  ripplesTexture: {fileID: 2800000, guid: fa3ccaeff005f9e488f927b6e5484137, type: 3}
-  ripplesScale: 1
-  ripplesSpeed: 0.75
+  ripplesTexture: {fileID: 2800000, guid: ed405256d866581489d27836cc263a39, type: 3}
+  ripplesScale: 3
+  ripplesSpeed: 0.5
   ripplesStrength: 0.5
   fade: 1
   fadeDistance: 200

@@ -34,6 +34,18 @@ float SGT_DitherBlue(float2 screenUV)
 	float  noise = tex2D(_SGT_BlueNoiseTex, pixel / 64.0f).r;
 	return frac(noise + _SGT_Frame / sqrt(0.5f));
 }
+
+float SGT_DitherFast(float2 screenUV)
+{
+	// R2 sequence constants (generalized golden ratio)
+    const float2 R2 = float2(0.7548776662, 0.5698402909);
+    
+    // Convert to pixel coords + temporal jitter
+    float2 p = screenUV * _ScreenParams.xy + frac(_Time.y * R2) * 256.0;
+    
+    // Interleaved Gradient Noise (Jorge Jimenez)
+    return frac(52.9829189 * frac(dot(p, float2(0.06711056, 0.00583715))));
+}
 	
 float2 SGT_DirectionToEquirectangular(float3 dir)
 {
@@ -232,6 +244,12 @@ void CW_SampleVolumetricsDefault(float2 screenUV, float3 viewDir, out float4 out
 		outColor = 0;
 		outDepth = 0;
 	}
+}
+
+void CW_SampleVolumetricsDefault2(float2 screenUV, float3 viewDir, out float4 outColor, out float outDepth)
+{
+	outColor = _SGT_Volumetrics_ColorTex.Sample(my_linear_clamp_sampler, screenUV);
+	outDepth = _SGT_Volumetrics_DepthTex.Sample(my_linear_clamp_sampler, screenUV).x;
 }
 	
 void CW_SampleVolumetrics(float2 screenUV, float3 viewDir, float sceneDepth, out float4 outColor, out float outDepth)

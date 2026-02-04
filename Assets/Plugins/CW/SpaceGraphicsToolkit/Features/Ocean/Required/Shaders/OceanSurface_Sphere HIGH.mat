@@ -25,6 +25,7 @@ Material:
   - _CW_SHAPE_SPHERE
   - _DISABLE_DECALS
   - _DISABLE_SSR_TRANSPARENT
+  - _SGT_BLUR
   - _SGT_DETAIL
   - _SGT_DISPLACEMENT_OFF
   - _SGT_LAYERS_TWO
@@ -150,6 +151,7 @@ Material:
     - _RenderQueueType: 4
     - _RequireSplitLighting: 0
     - _SGT_Albedo: 0
+    - _SGT_Blur: 1
     - _SGT_Caustics: 1
     - _SGT_CausticsBottomSharpness: 0.1
     - _SGT_CausticsBrightness: 10
@@ -165,7 +167,8 @@ Material:
     - _SGT_Fade: 0
     - _SGT_FadeDistance: 0
     - _SGT_FastSSR: 1
-    - _SGT_FssrFresnel: 32
+    - _SGT_FssrError: 50
+    - _SGT_FssrFresnel: 5
     - _SGT_Layers: 1
     - _SGT_LightCount: 0
     - _SGT_Lighting: 1
