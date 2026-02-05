@@ -103,7 +103,7 @@ Material:
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
-    - _Gau: 0
+    - _Gau: 2
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
@@ -122,7 +122,7 @@ Material:
     - _Proximity: 2
     - _QueueControl: -1
     - _QueueOffset: 0
-    - _Rip: 1
+    - _Rip: 0
     - _SGT_SphereMask: 0
     - _SGT_SphereMaskFalloff: 3
     - _SGT_SphereMaskRadius: 1

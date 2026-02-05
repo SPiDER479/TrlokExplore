@@ -1,10 +1,11 @@
-using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class SceneHandler : MonoBehaviour
 {
     public static SceneHandler Instance;
+    
+    private int currentSceneIndex;
     
     private void Awake()
     {
@@ -16,9 +17,11 @@ public class SceneHandler : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Alpha0)) SceneManager.LoadSceneAsync("Solar System");
-        if (Input.GetKeyDown(KeyCode.Alpha9)) SceneManager.LoadSceneAsync("Jupiter");
-        if (Input.GetKeyDown(KeyCode.Alpha8)) SceneManager.LoadSceneAsync("Custom");
-        if (Input.GetKeyDown(KeyCode.Alpha7)) SceneManager.LoadSceneAsync("AI");
+        if (Input.GetKeyDown(KeyCode.Alpha0))
+        {
+            ++currentSceneIndex;
+            if (currentSceneIndex >= SceneManager.sceneCountInBuildSettings) currentSceneIndex = 0;
+            SceneManager.LoadSceneAsync(currentSceneIndex);
+        }
     }
 }
