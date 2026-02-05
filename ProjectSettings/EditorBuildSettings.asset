@@ -21,6 +21,9 @@ EditorBuildSettings:
     path: Assets/Scenes/AccretionDisk/AccretionDisk.unity
     guid: 3949363a0780f1749a0ecded36595c74
   - enabled: 1
+    path: Assets/Scenes/Nebula/Nebula.unity
+    guid: 251b3e20b27f0dc40a42a4161241e1a0
+  - enabled: 1
     path: Assets/Scenes/Custom/CustomPlanet.unity
     guid: 15a33e4d161ff624ca60dc6a639d1346
   - enabled: 1
