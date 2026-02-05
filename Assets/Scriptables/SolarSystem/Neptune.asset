@@ -12,4 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80a61b1a5515f7942a36443b51b7124d, type: 3}
   m_Name: Neptune
   m_EditorClassIdentifier: Assembly-CSharp::DataSet
-  data: "Neptune\nRadius: 24,622 km\nMass: 1.02 \xD7 10^26 kg"
+  data: 'Neptune
+
+    Radius: 24,622 km
+
+    Mass: 1.02 x 10^26 kg
+
+    Distance
+    from Sun: 30.068 AU'

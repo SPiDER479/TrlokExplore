@@ -12,4 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80a61b1a5515f7942a36443b51b7124d, type: 3}
   m_Name: Earth
   m_EditorClassIdentifier: Assembly-CSharp::DataSet
-  data: "Earth\nRadius: 6,371 km\nMass: 5.97 \xD7 10^24 kg"
+  data: 'Earth
+
+    Radius: 6,371 km
+
+    Mass: 5.97 x 10^24 kg
+
+    Distance from
+    Sun: 1.000 AU'

@@ -12,4 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80a61b1a5515f7942a36443b51b7124d, type: 3}
   m_Name: Uranus
   m_EditorClassIdentifier: Assembly-CSharp::DataSet
-  data: "Uranus\nRadius: 25,362 km\nMass: 8.68 \xD7 10^25 kg"
+  data: 'Uranus
+
+    Radius: 25,362 km
+
+    Mass: 8.68 x 10^25 kg
+
+    Distance from
+    Sun: 19.191 AU'

@@ -12,4 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80a61b1a5515f7942a36443b51b7124d, type: 3}
   m_Name: Saturn
   m_EditorClassIdentifier: Assembly-CSharp::DataSet
-  data: "Saturn\nRadius: 58,232 km\nMass: 5.68 \xD7 10^26 kg"
+  data: 'Saturn
+
+    Radius: 58,232 km
+
+    Mass: 5.68 x 10^26 kg
+
+    Distance from
+    Sun: 9.537 AU'

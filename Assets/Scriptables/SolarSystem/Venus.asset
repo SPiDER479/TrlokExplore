@@ -12,4 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80a61b1a5515f7942a36443b51b7124d, type: 3}
   m_Name: Venus
   m_EditorClassIdentifier: Assembly-CSharp::DataSet
-  data: "Venus\nRadius: 6,052 km\nMass: 4.87 \xD7 10^24 kg"
+  data: 'Venus
+
+    Radius: 6,052 km
+
+    Mass: 4.87 x 10^24 kg
+
+    Distance from
+    Sun: 0.723 AU'

@@ -1574,12 +1574,20 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 864263560990706473, guid: 545cd5afcb49b0a4e865975b6f581034, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 864263560990706473, guid: 545cd5afcb49b0a4e865975b6f581034, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 5779849372627932684, guid: 545cd5afcb49b0a4e865975b6f581034, type: 3}
       propertyPath: m_Name
       value: Jupiter
+      objectReference: {fileID: 0}
+    - target: {fileID: 5779849372627932684, guid: 545cd5afcb49b0a4e865975b6f581034, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5779849372627932915, guid: 545cd5afcb49b0a4e865975b6f581034, type: 3}
       propertyPath: m_RootOrder

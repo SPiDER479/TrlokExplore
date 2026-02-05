@@ -7,7 +7,7 @@ public class PlanetMotion : MonoBehaviour
     [SerializeField] private float spinRadiansPerDay;
     [SerializeField] private Transform planetTransform;
     
-    private float[] daysPerSeconds = new float[] { 0.000011574f, 0.1f, 0.5f, 1f, 10f };
+    private float[] daysPerSeconds = new float[] { 0.000011574f, 0.01f, 0.1f, 0.5f, 1f, 10f };
     private int currentDaysPerSecond;
     private float daysPerSecond;
 
@@ -17,7 +17,7 @@ public class PlanetMotion : MonoBehaviour
     private void Update()
     {
         if (orbit) transform.RotateAround(Vector3.zero, Vector3.up, orbitRadiansPerDay * daysPerSecond * Mathf.Rad2Deg * Time.deltaTime);
-        if (spin) planetTransform.Rotate(planetTransform.up, spinRadiansPerDay * daysPerSecond * Mathf.Rad2Deg * Time.deltaTime);
+        if (spin) planetTransform.Rotate(Vector3.up, spinRadiansPerDay * daysPerSecond * Mathf.Rad2Deg * Time.deltaTime);
     }
 
     public void SetDaysPerSecond(TMP_Text textField)

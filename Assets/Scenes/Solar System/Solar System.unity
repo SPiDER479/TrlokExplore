@@ -4155,7 +4155,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e61ca4c2d083004ca1e5f232d11bc69, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  material: {fileID: 2100000, guid: 0b592e9b094c9734bb887006ce3bb3ec, type: 2}
+  material: {fileID: 2100000, guid: 4575adb7c48670e4c93dfeb2e42556cf, type: 2}
   renderers:
   - {fileID: 1147928466}
   maxGaussianWells: 0
@@ -7323,6 +7323,14 @@ PrefabInstance:
     - target: {fileID: 1886862718539311696, guid: bc867fbe7f38576409ad221a1d4d6e75, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3620988223763370917, guid: bc867fbe7f38576409ad221a1d4d6e75, type: 3}
+      propertyPath: m_fontSize
+      value: 28
+      objectReference: {fileID: 0}
+    - target: {fileID: 3620988223763370917, guid: bc867fbe7f38576409ad221a1d4d6e75, type: 3}
+      propertyPath: m_fontSizeMax
+      value: 28
       objectReference: {fileID: 0}
     - target: {fileID: 6959172451824019465, guid: bc867fbe7f38576409ad221a1d4d6e75, type: 3}
       propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target

@@ -12,4 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80a61b1a5515f7942a36443b51b7124d, type: 3}
   m_Name: Mars
   m_EditorClassIdentifier: Assembly-CSharp::DataSet
-  data: "Mars\nRadius: 3,390 km\nMass: 6.42 \xD7 10^23 kg"
+  data: 'Mars
+
+    Radius: 3,390 km
+
+    Mass: 6.42 x 10^23 kg
+
+    Distance from
+    Sun: 1.524 AU'
