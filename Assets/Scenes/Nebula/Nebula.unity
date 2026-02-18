@@ -180,7 +180,7 @@ LightingSettings:
   m_PVRFilteringAtrousPositionSigmaIndirect: 2
   m_PVRFilteringAtrousPositionSigmaAO: 1
   m_RespectSceneVisibilityWhenBakingGI: 0
---- !u!43 &382180750
+--- !u!43 &326905663
 Mesh:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1011,7 +1011,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1921381164}
-  m_Mesh: {fileID: 382180750}
+  m_Mesh: {fileID: 326905663}
 --- !u!4 &1921381168
 Transform:
   m_ObjectHideFlags: 0

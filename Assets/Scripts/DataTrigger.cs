@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -21,7 +20,8 @@ public class DataTrigger : MonoBehaviour
         if (other.CompareTag("DataUITrigger"))
         {
             StopAllCoroutines();
-            text.text = other.GetComponent<DataContainer>().dataSet.data;
+            if (SceneHandler.currentLanguage == languages.English) text.text = other.GetComponent<DataContainer>().dataSet.english;
+            else if (SceneHandler.currentLanguage == languages.Hindi) text.text = other.GetComponent<DataContainer>().dataSet.hindi;
             StartCoroutine(AnimateOpen());
         }
     }
