@@ -78,8 +78,9 @@ namespace SpaceGraphicsToolkit.Landscape
 
 				mesh.SetIndices(SgtLandscape.VERTEX_INDICES, MeshTopology.Triangles, 0);
 
-				meshCollider.sharedMesh = mesh;
-				meshCollider.enabled    = pendingTriangle.Triangle.Depth == maxDepth;
+				meshCollider.cookingOptions = MeshColliderCookingOptions.None;
+				meshCollider.sharedMesh     = mesh;
+				meshCollider.enabled        = pendingTriangle.Triangle.Depth == maxDepth;
 
 				colliders.Add(visual.Hash, meshCollider);
 			}

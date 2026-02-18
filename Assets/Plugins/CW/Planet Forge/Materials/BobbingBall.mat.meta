@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: ff473b5ab3cb1824f940de8cc3dcbcb4
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.16
+  assetPath: Assets/Plugins/CW/Planet Forge/Materials/BobbingBall.mat
+  uploadId: 864588

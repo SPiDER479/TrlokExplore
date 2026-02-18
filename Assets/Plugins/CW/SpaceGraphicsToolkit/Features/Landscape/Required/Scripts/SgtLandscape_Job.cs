@@ -232,10 +232,11 @@ namespace SpaceGraphicsToolkit.Landscape
 		[BurstCompile]
 		public struct PixelJob : IJob
 		{
-			[ReadOnly] public NativeArray<double3>  Points;
-			[ReadOnly] public NativeArray<double3>  Directions;
-			[ReadOnly] public NativeArray<double>   Heights;
-			[ReadOnly] public NativeArray<double3>  Weights;
+			[ReadOnly] public NativeArray<double3> Points;
+			[ReadOnly] public NativeArray<double3> Directions;
+			[ReadOnly] public NativeArray<double>  Heights;
+			[ReadOnly] public NativeArray<double3> Weights;
+			[ReadOnly] public NativeArray<int>     Neighbors;
 
 			[WriteOnly] public NativeArray<float4> PixelP;
 
@@ -245,7 +246,13 @@ namespace SpaceGraphicsToolkit.Landscape
 
 				for (var i = 0; i < Directions.Length; i++)
 				{
-					PixelP[i] = new float4((float3)(GetPosition(i) - origin), 0.0f);
+					var positionA = GetPosition(i);
+					var positionB = GetPosition(Neighbors[i * 3 + 0]);
+					var positionC = GetPosition(Neighbors[i * 3 + 0]);
+					var edge1 = positionB - positionA;
+					var edge2 = positionC - positionA;
+
+					PixelP[i] = new float4((float3)(positionA - origin), 0.0f);
 				}
 			}
 
@@ -278,6 +285,11 @@ namespace SpaceGraphicsToolkit.Landscape
 				DataB      = new NativeArray<double4>(total, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
 			}
 
+			public double3 GetPosition(int i)
+			{
+				return Points[i] + Directions[i] * Heights[i];
+			}
+
 			public virtual void Dispose()
 			{
 				Points.Dispose();
@@ -286,11 +298,6 @@ namespace SpaceGraphicsToolkit.Landscape
 				Coords.Dispose();
 				DataA.Dispose();
 				DataB.Dispose();
-			}
-
-			public double3 GetPosition(int index)
-			{
-				return Points[index] + Directions[index] * Heights[index];
 			}
 		}
 
@@ -373,6 +380,7 @@ namespace SpaceGraphicsToolkit.Landscape
 			var pixelJob = new PixelJob();
 
 			pixelJob.Weights    = VERTEX_WEIGHTS;
+			pixelJob.Neighbors  = VERTEX_NEIGHBORS;
 			pixelJob.Points     = pending.Points;
 			pixelJob.Directions = pending.Directions;
 			pixelJob.Heights    = pending.Heights;

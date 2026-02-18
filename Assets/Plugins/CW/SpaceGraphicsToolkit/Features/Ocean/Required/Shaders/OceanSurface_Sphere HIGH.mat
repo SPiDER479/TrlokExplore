@@ -234,6 +234,7 @@ Material:
     - _SGT_CloudOpacity: {r: 0, g: 0, b: 0, a: 0}
     - _SGT_CloudShadowDirection: {r: 0, g: 0, b: 0, a: 0}
     - _SGT_CloudShadowOpacity: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_ShoreColor: {r: 1, g: 1, b: 1, a: 1}
     - _SGT_SphereMaskPosition: {r: 0, g: 0, b: 0, a: 1}
     - _SGT_SurfaceColor: {r: 0, g: 0, b: 0, a: 1}
     - _SGT_SurfaceRange: {r: 0, g: 0, b: 0, a: 0}

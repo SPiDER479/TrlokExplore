@@ -23,8 +23,8 @@ float    _SGT_ShoreBlend;
 float4x4 _SGT_CausticsMatrixA;
 float4x4 _SGT_CausticsMatrixB;
 float    _SGT_CausticsBlend;
+float3   _SGT_CausticsDirection;
 
-float4    _SGT_WaveData;
 float4    _SGT_SurfaceTiling;
 
 sampler2D _SGT_RipplesTexture;
@@ -35,6 +35,7 @@ Texture2D _SGT_Volumetrics_OceanTex;
 SamplerState sampler_point_clamp;
 
 float2 _SGT_FadeOpacity;
+float  _SGT_WaveInvAmplitude;
 
 #if !defined(WAVE_SKIP)
 	#define WAVE_SKIP 3
@@ -56,8 +57,8 @@ void SGT_ComputeTangentFrame(float3 N, out float3 T, out float3 B)
 	}
 }
 
-float4x4 _WaveMatrices[24];
-float4   _WaveData[24]; // x = scale, y = weight
+float4 _WaveDataA[24]; // xyz = offset, w = period
+float4 _WaveDataB[24]; // xyz = direction, w = amplitude
 
 void SGT_ApplyWaves(
 	inout float3 vertex,
@@ -70,29 +71,36 @@ void SGT_ApplyWaves(
 	float3 displacement = 0, gradient = 0;
 	float3 N = normal, T = tangent, B = binormal;
 	
-	[unroll]
-	for (int i = 0; i < 24; i += WAVE_SKIP)
-	{
-		float3 scale = _WaveMatrices[i][0].xyz;
-		float2 pos   = mul(_WaveMatrices[i], float4(vertex, 1)).xy;
-		float  fade  = saturate(1.0 - (pixelSize * _WaveData[i].w));
+	#if _SGT_DISPLACEMENT_ON
+		[unroll]
+		for (int i = 0; i < 24; i += WAVE_SKIP)
+		{
+			float3 offset    = _WaveDataA[i].xyz;
+			float  period    = _WaveDataA[i].w;
+			float  fade      = saturate(1.0 - (pixelSize * period));
+			float3 direction = _WaveDataB[i].xyz;
+			float  amplitude = _WaveDataB[i].w * fade;
+			float  phase     = dot(vertex - offset, direction) * period;
 		
-		float s, c;
-		sincos(pos.x, s, c);
+			float s, c;
+			sincos(phase, s, c);
 		
-		float amp = _WaveData[i].z * fade;
-		
-		displacement += N * (s * amp);
-		gradient     += scale * (c * amp);
-	}
+			displacement += N * (s * amplitude);
+			gradient     += direction * (c * amplitude * period);
+		}
+	#endif
 	
 	float dhdT = dot(gradient, T) + normalDetail.x;
 	float dhdB = dot(gradient, B) + normalDetail.y;
 	
+	float3 dPdT = T + dhdT * N;
+	float3 dPdB = B + dhdB * N;
+	
+	normal   = normalize(cross(dPdT, dPdB)); normal *= sign(dot(normal, N));
+	tangent  = normalize(dPdT);
+	binormal = normalize(cross(normal, tangent));
+	
 	vertex  += displacement;
-	normal   = normalize(N - dhdT * T - dhdB * B);
-	tangent  = normalize(T + dhdT * N);
-	binormal = normalize(B + dhdB * N);
 }
 
 void SGT_GetOceanData(float2 uv, out float distance, out float3 normal)
@@ -122,45 +130,33 @@ void GetOceanTransmittanceScatter(
 	float3 viewDir,
 	float3 sunDir,
 	float3 sunColor,
-	float3 ambientColor,
-	float  cameraDepth,
-	float3 waterColor, // The "Deep" convergence color
+	float3 ambColor,
+	float2 cameraDepth,
+	float3 waterColor,
 	float  waterDensity)
 {
-	// 1. Artist-Friendly Absorption Profile
-	// Typical ocean water absorbs Red much faster than Blue.
-	// We use these coefficients to scale the extinction per channel.
-	// Higher value = color disappears faster with depth.
-	float3 absorptionWeight = float3(1.0, 0.2, 0.1); 
+	const float3 absorptionWeight = float3(1.0, 0.2, 0.1); // red dies fastest
+
+	float3 extinction = absorptionWeight * waterDensity;   // ƒÐ_t
+	float3 scattering = waterColor * extinction;           // deep convergence
 	
-	// 2. Derive Coefficients
-	// Extinction must be float3 for color shifting to happen.
-	float3 extinction = absorptionWeight * waterDensity;
+	float3 tau     = extinction * waterDepth;
+	float  viewCos = abs(viewDir.y);
+	float  sunCos  = max(sunDir.y, 0.01);
+	float  phase   = HenyeyGreenstein(dot(viewDir, sunDir), 0.7);
+
+	float sunFactor = (1.0 + viewCos / sunCos);
+	float ambFactor = (1.0 + viewCos * 2.0);
+
+	float3 camTransSun = exp(-extinction * cameraDepth.x / sunCos);
+	float3 camTransAmb = 1.0 / (1.0 + extinction * cameraDepth.y * 2.0); // rational approx
+
+	float3 sunIntegral = waterDepth / (1.0 + tau * sunFactor);
+	float3 ambIntegral = waterDepth / (1.0 + tau * ambFactor);
+
+	transmittance = exp(-tau);
 	
-	// To ensure convergence to waterColor at infinite depth, 
-	// the scattering/extinction ratio must equal waterColor.
-	float3 scatt = waterColor * extinction;
-	
-	// 3. Transmittance (The "Nice Shift" happens here)
-	// Red channel will drop to 0 much faster than Blue.
-	transmittance = exp(-extinction * waterDepth);
-	
-	float viewCos = abs(viewDir.y);
-	float sunCos = max(sunDir.y, 0.01);
-	
-	// 4. Sun Scattering
-	float3 sunExt = extinction * (1.0 + viewCos / sunCos);
-	float3 sunAtten = sunColor * exp(-extinction * cameraDepth / sunCos);
-	float  phase = HenyeyGreenstein(dot(viewDir, sunDir), 0.7);
-	
-	// Volume scattering formula with float3 coefficients
-	scatter = sunAtten * phase * (scatt / max(sunExt, 1e-4)) * (1.0 - exp(-sunExt * waterDepth));
-	
-	// 5. Ambient Scattering (Converges to waterColor when ambient=1)
-	float  geomFactor = (1.0 + viewCos * 2.0); 
-	float3 ambExt = extinction * geomFactor;
-	float3 ambAtten = ambientColor * exp(-extinction * cameraDepth * 2.0);
-	
-	// This term simplifies to (scatt / extinction) at infinite depth
-	scatter += ambAtten * (scatt * geomFactor / max(ambExt, 1e-4)) * (1.0 - exp(-ambExt * waterDepth));
+	scatter =
+		scattering * sunColor * camTransSun * sunIntegral * phase +
+		scattering * ambColor * camTransAmb * ambIntegral * ambFactor;
 }

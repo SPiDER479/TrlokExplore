@@ -652,7 +652,6 @@ MonoBehaviour:
   height: 30
   density: 0.5
   cameraOffset: 0.1
-  clipRadius: -1
   depthOpaque: 5
   rayleighColor: {r: 1, g: 0.20169549, b: 0.17647058, a: 1}
   rayleighMultiplier: 1
@@ -830,15 +829,14 @@ MonoBehaviour:
   surfaceScattering: {r: 0.19, g: 0.84, b: 0.78, a: 1}
   surfaceDensity: 0.5
   surfaceSmoothness: 0.95
-  underwaterExtinction: {x: 1, y: 1, z: 1, w: 0.1}
-  underwaterExtinctionRange: 10
   underwaterLightingSharpness: 5
   underwaterShadowRange: 10
-  wavesDisplacement: 0.2
-  wavesScale: 0.2
-  wavesSteepness: 0.5
-  wavesSpeed: 1.5
+  wavesStrength: 0.1
+  wavesSteepness: 0.05
+  wavesSpeed: 0.3
   wavesQuality: 3
+  windDirection: {x: 0, y: 0, z: 1}
+  windSpeed: 0
   shoreScale: 1
   shoreSpeed: 0.75
   ripples: 1
@@ -900,6 +898,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   space: 0
   surfaceScale: 1
+  replace: 1
   mask: 0
   maskIndex: 0
   maskInvert: 0

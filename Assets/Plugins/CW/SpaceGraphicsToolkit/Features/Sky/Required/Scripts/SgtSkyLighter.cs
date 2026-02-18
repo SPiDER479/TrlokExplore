@@ -20,7 +20,10 @@ namespace SpaceGraphicsToolkit.Sky
 		/// None/null = First <b>SgtLight</b> in the scene.</summary>
 		public SgtLight Sun { set { sun = value; } get { return sun; } } [SerializeField] private SgtLight sun;
 
-		/// <summary>The ambient light will be multiplied by this.</summary>
+		/// <summary>By default, this component will add light on top of the ambient color you have set in the scene, but you can override it here. Keep in mind the alpha value is used to override it.</summary>
+		public Color OverrideAmbientColor { set { overrideAmbientColor = value; } get { return overrideAmbientColor; } } [SerializeField] private Color overrideAmbientColor = Color.clear;
+
+		/// <summary>The ambient light added from atmospheric scattering will be multiplied by this.</summary>
 		public float AmbientMultiplier { set { ambientMultiplier = value; } get { return ambientMultiplier; } } [SerializeField] private float ambientMultiplier = 1.0f;
 
 		[System.NonSerialized]
@@ -104,7 +107,7 @@ namespace SpaceGraphicsToolkit.Sky
 
 				light.CachedLight.color = lightColor * transmittance;
 
-				ApplyAmbientColor(ambientColor + ambient * ambientMultiplier);
+				ApplyAmbientColor(Color.Lerp(ambientColor, overrideAmbientColor, overrideAmbientColor.a) + ambient * ambientMultiplier);
 			}
 			else
 			{
@@ -208,7 +211,8 @@ namespace SpaceGraphicsToolkit.Sky
 			
 			Draw("observer", "The camera whose position will be tracked.\n\nNone/null = Main Camera.");
 			Draw("sun", "The sun light.\n\nNone/null = First <b>SgtLight</b> in the scene.");
-			Draw("ambientMultiplier", "The ambient light will be multiplied by this.");
+			Draw("overrideAmbientColor", "By default, this component will add light on top of the ambient color you have set in the scene, but you can override it here. Keep in mind the alpha value is used to override it.");
+			Draw("ambientMultiplier", "The ambient light added from atmospheric scattering will be multiplied by this.");
 		}
 	}
 }

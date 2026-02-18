@@ -12,6 +12,6 @@ AssetOrigin:
   serializedVersion: 1
   productId: 127671
   packageName: Planet Forge
-  packageVersion: 1.6.13
+  packageVersion: 1.6.16
   assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Volumetrics/Required/Shaders/Resources/SgtVolumeDepth.shader
-  uploadId: 856240
+  uploadId: 864588

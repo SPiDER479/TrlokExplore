@@ -1,281 +1,190 @@
-using Unity.Mathematics;
 using UnityEngine;
 using Unity.Collections;
+using Unity.Mathematics;
 using System.Collections.Generic;
 
 namespace SpaceGraphicsToolkit.Landscape
 {
-	/// <summary>This component can be added alongside a terrain to procedurally spawn prefabs on its surface.</summary>
+	/// <summary>Implementation of SgtLandscapeSpawner that spawns GameObjects.</summary>
 	[AddComponentMenu("Space Graphics Toolkit/SGT Landscape Prefab Spawner")]
-	public class SgtLandscapePrefabSpawner : MonoBehaviour
+	public class SgtLandscapePrefabSpawner : SgtLandscapeSpawner
 	{
-		public enum RotateType
-		{
-			Randomly,
-			ToLandscapeCenter,
-			ToSurfaceNormal,
-		}
-
-		public class Chunk
-		{
-			public int RemainingSamples;
-
-			public Unity.Mathematics.Random RNG;
-
-			public SgtLandscape.TriangleHash TriangleHash;
-
-			public List<Transform> Clones = new List<Transform>();
-
-			public List<double3> Points = new List<double3>();
-
-			public List<double3> Directions = new List<double3>();
-
-			public List<double> Heights = new List<double>();
-
-			public List<double4> DataA = new List<double4>();
-
-			public static Stack<Chunk> Pool = new Stack<Chunk>();
-
-			public double3 GetPosition(int index)
-			{
-				return Points[index] + Directions[index] * Heights[index];
-			}
-		}
-
-		/// <summary>This allows you to define the spawn area.
-		/// NOTE: This texture should be <b>Single Channel</b> using either the <b>R8</b> or <b>Alpha8</b> formats.
-		/// NOTE: This texture should have <b>read/write</b> enabled.</summary>
-		public Texture2D MaskTex { set { maskTex = value; } get { return maskTex; } } [SerializeField] private Texture2D maskTex;
-
-		/// <summary>Invert the mask, so 0 values become 255 values, and 255 values become 0 values?</summary>
-		public bool InvertMask { set { invertMask = value; } get { return invertMask; } } [SerializeField] private bool invertMask;
-
-		/// <summary>Prefabs will spawn at the LOD level where triangles are approximately this size.</summary>
-		public float TriangleSize { set { triangleSize = value; } get { return triangleSize; } } [SerializeField] private float triangleSize = 10.0f;
-
-		/// <summary>The amount of prefabs that will be spawned per LOD chunk.</summary>
-		public int Count { set { count = value; } get { return count; } } [SerializeField] private int count = 10;
-
-		/// <summary>The random seed when procedurally spawning the prefabs.</summary>
-		public int Seed { set { seed = value; } get { return seed; } } [SerializeField] [CW.Common.CwSeed] private int seed;
-
-		/// <summary>The spawned prefabs will have their localScale multiplied by at least this number.</summary>
-		public float ScaleMin { set { scaleMin = value; } get { return scaleMin; } } [SerializeField] private float scaleMin = 0.75f;
-
-		/// <summary>The spawned prefabs will have their localScale multiplied by at most this number.</summary>
-		public float ScaleMax { set { scaleMax = value; } get { return scaleMax; } } [SerializeField] private float scaleMax = 1.25f;
-
-		/// <summary>How should the spawned prefabs be rotated?</summary>
-		public RotateType Rotate { set { rotate = value; } get { return rotate; } } [SerializeField] private RotateType rotate;
-
-		/// <summary>The spawned prefabs will have their position offset by this local space distance.</summary>
-		public float Offset { set { offset = value; } get { return offset; } } [SerializeField] private float offset;
-
-		/// <summary>The maximum amount of prefabs that can be spawned per frame.</summary>
-		public int MaxPerFrame { set { maxPerFrame = value; } get { return maxPerFrame; } } [SerializeField] private int maxPerFrame = 2;
-
 		/// <summary>The prefabs that will be picked from.</summary>
 		public List<Transform> Prefabs { get { if (prefabs == null) prefabs = new List<Transform>(); return prefabs; } } [SerializeField] private List<Transform> prefabs;
 
-		[System.NonSerialized]
-		private SgtLandscape parent;
+		/// <summary>Should spawned objects be pooled when they are despawned?</summary>
+		public bool UsePooling { set { usePooling = value; } get { return usePooling; } } [SerializeField] private bool usePooling;
 
-		[System.NonSerialized]
-		private int depth;
+		/// <summary>The maximum number of prefabs that can be spawned per frame across all spawners. -1 = No limit.</summary>
+		public int SpawnRate { set { spawnRate = value; } get { return spawnRate; } } [SerializeField] private int spawnRate = -1;
 
-		[System.NonSerialized]
-		private Dictionary<SgtLandscape.TriangleHash, Chunk> chunks = new Dictionary<SgtLandscape.TriangleHash, Chunk>();
+		private Dictionary<Tile, List<GameObject>> spawnedObjects = new Dictionary<Tile, List<GameObject>>();
 
-		public void MarkForRebuild()
+		private List<PendingSpawn> pendingSpawns = new List<PendingSpawn>();
+
+		private static LinkedList<SgtLandscapePrefabSpawner> instances = new LinkedList<SgtLandscapePrefabSpawner>();
+
+		private LinkedListNode<SgtLandscapePrefabSpawner> instanceNode;
+
+		private static Transform poolRoot;
+
+		private static Dictionary<Object, List<GameObject>> pool = new Dictionary<Object, List<GameObject>>();
+
+		private static int frameSpawnCount;
+
+		private struct PendingSpawn
 		{
-			var t = GetComponentInParent<SgtLandscape>();
+			public Tile         TargetTile;
+			public float3[]     Positions;
+			public quaternion[] Rotations;
+			public float3[]     Scales;
+		}
 
-			if (t != null)
+		protected override void OnEnable()
+		{
+			base.OnEnable();
+
+			instanceNode = instances.AddLast(this);
+		}
+
+		protected override void OnDisable()
+		{
+			base.OnDisable();
+
+			instances.Remove(instanceNode);
+
+			if (instances.Count == 0 && poolRoot != null)
 			{
-				t.MarkForRebuild();
+				DestroyImmediate(poolRoot.gameObject);
+
+				poolRoot = null;
+				pool.Clear();
 			}
 		}
 
-		protected virtual void OnEnable()
+		protected virtual void LateUpdate()
 		{
-			parent = GetComponentInParent<SgtLandscape>();
+			frameSpawnCount = 0;
 
-			parent.OnAddVisual    += HandleAddVisual;
-			parent.OnRemoveVisual += HandleRemoveVisual;
-
-			depth = parent.CalculateLodDepth(triangleSize);
-		}
-
-		protected virtual void OnDisable()
-		{
-			parent.OnAddVisual    -= HandleAddVisual;
-			parent.OnRemoveVisual -= HandleRemoveVisual;
-		}
-
-		protected virtual void Update()
-		{
-			var spawnCount = 0;
-
-			foreach (var pair in chunks)
+			for (var i = pendingSpawns.Count - 1; i >= 0; i--)
 			{
-				var chunk = pair.Value;
+				var pending = pendingSpawns[i];
+				var list    = spawnedObjects[pending.TargetTile];
 
-				while (chunk.RemainingSamples > 0)
+				while (list.Count < pending.Positions.Length)
 				{
-					chunk.RemainingSamples -= 1;
+					if (spawnRate >= 0 && frameSpawnCount >= spawnRate) return;
 
-					if (SampleChunk(chunk) == true)
+					var prefab = prefabs[UnityEngine.Random.Range(0, prefabs.Count)];
+
+					if (prefab != null)
 					{
-						spawnCount += 1;
+						var index = list.Count;
+						var clone = GetInstance(prefab);
 
-						if (spawnCount >= maxPerFrame)
-						{
-							return;
-						}
+						clone.transform.SetParent(transform, false);
+						clone.transform.localPosition = pending.Positions[index];
+						clone.transform.localRotation = pending.Rotations[index];
+						clone.transform.localScale    = Vector3.Scale(prefab.localScale, pending.Scales[index]);
+						clone.SetActive(true);
+
+						list.Add(clone);
+						frameSpawnCount++;
+					}
+				}
+
+				pendingSpawns.RemoveAt(i);
+			}
+		}
+
+		protected override void HandleSpawn(Tile tile, NativeList<float3> pos, NativeList<quaternion> rot, NativeList<float3> scale)
+		{
+			if (prefabs == null || prefabs.Count == 0) return;
+
+			var list = new List<GameObject>(tile.spawnCount);
+			spawnedObjects[tile] = list;
+
+			var pending = new PendingSpawn
+			{
+				TargetTile = tile,
+				Positions  = new float3[tile.spawnCount],
+				Rotations  = new quaternion[tile.spawnCount],
+				Scales     = new float3[tile.spawnCount]
+			};
+
+			for (var i = 0; i < tile.spawnCount; i++)
+			{
+				var index = tile.spawnIndex + i;
+				pending.Positions[i] = pos[index];
+				pending.Rotations[i] = rot[index];
+				pending.Scales[i]    = scale[index];
+			}
+
+			pendingSpawns.Add(pending);
+		}
+
+		protected override void HandleDespawn(Tile tile)
+		{
+			for (var i = pendingSpawns.Count - 1; i >= 0; i--)
+			{
+				if (pendingSpawns[i].TargetTile.Equals(tile))
+				{
+					pendingSpawns.RemoveAt(i);
+				}
+			}
+
+			if (spawnedObjects.Remove(tile, out var list))
+			{
+				foreach (var obj in list)
+				{
+					if (obj != null)
+					{
+						if (usePooling == true) ReleaseInstance(obj); else DestroyImmediate(obj);
 					}
 				}
 			}
 		}
 
-		private float3 GetRandomBary(float2 rand)
+		private GameObject GetInstance(Transform prefab)
 		{
-			var u = rand.x;
-			var v = rand.y;
-
-			if (u + v > 1)
+			if (usePooling == true)
 			{
-				u = 1 - u;
-				v = 1 - v;
-			}
-
-			return new Vector3(u, v, 1.0f - u - v);
-		}
-
-		private bool SampleChunk(Chunk chunk)
-		{
-			var spawned = false;
-			var center  = (float3)transform.position;
-
-			var index  = chunk.RNG.NextInt(0, prefabs.Count);
-			var prefab = prefabs[index];
-
-			if (prefab != null)
-			{
-				var triangle = chunk.RNG.NextInt(0, SgtLandscape.TRIANGLE_COUNT) * 3;
-				var indexA   = SgtLandscape.VERTEX_INDICES[triangle + 0];
-				var indexB   = SgtLandscape.VERTEX_INDICES[triangle + 1];
-				var indexC   = SgtLandscape.VERTEX_INDICES[triangle + 2];
-				var bary     = GetRandomBary(chunk.RNG.NextFloat2());
-				var coord    = chunk.DataA[indexA].xy * bary.x + chunk.DataA[indexB].xy * bary.y + chunk.DataA[indexC].xy * bary.z;
-
-				if (SampleMask(coord) >= chunk.RNG.NextFloat())
+				if (pool.TryGetValue(prefab, out var list) == true && list.Count > 0)
 				{
-					var clone         = Instantiate(prefab, transform, false);
-					var localPosition = (Vector3)(float3)(chunk.GetPosition(indexA) * bary.x + chunk.GetPosition(indexB) * bary.y + chunk.GetPosition(indexC) * bary.z);
-					var localRotation = Quaternion.identity;
-					var localScale    = clone.transform.localScale * chunk.RNG.NextFloat(scaleMin, scaleMax);
-
-					switch (rotate)
-					{
-						case RotateType.Randomly:
-						{
-							localRotation = chunk.RNG.NextQuaternionRotation();
-						}
-						break;
-
-						case RotateType.ToLandscapeCenter:
-						{
-							var point = chunk.Points[indexA] * bary.x + chunk.Points[indexB] * bary.y + chunk.Points[indexC] * bary.z;
-
-							localRotation = Quaternion.FromToRotation(Vector3.up, (float3)point - center) * Quaternion.Euler(0.0f, chunk.RNG.NextFloat(-180.0f, 180.0f), 0.0f);
-						}
-						break;
-
-						case RotateType.ToSurfaceNormal:
-						{
-							var direction = chunk.Directions[indexA] * bary.x + chunk.Directions[indexB] * bary.y + chunk.Directions[indexC] * bary.z;
-
-							localRotation = Quaternion.FromToRotation(Vector3.up, (float3)direction) * Quaternion.Euler(0.0f, chunk.RNG.NextFloat(-180.0f, 180.0f), 0.0f);
-						}
-						break;
-					}
-
-					localPosition += localRotation * new Vector3(0.0f, offset, 0.0f);
-
-					clone.localPosition = localPosition;
-					clone.localRotation = localRotation;
-					clone.localScale    = localScale;
-
-					chunk.Clones.Add(clone);
-
-					spawned = true;
+					var index    = list.Count - 1;
+					var instance = list[index];
+					list.RemoveAt(index);
+					return instance;
 				}
 			}
-
-			return spawned;
+			return Instantiate(prefab.gameObject);
 		}
 
-		private float SampleMask(double2 uv)
+		private void ReleaseInstance(GameObject instance)
 		{
-			if (maskTex != null)
-			{
-				var x = math.clamp((int)(uv.x * maskTex.width ), 0, maskTex.width  - 1);
-				var y = math.clamp((int)(uv.y * maskTex.height), 0, maskTex.height - 1);
-				var d = maskTex.GetPixelData<byte>(0);
-				var m = d[x + y * maskTex.width] / 255.0f;
+			var sourcePrefab = prefabs.Find(p => p.name == instance.name.Replace("(Clone)", "").Trim());
 
-				if (invertMask == true)
+			if (sourcePrefab != null)
+			{
+				if (poolRoot == null)
 				{
-					m = 1.0f - m;
+					poolRoot = new GameObject("SGT Landscape Pool").transform;
+					poolRoot.gameObject.SetActive(false);
 				}
 
-				return m;
-			}
-
-			return 1.0f;
-		}
-
-		private void HandleAddVisual(SgtLandscape.Visual visual, SgtLandscape.PendingTriangle pendingTriangle)
-		{
-			if (pendingTriangle.Triangle.Fixer == false && pendingTriangle.Triangle.Depth == depth && prefabs != null && prefabs.Count > 0 && count > 0)
-			{
-				var chunk = Chunk.Pool.Count > 0 ? Chunk.Pool.Pop() : new Chunk();
-				var rand  = (uint)(pendingTriangle.Triangle.Hash.GetHashCode() + seed);
-
-				chunk.RemainingSamples = count;
-				chunk.RNG              = new Unity.Mathematics.Random(rand > 0 ? rand : 1);
-
-				chunk.Points.AddRange(pendingTriangle.Points);
-				chunk.Directions.AddRange(pendingTriangle.Directions);
-				chunk.Heights.AddRange(pendingTriangle.Heights);
-				chunk.DataA.AddRange(pendingTriangle.DataA);
-
-				chunks.Add(visual.Hash, chunk);
-			}
-		}
-
-		private void HandleRemoveVisual(SgtLandscape.Visual visual)
-		{
-			var chunk = default(Chunk);
-
-			if (chunks.Remove(visual.Hash, out chunk) == true)
-			{
-				foreach (var clone in chunk.Clones)
+				if (pool.TryGetValue(sourcePrefab, out var list) == false)
 				{
-					if (clone != null)
-					{
-						DestroyImmediate(clone.gameObject);
-					}
+					list = new List<GameObject>();
+					pool.Add(sourcePrefab, list);
 				}
 
-				chunk.Points.Clear();
-				chunk.Directions.Clear();
-				chunk.Heights.Clear();
-				chunk.DataA.Clear();
-
-				chunk.Clones.Clear();
-
-				Chunk.Pool.Push(chunk);
+				instance.SetActive(false);
+				instance.transform.SetParent(poolRoot, false);
+				list.Add(instance);
+			}
+			else
+			{
+				DestroyImmediate(instance);
 			}
 		}
 	}
@@ -286,45 +195,28 @@ namespace SpaceGraphicsToolkit.Landscape
 {
 	[UnityEditor.CanEditMultipleObjects]
 	[UnityEditor.CustomEditor(typeof(SgtLandscapePrefabSpawner))]
-	public class SgtLandscapePrefabSpawner_Editor : CW.Common.CwEditor
+	public class SgtLandscapePrefabSpawner_Editor : SgtLandscapeSpawner_Editor
 	{
 		protected override void OnInspector()
 		{
+			base.OnInspector();
+
 			SgtLandscapePrefabSpawner tgt; SgtLandscapePrefabSpawner[] tgts; GetTargets(out tgt, out tgts);
 
 			var markAsDirty = false;
 
-			Draw("maskTex", ref markAsDirty, "This allows you to define the spawn area.\n\t\t/// NOTE: This texture should be <b>Single Channel</b> using either the <b>R8</b> or <b>Alpha8</b> formats.\n\t\t/// NOTE: This texture should have <b>read/write</b> enabled.");
-			Draw("invertMask", ref markAsDirty, "Invert the mask, so 0 values become 255 values, and 255 values become 0 values?");
-			BeginError(Any(tgts, t => t.TriangleSize <= 0.0f));
-				Draw("triangleSize", ref markAsDirty, "Prefabs will spawn at the LOD level where triangles are approximately this size.");
-			EndError();
-			BeginError(Any(tgts, t => t.Count <= 0));
-				Draw("count", ref markAsDirty, "The amount of prefabs that will be spawned per LOD chunk.");
-			EndError();
-			Draw("seed", ref markAsDirty, "The random seed when procedurally spawning the prefabs.");
-
 			Separator();
 
-			Draw("scaleMin", ref markAsDirty, "The spawned prefabs will have their localScale multiplied by at least this number.");
-			Draw("scaleMax", ref markAsDirty, "The spawned prefabs will have their localScale multiplied by at most this number.");
-			Draw("rotate", ref markAsDirty, "How should the spawned prefabs be rotated?");
-			Draw("offset", ref markAsDirty, "The spawned prefabs will have their position offset by this local space distance.");
-
-			Separator();
-
-			Draw("maxPerFrame", "The maximum amount of prefabs that can be spawned per frame.");
+			Draw("usePooling", ref markAsDirty, "Should spawned objects be pooled when they are despawned?");
+			Draw("spawnRate", "The maximum number of prefabs that can be spawned per frame across all spawners. -1 = No limit.");
 
 			Separator();
 
 			BeginError(Any(tgts, t => t.Prefabs.Count == 0));
-				Draw("prefabs", ref markAsDirty, "The prefabs that will be picked from.");
+				Draw("prefabs", ref markAsDirty, "Prefabs to spawn.");
 			EndError();
 
-			if (markAsDirty == true)
-			{
-				Each(tgts, t => t.MarkForRebuild());
-			}
+			if (markAsDirty) Each(tgts, t => t.MarkAsDirty());
 		}
 	}
 }

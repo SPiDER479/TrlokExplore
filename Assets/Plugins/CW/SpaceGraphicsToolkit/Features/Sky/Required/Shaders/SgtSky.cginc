@@ -14,6 +14,7 @@ sampler3D       _SGT_SkyRadianceTex;
 float           _SGT_SkyRadianceLod;
 sampler2D       _SGT_SkyLightingTex;
 sampler2D       _SGT_SkyAlbedoTex;
+float           _SGT_SkyRevealStars;
 float           _SGT_SkyDepthOpaque;
 
 float     _SGT_Volumetrics_Downscale; // Global
@@ -150,6 +151,22 @@ float3 SGT_AtmosphereColor(float3 rayPos, float3 sunDir, float dither)
 	float  sun01      = 0.5f + 0.5f * dot(sunDir, up);
 		
 	return tex2Dlod(_SGT_SkyLightingTex, float4(sun01, altitude01, 0.0f, 0.0f)).xyz;
+}
+
+float3 SGT_UnderwaterAtmosphere(float3 rayPos, float3 rayDir, float3 sunDir, float exposure, float dither)
+{
+	float3 coord = GetLutCoord(rayPos, rayDir, sunDir, dither); coord.x = 1.0f;
+	float4 ray   = SGT_SampleLUT(coord);
+	float3 mie   = SGT_CalculateMie(ray.xyz, ray.w);
+	float3 color = ray.xyz + mie;
+	
+	#if _SSS_HDRP
+		color *= exposure * 0.25f;
+	#else
+		color = 1.0 - exp(-color * exposure);
+	#endif
+	
+	return saturate(_SGT_SkyColor.xyz * color * _SGT_SkyBrightness);
 }
 
 float4 SGT_Atmosphere(float3 rayPos, float3 rayDir, float rayFar, float rayMax, float3 sunDir, float exposure, float dither)

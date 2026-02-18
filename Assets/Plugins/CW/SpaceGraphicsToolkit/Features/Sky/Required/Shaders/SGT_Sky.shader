@@ -636,7 +636,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	// Boost opacity when near ground
 	float skyWeight = rayMax * 1.02f > rayFar;//saturate(rayMax / rayFar); skyWeight = pow(skyWeight,16);
 	float luminance = dot(color.xyz, float3(0.2126f, 0.7152f, 0.0722f));
-	float boost     = dot(SGT_GetDensity2(rayPos), 1) * luminance * _SGT_SkyDepthOpaque;
+	float boost     = dot(SGT_GetDensity2(rayPos), 1) * lerp(1.0f, luminance, _SGT_SkyRevealStars) * _SGT_SkyDepthOpaque;
 	
 	color.xyz *= lighting.xyz;
 	color.w    = lerp(1.0f, color.a, exp(-boost * skyWeight));
@@ -1592,7 +1592,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	// Boost opacity when near ground
 	float skyWeight = rayMax * 1.02f > rayFar;//saturate(rayMax / rayFar); skyWeight = pow(skyWeight,16);
 	float luminance = dot(color.xyz, float3(0.2126f, 0.7152f, 0.0722f));
-	float boost     = dot(SGT_GetDensity2(rayPos), 1) * luminance * _SGT_SkyDepthOpaque;
+	float boost     = dot(SGT_GetDensity2(rayPos), 1) * lerp(1.0f, luminance, _SGT_SkyRevealStars) * _SGT_SkyDepthOpaque;
 	
 	color.xyz *= lighting.xyz;
 	color.w    = lerp(1.0f, color.a, exp(-boost * skyWeight));
@@ -2544,7 +2544,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	// Boost opacity when near ground
 	float skyWeight = rayMax * 1.02f > rayFar;//saturate(rayMax / rayFar); skyWeight = pow(skyWeight,16);
 	float luminance = dot(color.xyz, float3(0.2126f, 0.7152f, 0.0722f));
-	float boost     = dot(SGT_GetDensity2(rayPos), 1) * luminance * _SGT_SkyDepthOpaque;
+	float boost     = dot(SGT_GetDensity2(rayPos), 1) * lerp(1.0f, luminance, _SGT_SkyRevealStars) * _SGT_SkyDepthOpaque;
 	
 	color.xyz *= lighting.xyz;
 	color.w    = lerp(1.0f, color.a, exp(-boost * skyWeight));
@@ -3532,7 +3532,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	// Boost opacity when near ground
 	float skyWeight = rayMax * 1.02f > rayFar;//saturate(rayMax / rayFar); skyWeight = pow(skyWeight,16);
 	float luminance = dot(color.xyz, float3(0.2126f, 0.7152f, 0.0722f));
-	float boost     = dot(SGT_GetDensity2(rayPos), 1) * luminance * _SGT_SkyDepthOpaque;
+	float boost     = dot(SGT_GetDensity2(rayPos), 1) * lerp(1.0f, luminance, _SGT_SkyRevealStars) * _SGT_SkyDepthOpaque;
 	
 	color.xyz *= lighting.xyz;
 	color.w    = lerp(1.0f, color.a, exp(-boost * skyWeight));
@@ -4487,7 +4487,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	// Boost opacity when near ground
 	float skyWeight = rayMax * 1.02f > rayFar;//saturate(rayMax / rayFar); skyWeight = pow(skyWeight,16);
 	float luminance = dot(color.xyz, float3(0.2126f, 0.7152f, 0.0722f));
-	float boost     = dot(SGT_GetDensity2(rayPos), 1) * luminance * _SGT_SkyDepthOpaque;
+	float boost     = dot(SGT_GetDensity2(rayPos), 1) * lerp(1.0f, luminance, _SGT_SkyRevealStars) * _SGT_SkyDepthOpaque;
 	
 	color.xyz *= lighting.xyz;
 	color.w    = lerp(1.0f, color.a, exp(-boost * skyWeight));
@@ -5440,7 +5440,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	// Boost opacity when near ground
 	float skyWeight = rayMax * 1.02f > rayFar;//saturate(rayMax / rayFar); skyWeight = pow(skyWeight,16);
 	float luminance = dot(color.xyz, float3(0.2126f, 0.7152f, 0.0722f));
-	float boost     = dot(SGT_GetDensity2(rayPos), 1) * luminance * _SGT_SkyDepthOpaque;
+	float boost     = dot(SGT_GetDensity2(rayPos), 1) * lerp(1.0f, luminance, _SGT_SkyRevealStars) * _SGT_SkyDepthOpaque;
 	
 	color.xyz *= lighting.xyz;
 	color.w    = lerp(1.0f, color.a, exp(-boost * skyWeight));
@@ -6429,7 +6429,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	// Boost opacity when near ground
 	float skyWeight = rayMax * 1.02f > rayFar;//saturate(rayMax / rayFar); skyWeight = pow(skyWeight,16);
 	float luminance = dot(color.xyz, float3(0.2126f, 0.7152f, 0.0722f));
-	float boost     = dot(SGT_GetDensity2(rayPos), 1) * luminance * _SGT_SkyDepthOpaque;
+	float boost     = dot(SGT_GetDensity2(rayPos), 1) * lerp(1.0f, luminance, _SGT_SkyRevealStars) * _SGT_SkyDepthOpaque;
 	
 	color.xyz *= lighting.xyz;
 	color.w    = lerp(1.0f, color.a, exp(-boost * skyWeight));
@@ -7440,7 +7440,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	// Boost opacity when near ground
 	float skyWeight = rayMax * 1.02f > rayFar;//saturate(rayMax / rayFar); skyWeight = pow(skyWeight,16);
 	float luminance = dot(color.xyz, float3(0.2126f, 0.7152f, 0.0722f));
-	float boost     = dot(SGT_GetDensity2(rayPos), 1) * luminance * _SGT_SkyDepthOpaque;
+	float boost     = dot(SGT_GetDensity2(rayPos), 1) * lerp(1.0f, luminance, _SGT_SkyRevealStars) * _SGT_SkyDepthOpaque;
 	
 	color.xyz *= lighting.xyz;
 	color.w    = lerp(1.0f, color.a, exp(-boost * skyWeight));
@@ -8446,7 +8446,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	// Boost opacity when near ground
 	float skyWeight = rayMax * 1.02f > rayFar;//saturate(rayMax / rayFar); skyWeight = pow(skyWeight,16);
 	float luminance = dot(color.xyz, float3(0.2126f, 0.7152f, 0.0722f));
-	float boost     = dot(SGT_GetDensity2(rayPos), 1) * luminance * _SGT_SkyDepthOpaque;
+	float boost     = dot(SGT_GetDensity2(rayPos), 1) * lerp(1.0f, luminance, _SGT_SkyRevealStars) * _SGT_SkyDepthOpaque;
 	
 	color.xyz *= lighting.xyz;
 	color.w    = lerp(1.0f, color.a, exp(-boost * skyWeight));
@@ -9452,7 +9452,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	// Boost opacity when near ground
 	float skyWeight = rayMax * 1.02f > rayFar;//saturate(rayMax / rayFar); skyWeight = pow(skyWeight,16);
 	float luminance = dot(color.xyz, float3(0.2126f, 0.7152f, 0.0722f));
-	float boost     = dot(SGT_GetDensity2(rayPos), 1) * luminance * _SGT_SkyDepthOpaque;
+	float boost     = dot(SGT_GetDensity2(rayPos), 1) * lerp(1.0f, luminance, _SGT_SkyRevealStars) * _SGT_SkyDepthOpaque;
 	
 	color.xyz *= lighting.xyz;
 	color.w    = lerp(1.0f, color.a, exp(-boost * skyWeight));

@@ -103,6 +103,7 @@ Material:
     - _SGT_Clouds: 1
     - _SGT_FadeDensity: 0
     - _SGT_FadeDistance: 0
+    - _SGT_Occlusion: 0
     - _SGT_OceanDistance: 0
     - _SGT_OceanFade: 0
     - _SGT_OceanMinimum: 0

@@ -40,18 +40,13 @@ namespace SpaceGraphicsToolkit.Landscape
 		public static Vector4[]            VERTEX_COORDS;
 		public static NativeArray<float3>  VERTEX_POSITIONS;
 		public static NativeArray<int>     VERTEX_INDICES;
+		public static NativeArray<int>     VERTEX_NEIGHBORS;
 
 		[System.NonSerialized]
 		public static Mesh[] batchMeshes;
 
 		[System.NonSerialized]
 		public static Mesh visualBlitMesh;
-
-		[System.NonSerialized]
-		private static VertexAttributeDescriptor[] vertexAttributes = new VertexAttributeDescriptor[]
-			{
-				new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3, 0)
-			};
 
 		public void TryGenerateMeshData()
 		{
@@ -177,30 +172,6 @@ namespace SpaceGraphicsToolkit.Landscape
 			NativeArray<float3>.Copy(srcPositions, positions, VERTEX_COUNT);
 			NativeArray<int   >.Copy(srcIndices  , indices  ,  INDEX_COUNT);
 
-			/*
-			for (var i = 1; i <= VERTEX_RESOLUTION; i++)
-			{
-				var index = CalculateVertexCount(i) - 1;
-
-				positions[indexV++] = positions[index] + new float3(0.0f, 1.0f, 0.0f);
-			}
-
-			for (var i = 0; i < VERTEX_RESOLUTION - 1; i++)
-			{
-				var indexA = CalculateVertexCount(i + 1) - 1;
-				var indexB = CalculateVertexCount(i + 2) - 1;
-				var indexC = index0 + i;
-				var indexD = index0 + i + 1;
-
-				indices[indexI++] = indexA;
-				indices[indexI++] = indexB;
-				indices[indexI++] = indexC;
-				indices[indexI++] = indexC;
-				indices[indexI++] = indexB;
-				indices[indexI++] = indexD;
-			}
-			*/
-
 			visualBlitMesh.hideFlags   = HideFlags.DontSaveInBuild | HideFlags.DontSaveInEditor;
 			visualBlitMesh.indexFormat = IndexFormat.UInt32;
 			visualBlitMesh.SetVertices(positions, 0, indexV, MeshUpdateFlags.DontRecalculateBounds);
@@ -213,10 +184,13 @@ namespace SpaceGraphicsToolkit.Landscape
 		private static List<float3>  tempPositions = new List<float3 >();
 		private static List<Vector2> tempCoords    = new List<Vector2>();
 		private static List<int    > tempIndices   = new List<int    >();
+		// 2. Added temporary list for neighbors
+		private static List<int    > tempNeighbors = new List<int    >();
 
 		private int Insert(float3 posA, float3 posB, float3 posC, float3 posD, float2 coordA, float2 coordB, float2 coordC, float2 coordD)
 		{
 			var baseIndex = tempPositions.Count;
+			var stride = VERTEX_RESOLUTION + 1;
 
 			for (int i = 0; i <= VERTEX_RESOLUTION; i++)
 			{
@@ -231,6 +205,22 @@ namespace SpaceGraphicsToolkit.Landscape
 					var s = (float)j / VERTEX_RESOLUTION;
 					tempPositions.Add(math.lerp(leftPos, rightPos, s));
 					tempCoords.Add(math.lerp(leftCoord, rightCoord, s));
+
+					// 3. Calculate and store neighbors (Right, Up, Diagonal)
+					// Logic: try to look forward (+1), if at edge, look backward (-1)
+					int currentIndex = baseIndex + i * stride + j;
+
+					// Neighbor 1: Horizontal (Next Column)
+					if (j < VERTEX_RESOLUTION) tempNeighbors.Add(currentIndex + 1);
+					else tempNeighbors.Add(currentIndex - 1);
+
+					// Neighbor 2: Vertical (Next Row)
+					if (i < VERTEX_RESOLUTION) tempNeighbors.Add(currentIndex + stride);
+					else tempNeighbors.Add(currentIndex - stride);
+
+					// Neighbor 3: Diagonal (Next Row + Column)
+					if (j < VERTEX_RESOLUTION && i < VERTEX_RESOLUTION) tempNeighbors.Add(currentIndex + stride + 1);
+					else tempNeighbors.Add(currentIndex - stride - 1);
 				}
 			}
 
@@ -293,6 +283,7 @@ namespace SpaceGraphicsToolkit.Landscape
 			VERTEX_COORDS    = new Vector4[VERTEX_COUNT];
 			VERTEX_POSITIONS = new NativeArray<float3>(VERTEX_COUNT, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
 			VERTEX_INDICES   = new NativeArray<int>(INDEX_COUNT, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+			VERTEX_NEIGHBORS = new NativeArray<int>(VERTEX_COUNT * 3, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
 
 			for (var i = 0; i < VERTEX_COUNT; i++)
 			{
@@ -302,6 +293,10 @@ namespace SpaceGraphicsToolkit.Landscape
 				VERTEX_WEIGHTS[i] = new float3(bary.x, bary.y, bary.z);
 				VERTEX_BARY[i] = new Vector4(bary.x, bary.y, bary.z, 0.0f);
 				VERTEX_COORDS[i] = tempCoords[i];
+
+				VERTEX_NEIGHBORS[i * 3 + 0] = tempNeighbors[i * 3 + 0];
+				VERTEX_NEIGHBORS[i * 3 + 1] = tempNeighbors[i * 3 + 1];
+				VERTEX_NEIGHBORS[i * 3 + 2] = tempNeighbors[i * 3 + 2];
 			}
 
 			for (var i = 0; i < INDEX_COUNT; i++)
@@ -315,10 +310,12 @@ namespace SpaceGraphicsToolkit.Landscape
 			VERTEX_WEIGHTS  .Dispose();
 			VERTEX_POSITIONS.Dispose();
 			VERTEX_INDICES  .Dispose();
+			VERTEX_NEIGHBORS.Dispose();
 
 			tempPositions.Clear();
 			tempCoords.Clear();
 			tempIndices.Clear();
+			tempNeighbors.Clear();
 		}
 	}
 }

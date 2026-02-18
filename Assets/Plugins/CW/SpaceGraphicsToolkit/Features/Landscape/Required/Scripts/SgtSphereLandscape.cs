@@ -375,6 +375,19 @@ namespace SpaceGraphicsToolkit.Landscape
 			return localPoint;
 		}
 
+		public override PendingPoints SchedulePoints(NativeList<double3> localPoints)
+		{
+			var pending = new PendingPoints(localPoints.Length);
+
+			pending.Points.CopyFrom(localPoints.AsArray());
+
+			SchedulePoints(pending);
+			ScheduleBase(pending);
+			ScheduleFeatures(pending);
+
+			return pending;
+		}
+
 		protected override void Prepare()
 		{
 			var circ = 2.0 * math.PI_DBL * radius;

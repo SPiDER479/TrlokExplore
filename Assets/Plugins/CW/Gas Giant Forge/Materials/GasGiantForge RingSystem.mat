@@ -13,21 +13,23 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _SGT_LIGHTING
+  - _SURFACE_TYPE_TRANSPARENT
   m_InvalidKeywords:
   - _CW_REFRACTION_OFF
   - _SGT_DETAIL_OFF
   - _SGT_SPHEREMASK_OFF
-  - _SURFACE_TYPE_TRANSPARENT
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: 3000
   stringTagMap:
     MotionVector: User
+    RenderType: Transparent
   disabledShaderPasses:
   - TransparentDepthPrepass
   - TransparentDepthPostpass
   - TransparentBackface
+  - MOTIONVECTORS
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
@@ -151,8 +153,6 @@ Material:
     - _OpaqueCullMode: 2
     - _Parallax: 0.02
     - _PerPixelSorting: 0
-    - _QueueControl: 1
-    - _QueueOffset: 0
     - _RayTracing: 0
     - _ReceivesSSR: 1
     - _ReceivesSSRTransparent: 0

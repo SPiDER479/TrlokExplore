@@ -1,5 +1,6 @@
 BEGIN_PROPERTIES
 	[KeywordEnum(Square, Sphere)] _SGT_Shape ("Shape", Float) = 0
+	_SGT_Occlusion ("Occlusion", Range(0, 1)) = 0
 	
 	[Header(CLOUDS)]
 	[Toggle(_SGT_CLOUDS)] _SGT_Clouds("	Enable", Float) = 0
@@ -52,6 +53,8 @@ float3 _CwOffset;
 float4x4 _CwObjectToWorld;
 float4x4 _CwWorldToObject;
 
+float _SGT_Occlusion;
+
 // CLOUDS
 sampler2D _SGT_CloudShadowTex;
 float3    _SGT_CloudShadowDirection;
@@ -61,7 +64,7 @@ float4x4  _SGT_CloudShadowMatrix;
 // OCEAN FADE
 float  _SGT_OceanFade;
 float2 _SGT_OceanDensity;
-float4 _SGT_OceanColor;
+float3 _SGT_OceanColor;
 float  _SGT_OceanSmoothness;
 float4 _SGT_OceanLightDirection;
 
@@ -149,7 +152,7 @@ void SSS_Vert(inout SSS_VertexData v)
 		{
 			float3 N = normalize(position); // sphere normal
 			float3 V = normalize(_WorldSpaceCameraPos - v.position.xyz);
-			float  F = pow(1.0 - saturate(dot(N, V)), 2.0);
+			float  F = pow(abs(1.0 - saturate(dot(N, V))), 2.0);
 
 			float3 oceanPos = _CwOffset + N * _SGT_OceanRadius;
 			v.position.xyz = lerp(v.position.xyz, oceanPos, F);
@@ -193,24 +196,26 @@ float3 SGT_ApplyOceanColor(
     float depth = SGT_DecodeWaterDepth(waterDepth01);
     float3 w = float3(1.0, 0.2, 0.1);
 
-    float3 e0 = w * waterDensity.x;
-    float3 e1 = w * waterDensity.y;
+	float3 e0 = w * waterDensity.x;
+	float3 e1 = w * waterDensity.y;
 
-    float3 floorT0  = exp(-e0 * depth);
-    float3 volumeT0 = exp(-e0 * depth * 3.0);
+	float3 floorT0 = exp(-e0 * depth);
+	float3 floorT1 = exp(-e1 * depth);
+	
+	float3 volumeT0 = floorT0 * floorT0 * floorT0;
+	float3 volumeT1 = floorT1 * floorT1 * floorT1;
 
-    float3 floorT1  = exp(-e1 * depth);
-    float3 volumeT1 = exp(-e1 * depth * 3.0);
+	float3 scatter = waterColor * ambientColor;
 
-    float3 col0 = terrainColor * floorT0 + (waterColor * ambientColor) * (1.0 - volumeT0);
-    float3 col1 = terrainColor * floorT1 + (waterColor * ambientColor) * (1.0 - volumeT1);
+	float3 col0 = terrainColor * floorT0 + scatter * (1.0 - volumeT0);
+	float3 col1 = terrainColor * floorT1 + scatter * (1.0 - volumeT1);
 
-    return lerp(col0, col1, waterBlend);
+	return lerp(col0, col1, waterBlend);
 }
 
 float SGT_Bayer4x4(float2 screenPos)
 {
-	int2 p = int2(screenPos * _ScreenParams.xy) % 4;
+	uint2 p = uint2(screenPos * _ScreenParams.xy) % 4;
 	float bayer[16] = { 0,  8,  2, 10, 12,  4, 14,  6, 3, 11,  1,  9, 15,  7, 13,  5 };
 	return (bayer[p.x + p.y * 4] + 0.5) / 16.0;
 }
@@ -223,7 +228,7 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	dataN.x = -dataN.x; // Don't set negative tangent sign, so do it manually
 	
 	o.Albedo     = dataA.xyz;
-	o.Occlusion  = 1.0f;
+	o.Occlusion  = _SGT_Occlusion;
 	o.Emission   = dataA.xyz * dataN.z;
 	o.Smoothness = dataN.w;
 	o.Metallic   = 0.0f;
@@ -232,13 +237,11 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
-		float fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
-	
-		float cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
-		float cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
-		float3 oceanColor    = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
-	
-		float fade = saturate(dataA.w > 0) * fadeTransition;
+		float  fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
+		float  cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
+		float  cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float3 oceanColor     = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
+		float  fade           = saturate(dataA.w > 0) * fadeTransition;
 	
 		o.Albedo     = lerp(o.Albedo, oceanColor, fade);
 		o.Smoothness = lerp(o.Smoothness, _SGT_OceanSmoothness, fade);
@@ -246,7 +249,7 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 	#endif
 	
 	#if _SGT_CLOUDS
-		float  shadow = SGT_SampleCloudDensity(d.worldSpacePosition);
+		float shadow = SGT_SampleCloudDensity(d.worldSpacePosition);
 		
 		o.Albedo    = lerp(o.Albedo   , 0.0f, shadow);
 		o.Occlusion = lerp(o.Occlusion, 0.0f, shadow);

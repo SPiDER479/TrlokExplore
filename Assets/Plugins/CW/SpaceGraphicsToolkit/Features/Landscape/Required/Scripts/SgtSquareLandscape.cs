@@ -296,11 +296,6 @@ namespace SpaceGraphicsToolkit.Landscape
 			ScheduleBase(pending);
 			ScheduleFeatures(pending);
 
-			foreach (var feature in features)
-			{
-				feature.ScheduleCpu(pending);
-			}
-
 			pending.Handle.Complete();
 
 			localPosition = pending.GetPosition(0);
@@ -308,6 +303,19 @@ namespace SpaceGraphicsToolkit.Landscape
 			pending.Dispose();
 
 			return localPosition;
+		}
+
+		public override PendingPoints SchedulePoints(NativeList<double3> localPoints)
+		{
+			var pending = new PendingPoints(localPoints.Length);
+
+			pending.Points.CopyFrom(localPoints.AsArray());
+
+			SchedulePoints(pending);
+			ScheduleBase(pending);
+			ScheduleFeatures(pending);
+
+			return pending;
 		}
 
 		public override double3 GetWorldPivot(double3 worldPoint)

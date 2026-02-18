@@ -592,7 +592,6 @@ MonoBehaviour:
   height: 35
   density: 0.2
   cameraOffset: 0.1
-  clipRadius: -1
   depthOpaque: 5
   rayleighColor: {r: 1, g: 0.17647058, b: 0.19293761, a: 1}
   rayleighMultiplier: 33.1
@@ -766,6 +765,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   space: 0
   surfaceScale: 1
+  replace: 1
   mask: 0
   maskIndex: 0
   maskInvert: 0
@@ -963,20 +963,21 @@ MonoBehaviour:
   observer: {fileID: 0}
   cameraOffset: 0.1
   surfaceColor: {r: 0.5019608, g: 0.007843138, b: 0.042457614, a: 1}
+  surfaceScattering: {r: 0.19, g: 0.84, b: 0.78, a: 0.5}
   surfaceDensity: 0.5
   surfaceSmoothness: 0.95
-  underwaterExtinction: {x: 1, y: 1, z: 1, w: 0.1}
-  underwaterExtinctionRange: 10
   underwaterLightingSharpness: 5
   underwaterShadowRange: 10
+  wavesStrength: 0.1
+  wavesSteepness: 0.05
+  wavesSpeed: 0.3
   wavesQuality: 3
-  wavesSpeed: 1.5
-  wavesDisplacement: 0.05
-  wavesFrequency: 2
-  wavesSteepness: 0.5
+  windDirection: {x: 0, y: 0, z: 1}
+  windSpeed: 0
+  shoreScale: 1
+  shoreSpeed: 0.75
   ripples: 1
   ripplesTexture: {fileID: 2800000, guid: fa3ccaeff005f9e488f927b6e5484137, type: 3}
-  ripplesOffset: {fileID: 0}
   ripplesScale: 1
   ripplesSpeed: 0.75
   ripplesStrength: 0.5
@@ -985,6 +986,8 @@ MonoBehaviour:
   fadeDeepDistance: 10000
   fadeDeepDensity: 0.1
   causticsLight: {fileID: 0}
+  causticsScale: 1
+  causticsSpeed: 0.05
   model: {fileID: 871038077}
 --- !u!1 &1979672835
 GameObject:
@@ -1044,7 +1047,7 @@ MonoBehaviour:
   globalSizes: {x: 1, y: 100, z: 10000, w: 1000000}
   globalSizesNormalized: {x: 0.99987036, y: 101.3417, z: 3141.5928, w: 3141.5928}
   globalTiling: {x: 3142, y: 31, z: 1, w: 1}
-  globalTilingNormalized: {x: 1000.1297, y: 9.867607, z: 0.31830987, w: 0.31830987}
+  globalTilingNormalized: {x: 1.0001297, y: 0.009867607, z: 0.00031830987, w: 0.00031830987}
   observers: []
   castShadows: 1
   receiveShadows: 1

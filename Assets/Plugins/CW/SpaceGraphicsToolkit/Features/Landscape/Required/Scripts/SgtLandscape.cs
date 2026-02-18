@@ -486,6 +486,8 @@ namespace SpaceGraphicsToolkit.Landscape
 
 		public abstract double3 GetLocalPoint(double3 localPoint);
 
+		public abstract PendingPoints SchedulePoints(NativeList<double3> localPoints);
+
 		public bool IsActivated
 		{
 			get

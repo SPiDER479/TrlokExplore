@@ -39,6 +39,9 @@ namespace SpaceGraphicsToolkit.Sky
 		/// <summary>This allows you to offset the camera distance in world space when rendering the atmosphere, giving you fine control over the render order.</summary>
 		public float CameraOffset { set { cameraOffset = value; } get { return cameraOffset; } } [SerializeField] private float cameraOffset = 0.1f;
 
+		/// <summary>This allows you to control how easy it is to see the stars and other objects outside the atmosphere when it's dark.</summary>
+		public float RevealStars { set { revealStars = value; } get { return revealStars; } } [SerializeField] [Range(0.0f, 1.0f)] private float revealStars = 1.0f;
+
 		/// <summary>This allows you to control how fast the opacity of the sky increases as the camera descends.</summary>
 		public float DepthOpaque { set { depthOpaque = value; } get { return depthOpaque; } } [SerializeField] private float depthOpaque = 50.0f;
 
@@ -173,6 +176,7 @@ namespace SpaceGraphicsToolkit.Sky
 		private static readonly int _SGT_SkyMieData        = Shader.PropertyToID("_SGT_SkyMieData");
 		private static readonly int _SGT_SkyExposure       = Shader.PropertyToID("_SGT_SkyExposure");
 		private static readonly int _SGT_SkyDepthOpaque    = Shader.PropertyToID("_SGT_SkyDepthOpaque");
+		private static readonly int _SGT_SkyRevealStars    = Shader.PropertyToID("_SGT_SkyRevealStars");
 		private static readonly int _SGT_SkyLightingTex    = Shader.PropertyToID("_SGT_SkyLightingTex");
 		private static readonly int _SGT_SkyAlbedoTex      = Shader.PropertyToID("_SGT_SkyAlbedoTex");
 
@@ -725,6 +729,22 @@ namespace SpaceGraphicsToolkit.Sky
 			return new Color(final.x, final.y, final.z, 1.0f) * color * brightness;
 		}
 
+		public Color GetSkyColorPhaseless(Vector3 rayPos, Vector3 rayDir, Vector3 sunDir)
+		{
+			rayPos = transform.InverseTransformPoint(rayPos);
+			rayDir = transform.InverseTransformDirection(rayDir).normalized;
+			sunDir = transform.InverseTransformDirection(sunDir).normalized;
+
+			var coord  = GetLutCoord(rayPos, rayDir, sunDir, 0.5f);
+			var ray    = (float4)(Vector4)radianceLut.GetPixelBilinear(coord.x, coord.y, coord.z, jobStage);
+			var mie    = math.normalize(ray.xyz * MieWeight + 1e-6f) * ray.w;
+			var final  = ray.xyz + mie;
+
+			final = 1.0f - math.exp(-final * exposure);
+
+			return new Color(final.x, final.y, final.z, 1.0f) * color * brightness;
+		}
+
 		public Color GetSkyTransmittanceRaw(Vector3 rayPos, Vector3 sunDir)
 		{
 			rayPos = transform.InverseTransformPoint(rayPos);
@@ -757,27 +777,16 @@ namespace SpaceGraphicsToolkit.Sky
 			return Color.Lerp(rawTransmittance, tgtTransmittance, sunHeight01 * 0.8f); // Desaturate transmittance so it's closer to white during the day
 		}
 
-		public Color GetSkyAmbient(Vector3 rayPos, Vector3 sunDir)
+		public Color GetSkyAmbient(Vector3 worldPos, Vector3 worldSunDir)
 		{
-			var up = Vector3.Normalize(rayPos - transform.position);
+			var zenithDir   = Vector3.Normalize(worldPos - transform.position);
+			var zenithColor = GetSkyColorPhaseless(worldPos, zenithDir, worldSunDir);
 
-			var zenithColor = GetSkyColor(rayPos, up, sunDir);
+			zenithColor.r *= 0.25f;
+			zenithColor.g *= 0.25f;
+			zenithColor.b *= 0.25f;
 
-			var horizonDir = Vector3.Cross(sunDir, up).normalized;
-			if (horizonDir.sqrMagnitude < 0.01f) horizonDir = Vector3.forward; // Fallback
-	
-			var horizonColor = GetSkyColor(rayPos, horizonDir, sunDir);
-
-			// 3. Blend them
-			// Most surfaces are horizontal, so we weight the Zenith higher (e.g., 70/30)
-			var ambient = Color.Lerp(zenithColor, horizonColor, 0.3f);
-
-			// 4. Boost/Dim based on Sun Height
-			// This ensures ambient drops naturally during twilight
-			var sunHeight = math.saturate(Vector3.Dot(sunDir, up));
-			var ambientIntensity = math.lerp(0.05f, 1.0f, sunHeight);
-
-			return ambient * ambientIntensity;
+			return zenithColor;
 		}
 
 		public float CalculateOcclusion(int layers, Vector3 worldEye, Vector3 worldTgt)
@@ -849,6 +858,7 @@ namespace SpaceGraphicsToolkit.Sky
 
 			properties.SetVector(_SGT_SkyRadius, new Vector4(innerMeshRadius, innerMeshRadius + height, (float)planetRadius, (float)clippedRadius));
 			properties.SetFloat(_SGT_SkyDepthOpaque, depthOpaque);
+			properties.SetFloat(_SGT_SkyRevealStars, revealStars);
 			properties.SetFloat(_SGT_SkyDensity, density);
 			properties.SetFloat(_SGT_SkyExposure, exposure);
 
@@ -1181,6 +1191,7 @@ namespace SpaceGraphicsToolkit.Sky
 				Draw("density", ref markLutDirty, "This allows you to adjust the fog level of the atmosphere.");
 			EndError();
 			Draw("cameraOffset", "This allows you to offset the camera distance in world space when rendering the atmosphere, giving you fine control over the render order."); // Updated automatically
+			Draw("revealStars", "This allows you to control how easy it is to see the stars and other objects outside the atmosphere when it's dark."); // Updated automatically
 			Draw("depthOpaque", "This allows you to control how fast the opacity of the sky increases as the camera descends."); // Updated automatically
 
 			Separator();

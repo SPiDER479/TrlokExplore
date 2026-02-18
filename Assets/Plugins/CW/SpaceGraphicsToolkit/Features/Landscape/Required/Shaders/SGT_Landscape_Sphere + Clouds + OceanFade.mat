@@ -108,6 +108,7 @@ Material:
     - _SGT_FadeDensity: 0
     - _SGT_FadeDistance: 0
     - _SGT_FadeWeight: 0
+    - _SGT_Occlusion: 0
     - _SGT_OceanDensity: 0
     - _SGT_OceanDistance: 0
     - _SGT_OceanFade: 1

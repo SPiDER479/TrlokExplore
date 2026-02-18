@@ -30,6 +30,9 @@ namespace SpaceGraphicsToolkit.Ocean
 		/// <summary>The overall detail of the ocean relative to the camera distance. The higher you set this, the more triangles it will have.</summary>
 		public float Detail { set { detail = value; } get { return detail; } } [SerializeField] [Range(0.01f, 5.0f)] private float detail = 1.2f;
 
+		/// <summary>The density of the fluid used for buoyancy in kg/m^3 (seawater = 1025).</summary>
+		public float FluidDensity { set { fluidDensity = value; } get { return fluidDensity; } } [SerializeField] private float fluidDensity = 1025.0f;
+
 		/// <summary>If you want cloud shadows to appear on the surface of the ocean, specify them here.</summary>
 		public SgtCloud CloudShadow { set { cloudShadow = value; } get { return cloudShadow; } } [SerializeField] protected SgtCloud cloudShadow;
 
@@ -41,7 +44,7 @@ namespace SpaceGraphicsToolkit.Ocean
 		/// <summary>The color of the fluid when viewed from above the surface.</summary>
 		public Color SurfaceColor { set { surfaceColor = value; } get { return surfaceColor; } } [SerializeField] private Color surfaceColor = new Color(0.007843138f, 0.3647059f, 0.5019608f);
 
-		/// <summary>The color of the sub surface scattering.</summary>
+		/// <summary>The color of the sub surface scattering. Alpha controls strength.</summary>
 		public Color SurfaceScattering { set { surfaceScattering = value; } get { return surfaceScattering; } } [SerializeField] private Color surfaceScattering = new Color(0.19f, 0.84f, 0.78f, 0.5f);
 
 		/// <summary>The density of the water when viewed from above the surface.</summary>
@@ -56,17 +59,23 @@ namespace SpaceGraphicsToolkit.Ocean
 		/// <summary>The distance from the camera the cloud shadow calculations will use. This should approximately be the underwater fog distance (4.6 * density).</summary>
 		public float UnderwaterShadowRange { set { underwaterShadowRange = value; } get { return underwaterShadowRange; } } [SerializeField] private float underwaterShadowRange = 10.0f;
 
-		/// <summary>The maximum +- height displacement of the waves in world space.</summary>
-		public float WavesDisplacement { set { wavesDisplacement = value; } get { return wavesDisplacement; } } [SerializeField] [Range(0.0f, 20.0f)] private float wavesDisplacement = 0.1f;
+		/// <summary>The maximum +- height displacement of the waves in meters.</summary>
+		public float WavesAmplitude { set { wavesAmplitude = value; } get { return wavesAmplitude; } } [SerializeField] [Range(0.0f, 20.0f)] private float wavesAmplitude = 0.2f;
 
-		/// <summary>The amount of waves there are on the ocean surface.</summary>
-		public float WavesScale { set { wavesScale = value; } get { return wavesScale; } } [SerializeField] [Range(0.01f, 10.0f)] private float wavesScale = 1.0f;
+		/// <summary>How choppy the waves are.</summary>
+		public float WavesSteepness { set { wavesSteepness = value; } get { return wavesSteepness; } } [SerializeField] [Range(0.01f, 0.5f)] private float wavesSteepness = 0.05f;
 
-		/// <summary>The animation speed of the waves.</summary>
-		public float WavesSpeed { set { wavesSpeed = value; } get { return wavesSpeed; } } [SerializeField] [Range(0.0f, 10.0f)] private float wavesSpeed = 1.0f;
+		/// <summary>How fast the waves animate.</summary>
+		public float WavesSpeed { set { wavesSpeed = value; } get { return wavesSpeed; } } [SerializeField] [Range(0.0f, 1.0f)] private float wavesSpeed = 0.3f;
 
 		/// <summary>The amount of combined wave layers.</summary>
 		public int WavesQuality { set { wavesQuality = value; } get { return wavesQuality; } } [SerializeField] [Range(1, 3)] private int wavesQuality = 3;
+
+		/// <summary>The direction of the wind in world space.</summary>
+		public Vector3 WindDirection { set { windDirection = value; } get { return windDirection; } } [SerializeField] private Vector3 windDirection = Vector3.forward;
+
+		/// <summary>The speed of the wind in meters.</summary>
+		public float WindSpeed { set { windSpeed = value; } get { return windSpeed; } } [SerializeField] private float windSpeed;
 
 		/// <summary>The size of the shore texture in world space.</summary>
 		public float ShoreScale { set { shoreScale = value; } get { return shoreScale; } } [SerializeField] private float shoreScale = 1.0f;
@@ -153,9 +162,6 @@ namespace SpaceGraphicsToolkit.Ocean
 		[System.NonSerialized]
 		private List<Batch> batches = new List<Batch>();
 
-		[System.NonSerialized]
-		private float wavesPosition;
-
 		[System.NonSerialized] private Matrix4x4 ripplesMatrixA;
 		[System.NonSerialized] private Matrix4x4 ripplesMatrixB;
 		[System.NonSerialized] private float     ripplesBlend = -1.0f;
@@ -174,9 +180,15 @@ namespace SpaceGraphicsToolkit.Ocean
 		[System.NonSerialized]
 		private Dictionary<TriangleHash, Batch> triangleBatches = new Dictionary<TriangleHash, Batch>();
 
-		private static readonly int _SGT_CausticsDirection = Shader.PropertyToID("_SGT_CausticsDirection");
-		private static readonly int _SGT_FadeOpacity       = Shader.PropertyToID("_SGT_FadeOpacity");
-		private static readonly int _SGT_FadeDensity       = Shader.PropertyToID("_SGT_FadeDensity");
+		private static LinkedList<SgtOcean> AllOceans = new LinkedList<SgtOcean>();
+
+		[System.NonSerialized] private LinkedListNode<SgtOcean> node;
+
+		private static readonly int _SGT_CausticsDirection  = Shader.PropertyToID("_SGT_CausticsDirection");
+		private static readonly int _SGT_FadeOpacity        = Shader.PropertyToID("_SGT_FadeOpacity");
+		private static readonly int _SGT_FadeDensity        = Shader.PropertyToID("_SGT_FadeDensity");
+		private static readonly int _SGT_UnderwaterDistance = Shader.PropertyToID("_SGT_UnderwaterDistance");
+		private static readonly int _SGT_WaveInvAmplitude   = Shader.PropertyToID("_SGT_WaveInvAmplitude");
 
 		private static readonly int _SGT_SurfaceColor             = Shader.PropertyToID("_SGT_SurfaceColor");
 		private static readonly int _SGT_SurfaceScattering        = Shader.PropertyToID("_SGT_SurfaceScattering");
@@ -220,7 +232,6 @@ namespace SpaceGraphicsToolkit.Ocean
 		protected static readonly int _SGT_OceanSmoothness     = Shader.PropertyToID("_SGT_OceanSmoothness");
 		protected static readonly int _SGT_OceanRadius         = Shader.PropertyToID("_SGT_OceanRadius");
 
-		private static readonly int _SGT_WaveData       = Shader.PropertyToID("_SGT_WaveData");
 		private static readonly int _SGT_RipplesTexture = Shader.PropertyToID("_SGT_RipplesTexture");
 		private static readonly int _SGT_NoiseTex       = Shader.PropertyToID("_SGT_NoiseTex");
 		private static readonly int _SGT_RipplesData    = Shader.PropertyToID("_SGT_RipplesData");
@@ -232,14 +243,9 @@ namespace SpaceGraphicsToolkit.Ocean
 		private static readonly int _SGT_PositionsA     = Shader.PropertyToID("_SGT_PositionsA");
 		private static readonly int _SGT_PositionsB     = Shader.PropertyToID("_SGT_PositionsB");
 		private static readonly int _SGT_PositionsC     = Shader.PropertyToID("_SGT_PositionsC");
-		private static readonly int _SGT_CoordsX        = Shader.PropertyToID("_SGT_CoordsX");
-		private static readonly int _SGT_CoordsY        = Shader.PropertyToID("_SGT_CoordsY");
-		private static readonly int _SGT_CoordsZ        = Shader.PropertyToID("_SGT_CoordsZ");
-		private static readonly int _SGT_CoordsW        = Shader.PropertyToID("_SGT_CoordsW");
 
 		private static readonly int _SGT_World2View           = Shader.PropertyToID("_SGT_World2View");
 		private static readonly int _SGT_WCam                 = Shader.PropertyToID("_SGT_WCam");
-		private static readonly int _SGT_ScreenFactor         = Shader.PropertyToID("_SGT_ScreenFactor");
 
 		public Texture3D NoiseTex
 		{
@@ -283,6 +289,26 @@ namespace SpaceGraphicsToolkit.Ocean
 			{
 				return landscapeOpacity;
 			}
+		}
+
+		/// <summary>This method returns the nearest <b>SgtOcean</b> to the specified world point.</summary>
+		public static SgtOcean FindNearest(Vector3 worldPosition)
+		{
+			var bestDistance = float.PositiveInfinity;
+			var bestInstance = default(SgtOcean);
+
+			foreach (var ocean in AllOceans)
+			{
+				var distance = math.abs(ocean.CalculateWorldAltitude(worldPosition));
+
+				if (distance < bestDistance)
+				{
+					bestDistance = distance;
+					bestInstance = ocean;
+				}
+			}
+
+			return bestInstance;
 		}
 
 		public bool HasChild(CwChild child)
@@ -351,6 +377,8 @@ namespace SpaceGraphicsToolkit.Ocean
 
 		protected override void OnEnable()
 		{
+			node = AllOceans.AddLast(this);
+
 			base.OnEnable();
 
 			topology            = new NativeList<Triangle>(8, AllocatorManager.Persistent);
@@ -374,6 +402,8 @@ namespace SpaceGraphicsToolkit.Ocean
 			{
 				properties = new MaterialPropertyBlock();
 			}
+
+			InitializeWaves();
 		}
 
 		protected override void OnDisable()
@@ -411,6 +441,10 @@ namespace SpaceGraphicsToolkit.Ocean
 			foreach (var batch in batches) { Batch.Pool.Push(batch); } batches.Clear();
 
 			triangleBatches.Clear();
+
+			DisposeWaves();
+
+			AllOceans.Remove(node); node = null;
 		}
 
 		[System.NonSerialized]
@@ -422,23 +456,21 @@ namespace SpaceGraphicsToolkit.Ocean
 
 			if (newPosition != expectedPosition)
 			{
-				var delta = Matrix4x4.Translate(expectedPosition - newPosition);
+				var deltaPos = expectedPosition - newPosition;
+				var deltaMat = Matrix4x4.Translate(deltaPos);
 
 				expectedPosition = newPosition;
 
-				ripplesMatrixA *= delta;
-				ripplesMatrixB *= delta;
+				ripplesMatrixA *= deltaMat;
+				ripplesMatrixB *= deltaMat;
 
-				shoreMatrixA *= delta;
-				shoreMatrixB *= delta;
+				shoreMatrixA *= deltaMat;
+				shoreMatrixB *= deltaMat;
 
-				causticsMatrixA *= delta;
-				causticsMatrixB *= delta;
+				causticsMatrixA *= deltaMat;
+				causticsMatrixB *= deltaMat;
 
-				for (int i = 0; i < WAVE_COUNT; i++)
-				{
-					waveMatrices[i] *= delta;
-				}
+				wavePendingDelta -= deltaPos;
 			}
 		}
 
@@ -529,7 +561,7 @@ namespace SpaceGraphicsToolkit.Ocean
 		{
 			var batch = GetBatch(batches);
 
-			batch.AddTriangle(triangle, radius / 1.0, 1, radius);
+			batch.AddTriangle(triangle, radius);
 
 			triangleBatches.Add(triangle.Hash, batch);
 		}
@@ -575,69 +607,11 @@ namespace SpaceGraphicsToolkit.Ocean
 			return matrix;
 		}
 
-		private static readonly int WAVE_COUNT = 24;
-
-		[System.NonSerialized] private int waveIndex = -1;
-		[System.NonSerialized] private float waveProgress; // 0 (full) -> 0.5 (reset) -> 1 (full)
-		[System.NonSerialized] private Matrix4x4[] waveMatrices;
-		[System.NonSerialized] private Vector4[] waveData; // x = displacement, y = speed, z = displacement * fade, w = inv size
-
-		private void ResetWave(int i)
+		private Matrix4x4 GenerateWaterMatrix(Camera finalCamera, float scale, float degrees)
 		{
-			var size = wavesScale * math.pow(0.847f, i);
-
-			waveMatrices[i] = GenerateWaterMatrix(Camera.main, size, i * 137.5f);
-			waveData[i] = new Vector4(wavesDisplacement * math.pow(0.8f, i), wavesSpeed * math.pow(1.07f, i), 0.0f, 1.0f / size);
+			return Matrix4x4.Rotate(Quaternion.Euler(0.0f, 0.0f, degrees)) * Matrix4x4.LookAt(transform.position, finalCamera.transform.position, Vector3.up).inverse * Matrix4x4.Scale(Vector3.one / scale);
 		}
 
-		private void UpdateWaves()
-		{
-			if (waveIndex < 0)
-			{
-				waveMatrices = new Matrix4x4[WAVE_COUNT];
-				waveData = new Vector4[WAVE_COUNT];
-				waveIndex = 0;
-
-				for (int i = 0; i < WAVE_COUNT; i++) ResetWave(i);
-			}
-
-			var cycleSpeed  = math.min(0.2f * math.pow(1.25f, waveIndex), 2.0f);
-			var oldProgress = waveProgress;
-
-			waveProgress += Time.deltaTime * cycleSpeed;
-
-			if (oldProgress < 0.5f && waveProgress >= 0.5f) 
-			{
-				ResetWave(waveIndex);
-			}
-
-			if (waveProgress >= 1.0f)
-			{
-				waveProgress = 0.0f;
-				waveIndex    = (waveIndex + 1) % WAVE_COUNT;
-			}
-
-			// Animate waves
-			var weightSum = 0.0f;
-
-			for (int i = 0; i < WAVE_COUNT; i++)
-			{
-				var weight = i != waveIndex ? 1.0f : math.abs(math.saturate(waveProgress) * 2.0f - 1.0f);
-
-				weightSum += weight;
-
-				waveMatrices[i] = Matrix4x4.Translate(Vector3.right * waveData[i].y * Time.deltaTime) * waveMatrices[i];
-			}
-
-			var weightScale = 1.0f / math.max(0.01f, weightSum);
-
-			for (int i = 0; i < WAVE_COUNT; i++)
-			{
-				var weight = i != waveIndex ? 1.0f : math.abs(math.saturate(waveProgress) * 2.0f - 1.0f);
-
-				waveData[i].z = waveData[i].x * weight * weightScale;
-			}
-		}
 
 		protected virtual void LateUpdate()
 		{
@@ -646,9 +620,9 @@ namespace SpaceGraphicsToolkit.Ocean
 				model.CachedMeshFilter.sharedMesh = SgtSky.InvertedSphereMesh;
 			}
 
-			UpdateWaves();
-
 			UpdatePosition();
+
+			UpdateWaves();
 
 			if (batches.Count > 0)
 			{
@@ -668,8 +642,6 @@ namespace SpaceGraphicsToolkit.Ocean
 				CompleteAndRebuildBatches();
 			}
 
-			wavesPosition += wavesSpeed * Time.deltaTime;
-
 			ripplesPosition += ripplesSpeed * Time.deltaTime;
 
 			causticsPosition += causticsSpeed * Time.deltaTime;
@@ -681,10 +653,10 @@ namespace SpaceGraphicsToolkit.Ocean
 				model.transform.localScale = Vector3.one * CwHelper.Divide(sky.OuterRadius, 0.5f / sphereInflate);
 
 				var altitude    = CalculateWorldAltitude(finalCamera.transform.position);
-				var fadeOpacity = fade == true ? Mathf.InverseLerp(fadeDistance, 0.0f, altitude) : 0.0f;
+				var fadeOpacity = fade == true ? Mathf.InverseLerp(fadeDistance, 0.0f, altitude) : 1.0f;
 				var targetLO    = fade == true && altitude >= fadeDistance ? 1.0f : 0.0f;
 
-				if (landscapeOpacity >= 0.0f)
+				if (fade == true && landscapeOpacity >= 0.0f)
 				{
 					landscapeOpacity = Mathf.MoveTowards(landscapeOpacity, targetLO, Time.deltaTime);
 				}
@@ -710,8 +682,6 @@ namespace SpaceGraphicsToolkit.Ocean
 
 				sky.ApplySettings(properties, finalCamera);
 
-				underwaterBrightness = CalculateUnderwaterBrightness();
-
 				var o2w   = RemoveTranslation(transform.localToWorldMatrix);
 				var w2o   = RemoveTranslation(transform.worldToLocalMatrix);
 				var rot   = Quaternion.Inverse(transform.rotation) * transform.position;
@@ -720,9 +690,10 @@ namespace SpaceGraphicsToolkit.Ocean
 				var worldToSky = Matrix4x4.Scale(new Vector3(scale, scale, scale)) * transform.worldToLocalMatrix;
 				var center     = (double3)(float3)transform.position;
 				var delta      = (double3)(float3)finalCamera.transform.position - center;
-				var normal     = math.normalize(delta);
-				var planeW     = -math.dot(normal, center + normal * radius);
-				//var planeD     = (float)(math.length(delta) - radius);
+				var cameraN    = math.normalize(delta);
+				var cameraW    = -math.dot(cameraN, center + cameraN * radius);
+
+				underwaterBrightness = CalculateUnderwaterBrightness(cameraN);
 				
 				properties.SetMatrix(_SGT_ObjectToWorld, o2w);
 				properties.SetMatrix(_SGT_WorldToObject, w2o);
@@ -733,6 +704,8 @@ namespace SpaceGraphicsToolkit.Ocean
 				properties.SetFloat(_SGT_SurfaceSmoothness, surfaceSmoothness);
 				properties.SetVector(_SGT_FadeOpacity, new Vector2(fadeOpacity, 1.0f - landscapeOpacity));
 				properties.SetFloat(_SGT_FadeDensity, fadeDeepDensity);
+				properties.SetFloat(_SGT_UnderwaterDistance, 5.0f / math.max(surfaceDensity, 0.1f));
+				properties.SetFloat(_SGT_WaveInvAmplitude, 1.0f / math.max(wavesAmplitude, 1.0f));
 
 				if (ripplesBlend >= 0.0f)
 				{
@@ -752,8 +725,7 @@ namespace SpaceGraphicsToolkit.Ocean
 					ripplesBlend   = 0.0f;
 				}
 
-				properties.SetMatrixArray("_WaveMatrices", waveMatrices);
-				properties.SetVectorArray("_WaveData", waveData);
+				WriteWaves(properties);
 				properties.SetTexture(_SGT_NoiseTex, NoiseTex);
 
 				properties.SetMatrix(_SGT_RipplesMatrixA, ripplesMatrixA);
@@ -783,8 +755,6 @@ namespace SpaceGraphicsToolkit.Ocean
 				properties.SetMatrix(_SGT_ShoreMatrixB, shoreMatrixB);
 				properties.SetFloat(_SGT_ShoreBlend, shoreBlend);
 
-				//properties.SetColor("_LightColor0", Color.yellow);
-
 				if (causticsBlend >= 0.0f)
 				{
 					causticsBlend += Time.deltaTime;
@@ -806,12 +776,11 @@ namespace SpaceGraphicsToolkit.Ocean
 				properties.SetMatrix(_SGT_CausticsMatrixA, causticsMatrixA);
 				properties.SetMatrix(_SGT_CausticsMatrixB, causticsMatrixB);
 				properties.SetFloat(_SGT_CausticsBlend, causticsBlend);
-
 				properties.SetVector(_SGT_CausticsDirection, GetLightDirection());
 
 				properties.SetVector(_SGT_SphereData, new Vector4((float)center.x, (float)center.y, (float)center.z, radius));
-				properties.SetVector(_SGT_PlaneData, new Vector4((float)normal.x, (float)normal.y, (float)normal.z, (float)planeW));
-				properties.SetVector(_SGT_WaveData, new Vector4(0.0f, ripplesStrength, wavesDisplacement, 0.5f / wavesDisplacement));
+				properties.SetVector(_SGT_PlaneData, new Vector4((float)cameraN.x, (float)cameraN.y, (float)cameraN.z, (float)cameraW));
+				properties.SetVector(_SGT_RipplesData, new Vector4(ripplesStrength, 0.0f, 0.0f, 0.0f));
 
 				model.CachedMeshRenderer.SetPropertyBlock(properties);
 			}
@@ -830,13 +799,10 @@ namespace SpaceGraphicsToolkit.Ocean
 			}
 
 			blitMaterial.SetVector(_SGT_WCam, finalCamera.transform.position);
-			blitMaterial.SetFloat(_SGT_ScreenFactor, (2.0f * math.tan(math.radians(finalCamera.fieldOfView * 0.5f))) / (float)renderSize.y);
-
-			blitMaterial.SetFloat(_SGT_SurfaceDensity, surfaceDensity);
 
 			blitMaterial.EnableKeyword("_SGT_SHAPE_SPHERE");
 
-			if (wavesDisplacement > 0.0f)
+			if (wavesAmplitude > 0.0f)
 			{
 				blitMaterial.EnableKeyword("_SGT_DISPLACEMENT_ON");
 			}
@@ -887,21 +853,18 @@ namespace SpaceGraphicsToolkit.Ocean
 			{
 				blitMaterial.DisableKeyword("_SGT_SNAP_ON");
 			}
-
-			var bounds = new Bounds(transform.position, Vector3.one * radius * 2.0f);
 			
 			blitMaterial.enableInstancing = true;
 
-			var o2w   = RemoveTranslation(transform.localToWorldMatrix);
-			var w2o   = RemoveTranslation(transform.worldToLocalMatrix);
-			var rot   = Quaternion.Inverse(transform.rotation) * transform.position;
+			var o2w = RemoveTranslation(transform.localToWorldMatrix);
+			var w2o = RemoveTranslation(transform.worldToLocalMatrix);
+			var rot = Quaternion.Inverse(transform.rotation) * transform.position;
 
 			properties.SetMatrix(_SGT_ObjectToWorld, o2w);
 			properties.SetMatrix(_SGT_WorldToObject, w2o);
 			properties.SetVector(_SGT_Offset, rot);
 			properties.SetFloat(_SGT_Radius, radius);
 			properties.SetVector(_SGT_FadeOpacity, new Vector2(1.0f, landscapeOpacity));
-			properties.SetVector(_SGT_WaveData, new Vector4(wavesDisplacement, 0.0f, wavesPosition, 0.0f));
 			properties.SetVector(_SGT_RipplesData, new Vector4(ripplesStrength, ripplesPosition * Mathf.PI, 0.0f, 0.0f));
 
 			foreach (var batch in batches)
@@ -910,26 +873,17 @@ namespace SpaceGraphicsToolkit.Ocean
 				properties.SetVectorArray(_SGT_PositionsA, batch.PositionsA);
 				properties.SetVectorArray(_SGT_PositionsB, batch.PositionsB);
 				properties.SetVectorArray(_SGT_PositionsC, batch.PositionsC);
-				properties.SetMatrixArray(_SGT_CoordsX, batch.CoordX);
-				properties.SetMatrixArray(_SGT_CoordsY, batch.CoordY);
-				properties.SetMatrixArray(_SGT_CoordsZ, batch.CoordZ);
-				properties.SetMatrixArray(_SGT_CoordsW, batch.CoordW);
 
-				SgtVolumeCamera.AddDrawMeshInstancedProcedural(GetMesh(), 0, blitMaterial, 2, batch.Count, properties);
+				SgtVolumeCamera.AddDrawMeshInstancedProcedural(GetMesh(), 0, blitMaterial, 0, batch.Count, properties);
 			}
 		}
 
-		private Matrix4x4 GenerateWaterMatrix(Camera finalCamera, float scale, float degrees)
-		{
-			return Matrix4x4.Rotate(Quaternion.Euler(0.0f, 0.0f, degrees)) * Matrix4x4.LookAt(transform.position, finalCamera.transform.position, Vector3.up).inverse * Matrix4x4.Scale(Vector3.one / scale);
-		}
-
-		private float CalculateUnderwaterBrightness(Vector3 worldPoint)
+		private float CalculateUnderwaterBrightness(double3 camNormal)
 		{
 			var brightness = 0.0f;
 			var pivot      = transform.position;
-			var direction  = Vector3.Normalize(worldPoint - pivot);
-			var lights     = LightAndShadow.SgtLight.Find(-1, pivot);
+			var direction  = (float3)camNormal;
+			var lights     = SgtLight.Find(-1, pivot);
 
 			foreach (var light in lights)
 			{
@@ -940,22 +894,12 @@ namespace SpaceGraphicsToolkit.Ocean
 
 				LightAndShadow.SgtLight.Calculate(light, pivot, radius, null, null, ref lightPosition, ref lightDirection, ref lightColor, ref lightIntensity);
 
-				var lightDot = math.smoothstep(0.0f, 1.0f, math.saturate(math.dot(math.normalize(direction), lightDirection) * underwaterLightingSharpness + 0.5f));
+				var lightDot = math.smoothstep(0.0f, 1.0f, math.saturate(math.dot(direction, lightDirection) * underwaterLightingSharpness + 0.5f));
 
 				brightness += lightDot * lightIntensity;
 			}
 
 			return brightness;
-		}
-
-		private float CalculateUnderwaterBrightness()
-		{
-			if (Camera.main != null)
-			{
-				return CalculateUnderwaterBrightness(Camera.main.transform.position);
-			}
-
-			return 1.0f;
 		}
 
 		private Vector3 GetLightDirection()
@@ -1011,6 +955,7 @@ namespace SpaceGraphicsToolkit.Ocean
 			EndError();
 			Draw("radius", "The radius of the ocean.");
 			Draw("detail", "The overall detail of the ocean relative to the camera distance. The higher you set this, the more triangles it will have.");
+			Draw("fluidDensity", "The density of the fluid used for buoyancy in kg/m^3 (seawater = 1025).");
 			Draw("cloudShadow", "If you want cloud shadows to appear on the surface of the ocean, specify them here.");
 
 			Separator();
@@ -1021,7 +966,7 @@ namespace SpaceGraphicsToolkit.Ocean
 				var finalCamera = tgt.Observer != null ? tgt.Observer : Camera.main;
 				if (finalCamera != null)
 				{
-					UnityEditor.EditorGUILayout.FloatField("Camera Altitude", tgt.CalculateWorldAltitude(finalCamera.transform.position));
+					UnityEditor.EditorGUILayout.FloatField("Height Above Water", tgt.CalculateWaves(finalCamera.transform.position).HeightAboveWater);
 				}
 			EndDisabled();
 
@@ -1039,10 +984,15 @@ namespace SpaceGraphicsToolkit.Ocean
 
 			Separator();
 
-			Draw("wavesDisplacement", "The maximum +- height displacement of the waves in world space.");
-			Draw("wavesScale");
-			Draw("wavesSpeed", "The animation speed of the waves.");
+			Draw("wavesAmplitude", "How high the waves can reach in meters.");
+			Draw("wavesSteepness", "How choppy the waves are.");
+			Draw("wavesSpeed", "How fast the waves animate.");
 			Draw("wavesQuality", "The amount of combined wave layers.");
+
+			Separator();
+
+			Draw("windDirection", "The direction of the wind in world space.");
+			Draw("windSpeed", "The speed of the wind in world space.");
 
 			Separator();
 
