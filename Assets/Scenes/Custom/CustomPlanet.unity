@@ -1144,6 +1144,156 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 121898863}
   m_CullTransparentMesh: 1
+--- !u!1001 &145528566
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1850129270}
+    m_Modifications:
+    - target: {fileID: 1549485078128329949, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_Name
+      value: Slider (6)
+      objectReference: {fileID: 0}
+    - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_Value
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_MaxValue
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_MinValue
+      value: 0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1147746591}
+    - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: set_SurfaceDensity
+      objectReference: {fileID: 0}
+    - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: SpaceGraphicsToolkit.Ocean.SgtOcean, SpaceGraphicsToolkit
+      objectReference: {fileID: 0}
+    - target: {fileID: 4473960688220154534, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4473960688220154534, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5753063102097026565, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5753063102097026565, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5753063102097026565, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8261935969503905267, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_text
+      value: Water Density
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.5301
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 170
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -95
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+--- !u!224 &145528567 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
+  m_PrefabInstance: {fileID: 145528566}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &194647008
 GameObject:
   m_ObjectHideFlags: 0
@@ -1294,15 +1444,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_Value
-      value: 2
+      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_MaxValue
-      value: 3
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_MinValue
-      value: 1
+      value: 0.01
       objectReference: {fileID: 0}
     - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
@@ -1310,7 +1460,7 @@ PrefabInstance:
       objectReference: {fileID: 1147746591}
     - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: set_WavesDisplacement
+      value: set_WavesAmplitude
       objectReference: {fileID: 0}
     - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
@@ -1338,7 +1488,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8261935969503905267, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_text
-      value: Waves Displacement
+      value: Waves Height
       objectReference: {fileID: 0}
     - target: {fileID: 8261935969503905267, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_fontSize
@@ -2243,15 +2393,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_Value
-      value: 1
+      value: 0.05
       objectReference: {fileID: 0}
     - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_MaxValue
-      value: 2.5
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_MinValue
-      value: 0.5
+      value: 0.01
       objectReference: {fileID: 0}
     - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_Target
@@ -2259,7 +2409,7 @@ PrefabInstance:
       objectReference: {fileID: 1147746591}
     - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: set_WavesScale
+      value: set_WavesSteepness
       objectReference: {fileID: 0}
     - target: {fileID: 3759484558810963713, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
@@ -2287,7 +2437,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8261935969503905267, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_text
-      value: Waves Scale
+      value: Waves Separation
       objectReference: {fileID: 0}
     - target: {fileID: 8261935969503905267, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_fontSize
@@ -2757,7 +2907,7 @@ MonoBehaviour:
   erodeStrength: 2
   sky: {fileID: 970346961}
   density: 1500
-  resolution: 512
+  resolution: 256
   highPrecision: 1
   color: {r: 0.5411765, g: 0.7019608, b: 0.7607843, a: 1}
   color2: {r: 1, g: 1, b: 1, a: 1}
@@ -3733,6 +3883,7 @@ MonoBehaviour:
   height: 35
   density: 0.3
   cameraOffset: 0.1
+  revealStars: 1
   depthOpaque: 50
   rayleighColor: {r: 0.5411765, g: 0.69803923, b: 0.7607843, a: 1}
   rayleighMultiplier: 30
@@ -4506,7 +4657,8 @@ MonoBehaviour:
   material: {fileID: 2100000, guid: a0c330cf67d0b5a4ea1690c51f4268ba, type: 2}
   sky: {fileID: 970346961}
   radius: 500
-  detail: 1.2
+  detail: 0.01
+  fluidDensity: 1025
   cloudShadow: {fileID: 628214974}
   observer: {fileID: 0}
   cameraOffset: 1
@@ -4516,10 +4668,12 @@ MonoBehaviour:
   surfaceSmoothness: 1
   underwaterLightingSharpness: 5
   underwaterShadowRange: 10
-  wavesDisplacement: 2
-  wavesScale: 1
+  wavesAmplitude: 0.2
+  wavesSteepness: 0.05
   wavesSpeed: 1
   wavesQuality: 3
+  windDirection: {x: 0, y: 0, z: 1}
+  windSpeed: 0
   shoreScale: 1
   shoreSpeed: 0.75
   ripples: 1
@@ -7542,6 +7696,7 @@ RectTransform:
   - {fileID: 1684959900}
   - {fileID: 286416578}
   - {fileID: 1123508042}
+  - {fileID: 145528567}
   - {fileID: 1590335153}
   - {fileID: 1155486490}
   m_Father: {fileID: 1201458792}
@@ -7673,7 +7828,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8261935969503905267, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_text
-      value: Radius
+      value: Water Height
       objectReference: {fileID: 0}
     - target: {fileID: 8809719899274338817, guid: ab3b127358a930a489713d036fba7d1c, type: 3}
       propertyPath: m_Pivot.x
@@ -7811,10 +7966,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d7d01db0775ae154895e45f658b2e500, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  editorDetail: 3.2
+  editorDetail: 1
   initDetail: 0
-  detail: 4
-  boostMultiplier: 1.75
+  detail: 1
+  boostMultiplier: 1
   minimumTriangleSize: 0.01
   lodBudget: 0.001
   lodSteps: 300
