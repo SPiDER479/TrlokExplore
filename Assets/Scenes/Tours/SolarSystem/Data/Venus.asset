@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb344f67ff6b253419e582a2acc4b42b, type: 3}
+  m_Name: Venus
+  m_EditorClassIdentifier: Assembly-CSharp::TourDataSet
+  english: "Next comes Venus, nearly Earth\u2019s twin in size. It has a radius of
+    6,052 kilometers, a mass of 4.87 \xD7 10^24 kilograms, and orbits 108 million
+    kilometers from the Sun. Its thick, toxic atmosphere traps heat, making Venus
+    the hottest planet in our solar system."
+  hindi: "\u0907\u0938\u0915\u0947 \u092C\u093E\u0926 \u0906\u0924\u093E \u0939\u0948
+    \u0936\u0941\u0915\u094D\u0930 \u0917\u094D\u0930\u0939, \u091C\u094B \u0906\u0915\u093E\u0930
+    \u092E\u0947\u0902 \u092A\u0943\u0925\u094D\u0935\u0940 \u0915\u093E \u091C\u0941\u0921\u093C\u0935\u093E\u0901
+    \u092E\u093E\u0928\u093E \u091C\u093E\u0924\u093E \u0939\u0948\u0964 6,052 \u0915\u093F\u0932\u094B\u092E\u0940\u091F\u0930
+    \u0915\u0940 \u0924\u094D\u0930\u093F\u091C\u094D\u092F\u093E, 4.87 \xD7 10^24
+    \u0915\u093F\u0932\u094B\u0917\u094D\u0930\u093E\u092E \u0915\u093E \u0926\u094D\u0930\u0935\u094D\u092F\u092E\u093E\u0928,
+    \u0914\u0930 \u0938\u0942\u0930\u094D\u092F \u0938\u0947 108 \u092E\u093F\u0932\u093F\u092F\u0928
+    \u0915\u093F\u0932\u094B\u092E\u0940\u091F\u0930 \u0915\u0940 \u0926\u0942\u0930\u0940
+    \u092A\u0930 \u0938\u094D\u0925\u093F\u0924 \u092F\u0939 \u0917\u094D\u0930\u0939
+    \u0905\u092A\u0928\u0940 \u0918\u0928\u0940 \u0914\u0930 \u0935\u093F\u0937\u0948\u0932\u0940
+    \u0935\u093E\u092F\u0941\u092E\u0902\u0921\u0932\u0940\u092F \u092A\u0930\u0924
+    \u0915\u0947 \u0915\u093E\u0930\u0923 \u0905\u0924\u094D\u092F\u0902\u0924 \u0917\u0930\u094D\u092E
+    \u0939\u0948\u0964"
+  englishClip: {fileID: 8300000, guid: ddc29a4e48ada654a869a918b49b5240, type: 3}
+  hindiClip: {fileID: 8300000, guid: 2e3bb126a4c837f4b9ae7d4a11a6f289, type: 3}

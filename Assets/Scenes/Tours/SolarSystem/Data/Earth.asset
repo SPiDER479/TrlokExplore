@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb344f67ff6b253419e582a2acc4b42b, type: 3}
+  m_Name: Earth
+  m_EditorClassIdentifier: Assembly-CSharp::TourDataSet
+  english: "Our home, Earth, lies 149.6 million kilometers from the Sun. With a radius
+    of 6,371 kilometers and a mass of 5.97 \xD7 10^24 kilograms, it is the only known
+    planet to support life. Liquid water, a protective atmosphere, and perfect balance
+    make Earth truly unique."
+  hindi: "\u0939\u092E\u093E\u0930\u093E \u0918\u0930, \u092A\u0943\u0925\u094D\u0935\u0940,
+    \u0938\u0942\u0930\u094D\u092F \u0938\u0947 149.6 \u092E\u093F\u0932\u093F\u092F\u0928
+    \u0915\u093F\u0932\u094B\u092E\u0940\u091F\u0930 \u0926\u0942\u0930 \u0938\u094D\u0925\u093F\u0924
+    \u0939\u0948\u0964 6,371 \u0915\u093F\u0932\u094B\u092E\u0940\u091F\u0930 \u0915\u0940
+    \u0924\u094D\u0930\u093F\u091C\u094D\u092F\u093E \u0914\u0930 5.97 \xD7 10^24
+    \u0915\u093F\u0932\u094B\u0917\u094D\u0930\u093E\u092E \u0915\u0947 \u0926\u094D\u0930\u0935\u094D\u092F\u092E\u093E\u0928
+    \u0915\u0947 \u0938\u093E\u0925, \u092F\u0939 \u090F\u0915\u092E\u093E\u0924\u094D\u0930
+    \u091C\u094D\u091E\u093E\u0924 \u0917\u094D\u0930\u0939 \u0939\u0948 \u091C\u0939\u093E\u0901
+    \u091C\u0940\u0935\u0928 \u0938\u0902\u092D\u0935 \u0939\u0948\u0964"
+  englishClip: {fileID: 8300000, guid: 049eb27853a19a641b4085ec44049bb7, type: 3}
+  hindiClip: {fileID: 8300000, guid: b362a05793418cd4ebf7f2e696ee03c9, type: 3}

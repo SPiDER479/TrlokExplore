@@ -1,13 +1,11 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
 
 [System.Serializable] struct TourPlanet
 {
     public GameObject planet;
-    public float scale;
-    public Vector3 startPos;
-    public Vector3 endPos;
-    public float time;
+    public TourDataSet data;
 }
 
 public class TourSolarSystem : MonoBehaviour
@@ -16,10 +14,10 @@ public class TourSolarSystem : MonoBehaviour
     private float elapsedTime, duration;
     private Camera camera;
 
+    [SerializeField] private TMP_Text infoBox;
     [SerializeField] private TourPlanet[] planets;
 
-    private int currentPlanetIndex = -1;
-    private TourPlanet previousPlanet;
+    private int currentPlanetIndex;
     private TourPlanet currentPlanet;
     
     private void Awake()
@@ -30,50 +28,48 @@ public class TourSolarSystem : MonoBehaviour
 
     private IEnumerator Start()
     {
-        camera.transform.position = Vector3.zero;
-
+        if (SceneHandler.Instance.currentLanguage == languages.English) infoBox.font = SceneHandler.Instance.englishFont;
+        else infoBox.font = SceneHandler.Instance.hindiFont;
+        
         while (currentPlanetIndex < planets.Length)
         {
-            if (currentPlanetIndex != -1) previousPlanet = currentPlanet;
-            currentPlanet = planets[++currentPlanetIndex];
-            
-            currentPlanet.planet.SetActive(true);
-            currentPlanet.planet.transform.position = currentPlanet.startPos;
-            currentPlanet.planet.transform.localScale = Vector3.zero;
+            currentPlanet = planets[currentPlanetIndex++];
+
+            AudioClip clip; string text;
+            if (SceneHandler.Instance.currentLanguage == languages.English)
+            {
+                clip = currentPlanet.data.englishClip;
+                text = currentPlanet.data.english;
+            }
+            else
+            {
+                clip = currentPlanet.data.hindiClip;
+                text = currentPlanet.data.hindi;
+            }
+
+            Vector3 cameraPos = camera.transform.position;
             
             SetElapsedAndDuration(1);
             while (elapsedTime < duration)
             {
-                currentPlanet.planet.transform.localScale = Vector3.Lerp(Vector3.zero, currentPlanet.scale * Vector3.one, elapsedTime / duration);
-                if (currentPlanetIndex != 0) previousPlanet.planet.transform.localScale = Vector3.Lerp(previousPlanet.scale * Vector3.one, Vector3.zero, elapsedTime / duration);
-            
+                camera.transform.position = Vector3.Lerp(cameraPos, new Vector3(currentPlanet.planet.transform.position.x, 0, currentPlanet.planet.transform.localScale.x * 2), elapsedTime / duration);
+                
                 elapsedTime += Time.deltaTime;
                 yield return null;
             }
             
-            if (currentPlanetIndex != 0) previousPlanet.planet.SetActive(false);
-            if (currentPlanetIndex == 0) audioSource.Play();
+            audioSource.PlayOneShot(clip);
+            infoBox.text = text;
             
-            SetElapsedAndDuration(currentPlanet.time / 2);
+            SetElapsedAndDuration(clip.length);
             while (elapsedTime < duration)
             {
-                currentPlanet.planet.transform.position = Vector3.Lerp(currentPlanet.startPos, currentPlanet.endPos, elapsedTime / duration);
-
-                elapsedTime += Time.deltaTime;
-                yield return null;
-            }
+                camera.transform.RotateAround(currentPlanet.planet.transform.position, Vector3.up, (360f / duration) * Time.deltaTime);
             
-            SetElapsedAndDuration(currentPlanet.time / 2);
-            while (elapsedTime < duration)
-            {
-                currentPlanet.planet.transform.position = Vector3.Lerp(currentPlanet.endPos, currentPlanet.startPos, elapsedTime / duration);
-
                 elapsedTime += Time.deltaTime;
                 yield return null;
             }
         }
-        
-        currentPlanet.planet.SetActive(false);
         
         yield return null;
     }

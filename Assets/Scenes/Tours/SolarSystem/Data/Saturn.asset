@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb344f67ff6b253419e582a2acc4b42b, type: 3}
+  m_Name: Saturn
+  m_EditorClassIdentifier: Assembly-CSharp::TourDataSet
+  english: "Surrounded by dazzling rings is Saturn.\nIt has a radius of 58,232 kilometers,
+    a mass of 5.68 \xD7 10^26 kilograms, and orbits 1.43 billion kilometers from
+    the Sun. Saturn\u2019s beauty hides violent winds and crushing pressure beneath
+    its clouds."
+  hindi: "\u092D\u0935\u094D\u092F \u0914\u0930 \u091A\u092E\u0915\u0926\u093E\u0930
+    \u091B\u0932\u094D\u0932\u094B\u0902 \u0938\u0947 \u0918\u093F\u0930\u093E \u0939\u0941\u0906
+    \u0939\u0948 \u0936\u0928\u093F \u0917\u094D\u0930\u0939\u0964 58,232 \u0915\u093F\u0932\u094B\u092E\u0940\u091F\u0930
+    \u0915\u0940 \u0924\u094D\u0930\u093F\u091C\u094D\u092F\u093E, 5.68 \xD7 10^26
+    \u0915\u093F\u0932\u094B\u0917\u094D\u0930\u093E\u092E \u0915\u093E \u0926\u094D\u0930\u0935\u094D\u092F\u092E\u093E\u0928,
+    \u0914\u0930 \u0938\u0942\u0930\u094D\u092F \u0938\u0947 1.43 \u0905\u0930\u092C
+    \u0915\u093F\u0932\u094B\u092E\u0940\u091F\u0930 \u0915\u0940 \u0926\u0942\u0930\u0940
+    \u092A\u0930 \u0938\u094D\u0925\u093F\u0924 \u092F\u0939 \u0917\u094D\u0930\u0939
+    \u0905\u092A\u0928\u0940 \u0938\u0941\u0902\u0926\u0930\u0924\u093E \u0915\u0947
+    \u0932\u093F\u090F \u092A\u094D\u0930\u0938\u093F\u0926\u094D\u0927 \u0939\u0948\u0964"
+  englishClip: {fileID: 8300000, guid: 49bded66b7a22934f923cddcff2721b4, type: 3}
+  hindiClip: {fileID: 8300000, guid: 4cbe9543cb4a1af4683893c9a9a46d76, type: 3}

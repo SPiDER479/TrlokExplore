@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb344f67ff6b253419e582a2acc4b42b, type: 3}
+  m_Name: Sun
+  m_EditorClassIdentifier: Assembly-CSharp::TourDataSet
+  english: "In the vast darkness of space, at the center of our cosmic neighborhood,
+    burns the Sun \u2014 a colossal star with a radius of 696,340 kilometers and
+    a mass of 1.989 \xD7 10^30 kilograms.\nIt is the source of light, heat, and gravity,
+    holding every planet in its eternal embrace."
+  hindi: "\u0905\u0902\u0924\u0930\u093F\u0915\u094D\u0937 \u0915\u0947 \u0905\u0938\u0940\u092E
+    \u0905\u0902\u0927\u0915\u093E\u0930 \u092E\u0947\u0902, \u0939\u092E\u093E\u0930\u0947
+    \u092C\u094D\u0930\u0939\u094D\u092E\u093E\u0902\u0921\u0940\u092F \u092A\u0921\u093C\u094B\u0938
+    \u0915\u0947 \u0915\u0947\u0902\u0926\u094D\u0930 \u092E\u0947\u0902, \u0938\u0942\u0930\u094D\u092F
+    \u092A\u094D\u0930\u091C\u094D\u0935\u0932\u093F\u0924 \u0939\u0948\u0964 696,340
+    \u0915\u093F\u0932\u094B\u092E\u0940\u091F\u0930 \u0915\u0940 \u0924\u094D\u0930\u093F\u091C\u094D\u092F\u093E
+    \u0914\u0930 1.989 \xD7 10^30 \u0915\u093F\u0932\u094B\u0917\u094D\u0930\u093E\u092E
+    \u0915\u0947 \u0926\u094D\u0930\u0935\u094D\u092F\u092E\u093E\u0928 \u0915\u0947
+    \u0938\u093E\u0925, \u092F\u0939 \u0905\u092A\u0928\u0947 \u0917\u0941\u0930\u0941\u0924\u094D\u0935\u093E\u0915\u0930\u094D\u0937\u0923
+    \u0938\u0947 \u092A\u0942\u0930\u0947 \u0938\u094C\u0930\u092E\u0902\u0921\u0932
+    \u0915\u094B \u090F\u0915 \u0938\u093E\u0925 \u092C\u093E\u0901\u0927\u0947 \u0930\u0916\u0924\u093E
+    \u0939\u0948\u0964"
+  englishClip: {fileID: 8300000, guid: 00df735c1203b9c48b630b444fea4c86, type: 3}
+  hindiClip: {fileID: 8300000, guid: 295fb0c13f52d5b40837e11006937cac, type: 3}

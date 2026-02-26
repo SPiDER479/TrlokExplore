@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb344f67ff6b253419e582a2acc4b42b, type: 3}
+  m_Name: Uranus
+  m_EditorClassIdentifier: Assembly-CSharp::TourDataSet
+  english: "Beyond Saturn drifts Uranus, tilted on its side.\nWith a radius of 25,362
+    kilometers, a mass of 8.68 \xD7 10^25 kilograms, and a distance of 2.87 billion
+    kilometers, it rotates unlike any other planet. Its icy atmosphere glows faintly
+    blue under distant sunlight."
+  hindi: "\u0936\u0928\u093F \u0915\u0947 \u0906\u0917\u0947 \u0938\u094D\u0925\u093F\u0924
+    \u0939\u0948 \u0905\u0930\u0941\u0923 \u0917\u094D\u0930\u0939, \u091C\u094B
+    \u0905\u092A\u0928\u0940 \u0927\u0941\u0930\u0940 \u092A\u0930 \u0932\u0917\u092D\u0917
+    \u0932\u0947\u091F\u093E \u0939\u0941\u0906 \u0918\u0942\u092E\u0924\u093E \u0939\u0948\u0964
+    25,362 \u0915\u093F\u0932\u094B\u092E\u0940\u091F\u0930 \u0915\u0940 \u0924\u094D\u0930\u093F\u091C\u094D\u092F\u093E,
+    8.68 \xD7 10^25 \u0915\u093F\u0932\u094B\u0917\u094D\u0930\u093E\u092E \u0915\u093E
+    \u0926\u094D\u0930\u0935\u094D\u092F\u092E\u093E\u0928, \u0914\u0930 \u0938\u0942\u0930\u094D\u092F
+    \u0938\u0947 2.87 \u0905\u0930\u092C \u0915\u093F\u0932\u094B\u092E\u0940\u091F\u0930
+    \u0915\u0940 \u0926\u0942\u0930\u0940\n\u092A\u0930 \u0938\u094D\u0925\u093F\u0924
+    \u092F\u0939 \u0917\u094D\u0930\u0939 \u0905\u092A\u0928\u0940 \u0920\u0902\u0921\u0940
+    \u0928\u0940\u0932\u0940 \u0906\u092D\u093E \u0915\u0947 \u0932\u093F\u090F \u091C\u093E\u0928\u093E
+    \u091C\u093E\u0924\u093E \u0939\u0948\u0964"
+  englishClip: {fileID: 8300000, guid: 6e1d868b49ea2d74cbe89ba1f5e07f9e, type: 3}
+  hindiClip: {fileID: 8300000, guid: b0035909d11bd444fa8ed18350654684, type: 3}

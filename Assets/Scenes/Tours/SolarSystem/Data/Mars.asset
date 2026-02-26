@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb344f67ff6b253419e582a2acc4b42b, type: 3}
+  m_Name: Mars
+  m_EditorClassIdentifier: Assembly-CSharp::TourDataSet
+  english: "Beyond Earth is Mars, the Red Planet. Mars has a radius of 3,390 kilometers,
+    a mass of 6.42 \xD7 10^23 kilograms, and orbits 227.9 million kilometers from
+    the Sun. Once rich with water, Mars now stands cold and dusty, yet full of mystery."
+  hindi: "\u092A\u0943\u0925\u094D\u0935\u0940 \u0915\u0947 \u0906\u0917\u0947 \u0938\u094D\u0925\u093F\u0924
+    \u0939\u0948 \u092E\u0902\u0917\u0932, \u091C\u093F\u0938\u0947 \u0932\u093E\u0932
+    \u0917\u094D\u0930\u0939 \u0915\u0947 \u0928\u093E\u092E \u0938\u0947 \u091C\u093E\u0928\u093E
+    \u091C\u093E\u0924\u093E \u0939\u0948\u0964 3,390 \u0915\u093F\u0932\u094B\u092E\u0940\u091F\u0930
+    \u0915\u0940 \u0924\u094D\u0930\u093F\u091C\u094D\u092F\u093E, 6.42 \xD7 10^23
+    \u0915\u093F\u0932\u094B\u0917\u094D\u0930\u093E\u092E \u0915\u093E \u0926\u094D\u0930\u0935\u094D\u092F\u092E\u093E\u0928,
+    \u0914\u0930 \u0938\u0942\u0930\u094D\u092F \u0938\u0947 227.9 \u092E\u093F\u0932\u093F\u092F\u0928
+    \u0915\u093F\u0932\u094B\u092E\u0940\u091F\u0930 \u0915\u0940 \u0926\u0942\u0930\u0940
+    \u092A\u0930 \u0938\u094D\u0925\u093F\u0924 \u092F\u0939 \u0917\u094D\u0930\u0939
+    \u0915\u092D\u0940 \u091C\u0932 \u0938\u0947 \u0938\u092E\u0943\u0926\u094D\u0927
+    \u0930\u0939\u093E \u0939\u094B\u0917\u093E\u0964"
+  englishClip: {fileID: 8300000, guid: 25cd7a262c3cae14d9b1e77e2f6b1253, type: 3}
+  hindiClip: {fileID: 8300000, guid: c2b53efa610b3094db08a9ccc5ba4a4e, type: 3}
