@@ -12,8 +12,20 @@ EditorBuildSettings:
     path: Assets/Scenes/Solar System/Solar System.unity
     guid: 30eb3bc2a9a094e4a85d36fc5ea1b061
   - enabled: 1
+    path: Assets/Scenes/Jupiter/Jupiter.unity
+    guid: 4485210caa8584140b25e2ebf47b101d
+  - enabled: 1
+    path: Assets/Scenes/Earth/Earth.unity
+    guid: 9f78be6d6d37e254794863f51bc1e10b
+  - enabled: 1
     path: Assets/Scenes/Tours/SolarSystem/Solar System Tour.unity
     guid: c3b14e2cc39c377449776edbb4692f25
+  - enabled: 1
+    path: Assets/Scenes/Custom/CustomPlanet.unity
+    guid: 15a33e4d161ff624ca60dc6a639d1346
+  - enabled: 1
+    path: Assets/Scenes/AI/AI.unity
+    guid: 3ec4d61179fed834e9fb317228e3f311
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
     com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 28e6e4f87fb667346b724909e8439ca6, type: 2}
