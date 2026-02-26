@@ -30,16 +30,12 @@ public class TourSolarSystem : MonoBehaviour
 
     private IEnumerator Start()
     {
-        audioSource.clip = TourManager.Instance.GetAudio();
         camera.transform.position = Vector3.zero;
 
         while (currentPlanetIndex < planets.Length)
         {
             if (currentPlanetIndex != -1) previousPlanet = currentPlanet;
             currentPlanet = planets[++currentPlanetIndex];
-
-            if (TourManager.Instance.language == languages.Hindi) currentPlanet.time *= 0.922f;
-            if (TourManager.Instance.language == languages.Hindi && currentPlanetIndex == 5) currentPlanet.time -= 2.1f;
             
             currentPlanet.planet.SetActive(true);
             currentPlanet.planet.transform.position = currentPlanet.startPos;

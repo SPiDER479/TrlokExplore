@@ -12,8 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80a61b1a5515f7942a36443b51b7124d, type: 3}
   m_Name: Sun
   m_EditorClassIdentifier: Assembly-CSharp::DataSet
-  data: 'Sun
-
-    Radius: 696,340 km
-
-    Mass: 1.989 x 10^30 kg'
+  english: Sun
+  hindi: "\u0932\u094B\u092E"

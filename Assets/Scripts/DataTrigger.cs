@@ -20,8 +20,16 @@ public class DataTrigger : MonoBehaviour
         if (other.CompareTag("DataUITrigger"))
         {
             StopAllCoroutines();
-            if (SceneHandler.currentLanguage == languages.English) text.text = other.GetComponent<DataContainer>().dataSet.english;
-            else if (SceneHandler.currentLanguage == languages.Hindi) text.text = other.GetComponent<DataContainer>().dataSet.hindi;
+            if (SceneHandler.Instance.currentLanguage == languages.English)
+            {
+                text.font = SceneHandler.Instance.englishFont;
+                text.text = other.GetComponent<DataContainer>().dataSet.english;
+            }
+            else if (SceneHandler.Instance.currentLanguage == languages.Hindi)
+            {
+                text.font = SceneHandler.Instance.hindiFont;
+                text.text = other.GetComponent<DataContainer>().dataSet.hindi;
+            }
             StartCoroutine(AnimateOpen());
         }
     }

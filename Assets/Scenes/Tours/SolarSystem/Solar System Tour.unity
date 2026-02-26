@@ -2156,7 +2156,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1382897148}
-  - component: {fileID: 1382897147}
   - component: {fileID: 1382897150}
   - component: {fileID: 1382897149}
   - component: {fileID: 1382897151}
@@ -2167,21 +2166,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1382897147
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1382897146}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 76673fdb260fd2440af2f941c13e9b74, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TourManager
-  language: 0
-  englishClip: {fileID: 8300000, guid: 92250a78ee5a46c44a1ebd9b15e334a3, type: 3}
-  hindiClip: {fileID: 8300000, guid: 1ec6625c261d1af4f822886371a7ad2b, type: 3}
 --- !u!4 &1382897148
 Transform:
   m_ObjectHideFlags: 0
