@@ -2179,7 +2179,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76673fdb260fd2440af2f941c13e9b74, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TourManager
-  language: 1
+  language: 0
   englishClip: {fileID: 8300000, guid: 92250a78ee5a46c44a1ebd9b15e334a3, type: 3}
   hindiClip: {fileID: 8300000, guid: 1ec6625c261d1af4f822886371a7ad2b, type: 3}
 --- !u!4 &1382897148
