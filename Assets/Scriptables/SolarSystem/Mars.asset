@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80a61b1a5515f7942a36443b51b7124d, type: 3}
   m_Name: Mars
   m_EditorClassIdentifier: Assembly-CSharp::DataSet
-  data: 'Mars
+  english: 'Mars
 
-    Radius: 3,390 km
+    Radius: 3,389.5 km
 
-    Mass: 6.42 x 10^23 kg
-
-    Distance from
-    Sun: 1.524 AU'
+    Distance from Sun: 1.52 AU'
+  hindi: "\u092E\u0902\u0917\u0932\n\u0924\u094D\u0930\u093F\u091C\u094D\u092F\u093E:
+    3,389.5 \u0915\u093F\u092E\u0940\n\u0938\u0942\u0930\u094D\u092F \u0938\u0947
+    \u0926\u0942\u0930\u0940: 1.52 AU"

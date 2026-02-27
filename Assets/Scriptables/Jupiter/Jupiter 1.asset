@@ -12,5 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80a61b1a5515f7942a36443b51b7124d, type: 3}
   m_Name: Jupiter 1
   m_EditorClassIdentifier: Assembly-CSharp::DataSet
-  data: "Atmosphere / cloud tops \u2013 Made mostly of hydrogen and helium, with
-    colorful bands and massive storms like the Great Red Spot."
+  english: Jupiter is the largest planet in the Solar System.
+  hindi: "\u092C\u0943\u0939\u0938\u094D\u092A\u0924\u093F \u0938\u094C\u0930\u092E\u0902\u0921\u0932
+    \u0915\u093E \u0938\u092C\u0938\u0947 \u092C\u0921\u093C\u093E \u0917\u094D\u0930\u0939
+    \u0939\u0948\u0964"

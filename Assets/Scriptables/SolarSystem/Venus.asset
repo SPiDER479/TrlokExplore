@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80a61b1a5515f7942a36443b51b7124d, type: 3}
   m_Name: Venus
   m_EditorClassIdentifier: Assembly-CSharp::DataSet
-  data: 'Venus
+  english: 'Venus
 
-    Radius: 6,052 km
+    Radius: 6,051.8 km
 
-    Mass: 4.87 x 10^24 kg
-
-    Distance from
-    Sun: 0.723 AU'
+    Distance from Sun: 0.72 AU'
+  hindi: "\u0936\u0941\u0915\u094D\u0930\n\u0924\u094D\u0930\u093F\u091C\u094D\u092F\u093E:
+    6,051.8 \u0915\u093F\u092E\u0940\n\u0938\u0942\u0930\u094D\u092F \u0938\u0947
+    \u0926\u0942\u0930\u0940: 0.72 AU"
