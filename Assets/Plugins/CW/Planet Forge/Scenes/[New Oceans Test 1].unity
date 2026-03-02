@@ -173,6 +173,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb29617235f418b4ba7efe3be06da1ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  linearDragMultiplier: 1
+  angularDragMultiplier: 1
 --- !u!114 &108100149
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -661,6 +663,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb29617235f418b4ba7efe3be06da1ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  linearDragMultiplier: 1
+  angularDragMultiplier: 1
 --- !u!114 &582900731
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -933,6 +937,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb29617235f418b4ba7efe3be06da1ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  linearDragMultiplier: 1
+  angularDragMultiplier: 1
 --- !u!114 &1032984882
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1395,6 +1401,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb29617235f418b4ba7efe3be06da1ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  linearDragMultiplier: 1
+  angularDragMultiplier: 1
 --- !u!114 &1390870242
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1566,6 +1574,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mass: 5.972e+24
+  drag: 1
+  angularDrag: 0.1
+  radius: 0
+  height: 0
 --- !u!1 &1544256904
 GameObject:
   m_ObjectHideFlags: 0
@@ -1599,6 +1611,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 418311003}
+  - {fileID: 2039215041}
   m_Father: {fileID: 1394280287}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: -4.66, z: 0}
@@ -1684,6 +1697,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mass: 1e+12
+  drag: 1
+  angularDrag: 0.1
+  radius: 0
+  height: 0
 --- !u!1 &1661238309
 GameObject:
   m_ObjectHideFlags: 0
@@ -1734,6 +1751,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb29617235f418b4ba7efe3be06da1ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  linearDragMultiplier: 1
+  angularDragMultiplier: 1
 --- !u!114 &1661238312
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2112,3 +2131,75 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1993592091}
   m_Mesh: {fileID: 0}
+--- !u!1 &2039215040
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2039215041}
+  - component: {fileID: 2039215042}
+  m_Layer: 0
+  m_Name: SgtLandscapeStaticSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2039215041
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2039215040}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1544256905}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2039215042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2039215040}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab48e9d6d1ffea54b990c231c3693ebd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maskTex: {fileID: 0}
+  invertMask: 0
+  tileSize: 30
+  range: 150
+  density: 0.1
+  seed: 0
+  scaleMin: 1
+  scaleMax: 1.1
+  rotate: 1
+  offset: -1
+  useMinHeight: 1
+  minHeight: 0
+  minHeightFalloff: 0
+  useMaxHeight: 0
+  maxHeight: 0
+  maxHeightFalloff: 0
+  useMinSlope: 0
+  minSlope: 0
+  minSlopeFalloff: 5
+  useMaxSlope: 0
+  maxSlope: 90
+  maxSlopeFalloff: 5
+  staticMesh: {fileID: 4300000, guid: 3cb71cb1b98a2a44e95c5668dbc3501e, type: 2}
+  staticMaterial: {fileID: 2100000, guid: 46a127cb28f08d04dafe7aaab94a61b2, type: 2}
+  swapPrefab: {fileID: 795569111854965380, guid: ba915bfdb6bc21142aeabe42e407417d,
+    type: 3}
+  swapRange: 10
+  swapFalloff: 2

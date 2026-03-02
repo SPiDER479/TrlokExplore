@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 7b1f4deadb420fc42907a45174b71e58
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.16
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Landscape/Required/Shaders/SGT_LandscapeStaticDual.asset
+  uploadId: 870778

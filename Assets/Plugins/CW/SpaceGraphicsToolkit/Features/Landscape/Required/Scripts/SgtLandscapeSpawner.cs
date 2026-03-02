@@ -82,6 +82,8 @@ namespace SpaceGraphicsToolkit.Landscape
 
 		[System.NonSerialized] private double surfaceHeight;
 
+		[System.NonSerialized] private Vector3 currentObserverWorldPosition;
+
 		public struct Tile : System.IEquatable<Tile>
 		{
 			public long    u, v;
@@ -269,9 +271,9 @@ namespace SpaceGraphicsToolkit.Landscape
 					for (var s = 0; s < tile.tripletCount; s++)
 					{
 						var globalIdx   = tile.tripletIndex + s * 3;
-						var p0          = (float3)GetPosition(globalIdx + 0);
-						var p1          = (float3)GetPosition(globalIdx + 1);
-						var p2          = (float3)GetPosition(globalIdx + 2);
+						var p0          = GetPosition(globalIdx + 0);
+						var p1          = GetPosition(globalIdx + 1);
+						var p2          = GetPosition(globalIdx + 2);
 						var height      = (float)InputHeights[globalIdx];
 						var uv          = InputDataA[globalIdx].xy;
 						var rng         = new RNG(math.hash(p0) + Seed);
@@ -291,8 +293,8 @@ namespace SpaceGraphicsToolkit.Landscape
 						var sMinP = math.saturate((slope - MinSlope) / math.max(MinSlopeFalloff, 0.0001f));
 						var sMaxP = math.saturate((MaxSlope - slope) / math.max(MaxSlopeFalloff, 0.0001f));
 
-						probability *= math.lerp(1.0f, sMinP, UseMinSlope);
-						probability *= math.lerp(1.0f, sMaxP, UseMaxSlope);
+						probability *= math.lerp(1.0f, (float)sMinP, UseMinSlope);
+						probability *= math.lerp(1.0f, (float)sMaxP, UseMaxSlope);
 
 						if (probability < rng.NextFloat()) continue;
 
@@ -303,10 +305,10 @@ namespace SpaceGraphicsToolkit.Landscape
 						{
 							case RotateType.Randomly:          rot = rng.NextQuaternionRotation(); break;
 							case RotateType.ToLandscapeCenter: rot = math.mul(FromToRotation(new float3(0,1,0), upDir), spin); break;
-							case RotateType.ToSurfaceNormal:   rot = math.mul(FromToRotation(new float3(0,1,0), norm), spin); break;
+							case RotateType.ToSurfaceNormal:   rot = math.mul(FromToRotation(new float3(0,-1,0), (float3)norm), spin); break;
 						}
 
-						OutPositions.Add(p0 + math.rotate(rot, new float3(0, Offset, 0)));
+						OutPositions.Add((float3)p0 + math.rotate(rot, new float3(0, Offset, 0)));
 						OutRotations.Add(rot);
 						OutScales.Add(new float3(rng.NextFloat(ScaleMin, ScaleMax)));
 		
@@ -462,7 +464,9 @@ namespace SpaceGraphicsToolkit.Landscape
 
 		protected virtual void Update()
 		{
-			// 1. Check Grid Status
+			var observerExists = parent != null && parent.TryGetFirstObserverWorldPosition(ref currentObserverWorldPosition);
+
+			// Update tiles
 			if (gridRunning)
 			{
 				if (!gridHandle.IsCompleted) return;
@@ -478,6 +482,7 @@ namespace SpaceGraphicsToolkit.Landscape
 				return;
 			}
 
+			// Update spawning
 			if (spawnRunning)
 			{
 				if (!spawnHandle.IsCompleted) return;
@@ -499,14 +504,14 @@ namespace SpaceGraphicsToolkit.Landscape
 				return;
 			}
 
-			// 3. Start new cycle if camera exists
-			var cam = Camera.main;
-			if (cam == null) return;
-
-			StartGridPipeline(cam);
+			// Start new search for tiles?
+			if (observerExists == true)
+			{
+				StartGridPipeline(currentObserverWorldPosition);
+			}
 		}
 
-		private void StartGridPipeline(Camera cam)
+		private void StartGridPipeline(Vector3 observerWorldPosition)
 		{
 			var job = new GridJob
 			{
@@ -514,7 +519,7 @@ namespace SpaceGraphicsToolkit.Landscape
 				added         = addedTiles,
 				removed       = removedTiles,
 				spawnPoints   = spawnPoints,
-				camWorld      = new double3(cam.transform.position),
+				camWorld      = new double3(observerWorldPosition),
 				surfaceHeight = surfaceHeight,
 				worldToLocal  = new double4x4(transform.worldToLocalMatrix),
 				localToWorld  = new double4x4(transform.localToWorldMatrix),

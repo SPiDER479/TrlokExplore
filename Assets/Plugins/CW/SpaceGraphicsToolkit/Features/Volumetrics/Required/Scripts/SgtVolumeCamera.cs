@@ -100,7 +100,9 @@ namespace SpaceGraphicsToolkit.Volumetrics
 				customDepthPass = (CustomDepthPass)customPassVolume.AddPassOfType<CustomDepthPass>();
 			}
 
-			customPassVolume.enabled = true;
+			customPassVolume.enabled      = true;
+			customPassVolume.isGlobal     = false;
+			customPassVolume.targetCamera = GetComponent<Camera>();
 
 			customDepthPass.parent = this;
 

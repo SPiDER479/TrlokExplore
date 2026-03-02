@@ -916,6 +916,29 @@ namespace SpaceGraphicsToolkit.Landscape
 			}
 		}
 
+		public bool TryGetFirstObserverWorldPosition(ref Vector3 worldPosition)
+		{
+			if (observers != null)
+			{
+				foreach (var observer in observers)
+				{
+					if (observer != null)
+					{
+						worldPosition = observer.position; return true;
+					}
+				}
+			}
+
+			var mainCamera = Camera.main;
+
+			if (mainCamera != null)
+			{
+				worldPosition = mainCamera.transform.position; return true;
+			}
+
+			return false;
+		}
+
 		private void UpdateCameraPositions()
 		{
 			cameraPositions.Clear();

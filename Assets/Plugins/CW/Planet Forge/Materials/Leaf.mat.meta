@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 0cd1e87a23cc5f14ab80b1566446e34f
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.16
+  assetPath: Assets/Plugins/CW/Planet Forge/Materials/Leaf.mat
+  uploadId: 870778

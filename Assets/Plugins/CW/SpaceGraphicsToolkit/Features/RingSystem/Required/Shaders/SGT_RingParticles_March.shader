@@ -592,6 +592,15 @@ float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
 	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
 }
 
+float3 SSS_UnpackNormalScale(float4 c, float s)
+{
+	#if _SSS_BIRP
+		return UnpackScaleNormal(c, s);
+	#else
+		return UnpackNormalScale(c, s);
+	#endif
+}
+
 struct SSS_VertexData
 {
 	float  instanceID;
@@ -1943,6 +1952,15 @@ float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
 	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
 }
 
+float3 SSS_UnpackNormalScale(float4 c, float s)
+{
+	#if _SSS_BIRP
+		return UnpackScaleNormal(c, s);
+	#else
+		return UnpackNormalScale(c, s);
+	#endif
+}
+
 struct SSS_VertexData
 {
 	float  instanceID;
@@ -3203,6 +3221,15 @@ float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
 	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
 }
 
+float3 SSS_UnpackNormalScale(float4 c, float s)
+{
+	#if _SSS_BIRP
+		return UnpackScaleNormal(c, s);
+	#else
+		return UnpackNormalScale(c, s);
+	#endif
+}
+
 struct SSS_VertexData
 {
 	float  instanceID;
@@ -4444,6 +4471,15 @@ float3 SSS_GetSceneWorldPosition(float2 screenUV, float sceneDepth)
 float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
 {
 	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
+}
+
+float3 SSS_UnpackNormalScale(float4 c, float s)
+{
+	#if _SSS_BIRP
+		return UnpackScaleNormal(c, s);
+	#else
+		return UnpackNormalScale(c, s);
+	#endif
 }
 
 struct SSS_VertexData
@@ -5692,6 +5728,15 @@ float3 SSS_GetSceneWorldPosition(float2 screenUV, float sceneDepth)
 float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
 {
 	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
+}
+
+float3 SSS_UnpackNormalScale(float4 c, float s)
+{
+	#if _SSS_BIRP
+		return UnpackScaleNormal(c, s);
+	#else
+		return UnpackNormalScale(c, s);
+	#endif
 }
 
 struct SSS_VertexData
@@ -6951,6 +6996,15 @@ float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
 	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
 }
 
+float3 SSS_UnpackNormalScale(float4 c, float s)
+{
+	#if _SSS_BIRP
+		return UnpackScaleNormal(c, s);
+	#else
+		return UnpackNormalScale(c, s);
+	#endif
+}
+
 struct SSS_VertexData
 {
 	float  instanceID;
@@ -8200,6 +8254,15 @@ float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
 	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
 }
 
+float3 SSS_UnpackNormalScale(float4 c, float s)
+{
+	#if _SSS_BIRP
+		return UnpackScaleNormal(c, s);
+	#else
+		return UnpackNormalScale(c, s);
+	#endif
+}
+
 struct SSS_VertexData
 {
 	float  instanceID;
@@ -9443,6 +9506,15 @@ float3 SSS_GetSceneWorldPosition(float2 screenUV, float sceneDepth)
 float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
 {
 	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
+}
+
+float3 SSS_UnpackNormalScale(float4 c, float s)
+{
+	#if _SSS_BIRP
+		return UnpackScaleNormal(c, s);
+	#else
+		return UnpackNormalScale(c, s);
+	#endif
 }
 
 struct SSS_VertexData
@@ -10690,6 +10762,15 @@ float3 SSS_GetSceneWorldPosition(float2 screenUV, float sceneDepth)
 float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
 {
 	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
+}
+
+float3 SSS_UnpackNormalScale(float4 c, float s)
+{
+	#if _SSS_BIRP
+		return UnpackScaleNormal(c, s);
+	#else
+		return UnpackNormalScale(c, s);
+	#endif
 }
 
 struct SSS_VertexData
@@ -12012,6 +12093,15 @@ float3 SSS_GetSceneWorldPosition(float2 screenUV, float sceneDepth)
 float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
 {
 	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
+}
+
+float3 SSS_UnpackNormalScale(float4 c, float s)
+{
+	#if _SSS_BIRP
+		return UnpackScaleNormal(c, s);
+	#else
+		return UnpackNormalScale(c, s);
+	#endif
 }
 
 struct SSS_VertexData
@@ -13375,6 +13465,15 @@ float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
 	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
 }
 
+float3 SSS_UnpackNormalScale(float4 c, float s)
+{
+	#if _SSS_BIRP
+		return UnpackScaleNormal(c, s);
+	#else
+		return UnpackNormalScale(c, s);
+	#endif
+}
+
 struct SSS_VertexData
 {
 	float  instanceID;
@@ -14735,6 +14834,15 @@ float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
 	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
 }
 
+float3 SSS_UnpackNormalScale(float4 c, float s)
+{
+	#if _SSS_BIRP
+		return UnpackScaleNormal(c, s);
+	#else
+		return UnpackNormalScale(c, s);
+	#endif
+}
+
 struct SSS_VertexData
 {
 	float  instanceID;
@@ -16055,6 +16163,15 @@ float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
 	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
 }
 
+float3 SSS_UnpackNormalScale(float4 c, float s)
+{
+	#if _SSS_BIRP
+		return UnpackScaleNormal(c, s);
+	#else
+		return UnpackNormalScale(c, s);
+	#endif
+}
+
 struct SSS_VertexData
 {
 	float  instanceID;
@@ -17356,6 +17473,15 @@ float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
 	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
 }
 
+float3 SSS_UnpackNormalScale(float4 c, float s)
+{
+	#if _SSS_BIRP
+		return UnpackScaleNormal(c, s);
+	#else
+		return UnpackNormalScale(c, s);
+	#endif
+}
+
 struct SSS_VertexData
 {
 	float  instanceID;
@@ -18650,6 +18776,15 @@ float3 SSS_GetSceneWorldPosition(float2 screenUV, float sceneDepth)
 float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
 {
 	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
+}
+
+float3 SSS_UnpackNormalScale(float4 c, float s)
+{
+	#if _SSS_BIRP
+		return UnpackScaleNormal(c, s);
+	#else
+		return UnpackNormalScale(c, s);
+	#endif
 }
 
 struct SSS_VertexData
@@ -19954,6 +20089,15 @@ float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
 	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
 }
 
+float3 SSS_UnpackNormalScale(float4 c, float s)
+{
+	#if _SSS_BIRP
+		return UnpackScaleNormal(c, s);
+	#else
+		return UnpackNormalScale(c, s);
+	#endif
+}
+
 struct SSS_VertexData
 {
 	float  instanceID;
@@ -21250,6 +21394,15 @@ float3 SSS_GetSceneWorldPosition(float2 screenUV, float sceneDepth)
 float SSS_GetSceneWorldDistance(float2 screenUV, float sceneDepth)
 {
 	return distance(_WorldSpaceCameraPos, SSS_GetSceneWorldPosition(screenUV, sceneDepth));
+}
+
+float3 SSS_UnpackNormalScale(float4 c, float s)
+{
+	#if _SSS_BIRP
+		return UnpackScaleNormal(c, s);
+	#else
+		return UnpackNormalScale(c, s);
+	#endif
 }
 
 struct SSS_VertexData

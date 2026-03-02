@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d39486d8c1f717e4d84e0baea98c44c7
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.16
+  assetPath: Assets/Plugins/CW/Planet Forge/Materials/Bark.mat
+  uploadId: 870778

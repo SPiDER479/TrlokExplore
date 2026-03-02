@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 045b72d54f5cdd946807dee7b4eaad7c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 4300000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.16
+  assetPath: Assets/Plugins/CW/Planet Forge/Prefabs/PineTree1/PineTree1_Bark.asset
+  uploadId: 870778

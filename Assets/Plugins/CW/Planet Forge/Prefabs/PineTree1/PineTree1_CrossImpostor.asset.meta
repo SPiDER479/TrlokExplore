@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 41e9f938304b2684dbcb94b6d964088c
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.16
+  assetPath: Assets/Plugins/CW/Planet Forge/Prefabs/PineTree1/PineTree1_CrossImpostor.asset
+  uploadId: 870778

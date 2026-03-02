@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c76e77b6e47b6f34986d481a7b5cf912, type: 3}
+  m_Name: PineTree1_CrossImpostor
+  m_EditorClassIdentifier: 
+  sourcePrefab: {fileID: 795569111854965380, guid: ba915bfdb6bc21142aeabe42e407417d,
+    type: 3}
+  material: {fileID: 2100000, guid: 46a127cb28f08d04dafe7aaab94a61b2, type: 2}
+  bakedMesh: {fileID: 4300000, guid: 3cb71cb1b98a2a44e95c5668dbc3501e, type: 2}
+  maxFrameSize: 512
+  framePadding: 4
+  BakedOffset: {x: -0.04882002, y: 2.567453, z: -0.13298488}
+  BakedExtents: {x: 1.6085414, y: 2.567453, z: 1.653276}
+  FrameUVRects:
+  - {x: 0.0040241447, y: 0.0038461538, z: 0.33199194, w: 0.4923077}
+  - {x: 0.0040241447, y: 0.50384617, z: 0.33199194, w: 0.4923077}
+  - {x: 0.34406438, y: 0.09326923, z: 0.3219316, w: 0.31346154}
+  - {x: 0.34406438, y: 0.5932692, z: 0.3219316, w: 0.31346154}
+  - {x: 0.67404425, y: 0.0038461538, z: 0.3219316, w: 0.4923077}
+  - {x: 0.67404425, y: 0.50384617, z: 0.3219316, w: 0.4923077}
+  AtlasWidth: 994
+  AtlasHeight: 1040
+  AxisFrameSizes:
+  - {x: 330, y: 512}
+  - {x: 320, y: 326}
+  - {x: 320, y: 512}
+  AxisWorldHalfSizes:
+  - {x: 1.6447746, y: 2.5448873}
+  - {x: 1.5946289, y: 1.6234627}
+  - {x: 1.5946289, y: 2.5448873}
