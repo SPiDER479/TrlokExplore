@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 92186eaec320d274eb7294e6de6f93a4
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.22
+  assetPath: Assets/Plugins/CW/Planet Forge/Prefabs/Cave/RockFace.mat
+  uploadId: 881296

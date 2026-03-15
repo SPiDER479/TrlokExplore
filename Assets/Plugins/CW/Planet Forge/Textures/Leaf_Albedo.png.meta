@@ -51,7 +51,7 @@ TextureImporter:
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
-  alphaIsTransparency: 0
+  alphaIsTransparency: 1
   spriteTessellationDetail: -1
   textureType: 0
   textureShape: 1
@@ -124,6 +124,6 @@ AssetOrigin:
   serializedVersion: 1
   productId: 127671
   packageName: Planet Forge
-  packageVersion: 1.6.16
+  packageVersion: 1.6.22
   assetPath: Assets/Plugins/CW/Planet Forge/Textures/Leaf_Albedo.png
-  uploadId: 870778
+  uploadId: 881296

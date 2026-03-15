@@ -108,8 +108,8 @@ Shader "Hidden/SgtSphereLandscape"
 			void CW_Frag(v2f i, out f2g o)
 			{
 				float3 weights    = tex2Dlod(_SGT_WeightTex, float4(i.coord, 0.0f, 0.0f)).xyz;
-				float3 position   = normalize(_CwPositionA * weights.x + _CwPositionB * weights.y + _CwPositionC * weights.z) * _CwRadius;
-				float3 direction  = CW_FixDirection(_CwPositionA * weights.x + _CwPositionB * weights.y + _CwPositionC * weights.z); 
+				float3 position   = i.localPos.xyz + _CwOffset; // High precision local space position?
+				float3 direction  = CW_FixDirection(position); 
 				float2 coord      = CW_CalculateDetailCoords1(direction).xy; coord.y *= 2.0f;
 				float4 albedo     = CW_SampleCubic(_CwAlbedo, coord.xy, _CwAlbedoSize);
 				float  occlusion  = 1.0f;
@@ -184,6 +184,8 @@ Shader "Hidden/SgtSphereLandscape"
 
 				o.rgbo = float4(albedo.xyz, ocean);
 				o.nnes = float4(topology.xy * 0.5f + 0.5f, emission, smoothness);
+
+				CW_ContributeHoles(o.rgbo, o.nnes, position);
 			}
 			ENDCG
 		}

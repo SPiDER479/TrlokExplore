@@ -6,6 +6,7 @@ Properties
 
 
 
+
 [HideInInspector]_QueueOffset("_QueueOffset", Float) = 0
 [HideInInspector]_QueueControl("_QueueControl", Float) = -1
 [HideInInspector][NoScaleOffset]unity_Lightmaps("unity_Lightmaps", 2DArray) = "" {}
@@ -26,6 +27,7 @@ Tags
 "ShaderGraphShader"="true"
 "ShaderGraphTargetId"="UniversalUnlitSubTarget"
 }
+
 
 Pass
 {
@@ -102,19 +104,26 @@ Pass
 			};
 
 			Varyings Vert(Attributes input)
-			{
-				Varyings output;
-				UNITY_SETUP_INSTANCE_ID(input);
-				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
-				output.positionCS = GetFullScreenTriangleVertexPosition(input.vertexID, 0.0f);
-				output.positionCS   = float4(input.texcoord0.xy * 2.0f - 1.0f, 0.5f, 1.0f);
-				output.texcoord0 = input.texcoord0;
-				
-				#if UNITY_UV_STARTS_AT_TOP
-					output.positionCS.y = -output.positionCS.y;
-				#endif
-				return output;
-			}
+		{
+			Varyings output;
+			UNITY_SETUP_INSTANCE_ID(input);
+			UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+    
+			// 1. Generate the correct clip-space position for a procedural triangle
+			output.positionCS = GetFullScreenTriangleVertexPosition(input.vertexID, 0.5f);
+    
+			// 2. Procedurally generate the UVs based on the vertex ID
+			float2 uv = float2((input.vertexID << 1) & 2, input.vertexID & 2);
+    
+			// 3. Flip the UVs (not the geometry) if the API coordinates start at the top
+			#if UNITY_UV_STARTS_AT_TOP
+				uv.y = 1.0 - uv.y;
+			#endif
+    
+			output.texcoord0 = uv;
+    
+			return output;
+		}
 			
 			float4 Frag(Varyings varyings) : SV_Target
 			{
@@ -368,6 +377,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -545,6 +555,7 @@ struct SSS_VertexData
 	float4 extraV2F7;
 	
 
+
 };
 
 struct SSS_FragmentData
@@ -584,6 +595,7 @@ struct SSS_FragmentData
 	float3x3 TBNMatrix;
 	
 
+
 };
 
 struct SSS_SurfaceData
@@ -597,6 +609,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 
 
 
@@ -766,6 +835,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 
@@ -1134,6 +1204,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -1311,6 +1382,7 @@ struct SSS_VertexData
 	float4 extraV2F7;
 	
 
+
 };
 
 struct SSS_FragmentData
@@ -1350,6 +1422,7 @@ struct SSS_FragmentData
 	float3x3 TBNMatrix;
 	
 
+
 };
 
 struct SSS_SurfaceData
@@ -1363,6 +1436,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 
 
 
@@ -1532,6 +1662,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 
@@ -1874,6 +2005,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -2051,6 +2183,7 @@ struct SSS_VertexData
 	float4 extraV2F7;
 	
 
+
 };
 
 struct SSS_FragmentData
@@ -2090,6 +2223,7 @@ struct SSS_FragmentData
 	float3x3 TBNMatrix;
 	
 
+
 };
 
 struct SSS_SurfaceData
@@ -2103,6 +2237,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 
 
 
@@ -2272,6 +2463,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 
@@ -2682,6 +2874,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -2859,6 +3052,7 @@ struct SSS_VertexData
 	float4 extraV2F7;
 	
 
+
 };
 
 struct SSS_FragmentData
@@ -2898,6 +3092,7 @@ struct SSS_FragmentData
 	float3x3 TBNMatrix;
 	
 
+
 };
 
 struct SSS_SurfaceData
@@ -2911,6 +3106,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 
 
 
@@ -3080,6 +3332,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 
@@ -3447,6 +3700,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -3624,6 +3878,7 @@ struct SSS_VertexData
 	float4 extraV2F7;
 	
 
+
 };
 
 struct SSS_FragmentData
@@ -3663,6 +3918,7 @@ struct SSS_FragmentData
 	float3x3 TBNMatrix;
 	
 
+
 };
 
 struct SSS_SurfaceData
@@ -3676,6 +3932,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 
 
 
@@ -3845,6 +4158,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 
@@ -4221,6 +4535,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -4398,6 +4713,7 @@ struct SSS_VertexData
 	float4 extraV2F7;
 	
 
+
 };
 
 struct SSS_FragmentData
@@ -4437,6 +4753,7 @@ struct SSS_FragmentData
 	float3x3 TBNMatrix;
 	
 
+
 };
 
 struct SSS_SurfaceData
@@ -4450,6 +4767,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 
 
 
@@ -4619,6 +4993,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 
@@ -5045,6 +5420,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 CBUFFER_END
 
 
@@ -5232,6 +5608,7 @@ struct SSS_VertexData
 	float4 extraV2F7;
 	
 
+
 };
 
 struct SSS_FragmentData
@@ -5271,6 +5648,7 @@ struct SSS_FragmentData
 	float3x3 TBNMatrix;
 	
 
+
 };
 
 struct SSS_SurfaceData
@@ -5284,6 +5662,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 
 
 
@@ -5453,6 +5888,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 
@@ -5865,6 +6301,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 CBUFFER_END
 
 
@@ -6052,6 +6489,7 @@ struct SSS_VertexData
 	float4 extraV2F7;
 	
 
+
 };
 
 struct SSS_FragmentData
@@ -6091,6 +6529,7 @@ struct SSS_FragmentData
 	float3x3 TBNMatrix;
 	
 
+
 };
 
 struct SSS_SurfaceData
@@ -6104,6 +6543,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 
 
 
@@ -6273,6 +6769,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 
@@ -6650,6 +7147,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 CBUFFER_END
 
 
@@ -6837,6 +7335,7 @@ struct SSS_VertexData
 	float4 extraV2F7;
 	
 
+
 };
 
 struct SSS_FragmentData
@@ -6876,6 +7375,7 @@ struct SSS_FragmentData
 	float3x3 TBNMatrix;
 	
 
+
 };
 
 struct SSS_SurfaceData
@@ -6889,6 +7389,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 
 
 
@@ -7058,6 +7615,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 
@@ -7435,6 +7993,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 CBUFFER_END
 
 
@@ -7622,6 +8181,7 @@ struct SSS_VertexData
 	float4 extraV2F7;
 	
 
+
 };
 
 struct SSS_FragmentData
@@ -7661,6 +8221,7 @@ struct SSS_FragmentData
 	float3x3 TBNMatrix;
 	
 
+
 };
 
 struct SSS_SurfaceData
@@ -7674,6 +8235,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 
 
 
@@ -7843,6 +8461,7 @@ void Frag_float
 	oMetallic   = s.Metallic;
 	oAlpha      = s.Alpha;
 }
+
 
 
 

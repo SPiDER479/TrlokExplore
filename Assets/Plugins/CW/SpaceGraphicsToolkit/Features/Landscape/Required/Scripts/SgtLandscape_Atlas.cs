@@ -312,6 +312,7 @@ namespace SpaceGraphicsToolkit.Landscape
 				var descN = new RenderTextureDescriptor(PIXEL_WIDTH, PIXEL_HEIGHT, RenderTextureFormat.ARGB32, 0); descN.sRGB = false;
 
 				tempBufferP = new Texture2D(VERTEX_COUNT, 1, TextureFormat.RGBAFloat, false, true);
+				tempBufferP.filterMode = FilterMode.Point;
 
 				tempBufferA = new RenderTexture(descA);
 				tempBufferN = new RenderTexture(descN);
@@ -320,6 +321,14 @@ namespace SpaceGraphicsToolkit.Landscape
 			tempBufferP.SetPixelData(pending.PixelP, 0); tempBufferP.Apply();// Graphics.CopyTexture(tempBufferP, 0, 0, 0, 0, VERTEX_COUNT, 1, visual.BufferP, 0, 0, 0, 0);
 
 			var blitMaterial = GetVisualBlitMaterial(pending);
+
+			blitMaterial.SetTexture(_CwBufferP, tempBufferP);
+			blitMaterial.SetVector(_CwBufferSize, new Vector4(tempBufferP.width, tempBufferP.height, 1.0f / tempBufferP.width, 1.0f / tempBufferP.height));
+
+			blitMaterial.SetVector(_CwOffset, (Vector3)(float3)visual.Origin);
+			blitMaterial.SetInt(_CwHoleCount, activeHoleCount);
+			blitMaterial.SetVectorArray(_CwHoleDatas, activeHoleDatas);
+			blitMaterial.SetMatrixArray(_CwHoleMatrices, activeHoleMatrices);
 
 			tempBuffers[0] = tempBufferA.colorBuffer;
 			tempBuffers[1] = tempBufferN.colorBuffer;
@@ -343,8 +352,6 @@ namespace SpaceGraphicsToolkit.Landscape
 			blitMaterial.SetVectorArray(_CwCoords, VERTEX_COORDS);
 			blitMaterial.SetVector(_CwPixelSize, new Vector2(PIXEL_WIDTH, PIXEL_HEIGHT));
 			blitMaterial.SetFloat(_CwVertexResolution, VERTEX_RESOLUTION);
-			blitMaterial.SetFloat(_CwSize, 1.0f / (VERTEX_COUNT - 1));
-			blitMaterial.SetTexture(_CwBufferP, tempBufferP);
 
 			blitMaterial.SetInt(_CwGlobalDetailCount, globalDetailCount);
 			blitMaterial.SetVectorArray(_CwGlobalDetailDataA, globalDetailDataA);

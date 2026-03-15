@@ -32,6 +32,7 @@ Shader "SgtCloud"
 			#pragma shader_feature_local _SGT_ALBEDO_OFF _SGT_ALBEDO
 			#pragma shader_feature_local _SGT_SHADOW_OFF _SGT_SHADOW
 			#pragma shader_feature_local _SGT_SKY_OFF _SGT_SKY
+			#pragma multi_compile __ CW_COMPRESS_POSITIONS
 
 			#include "SgtCloud.cginc"
 
@@ -67,7 +68,7 @@ Shader "SgtCloud"
 				float4 pos          : SV_POSITION;
 				float2 uv           : TEXCOORD0;
 				float3 worldPos     : TEXCOORD1;
-				float3 localPos     : TEXCOORD2;
+				float  ratio        : TEXCOORD2;
 				float4 screenPos    : TEXCOORD3;
 				float3 viewPosition : TEXCOORD4;
 			};
@@ -117,12 +118,20 @@ Shader "SgtCloud"
 
 			void Vert(a2v v, out v2f o)
 			{
-				o.pos      = UnityObjectToClipPos(v.vertex);
-				o.uv       = v.texcoord0;
-				o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
-				o.localPos = v.vertex.xyz * 0.5 + 0.5; // local cube space [0..1]
-				o.screenPos = ComputeScreenPos(o.pos);
+				o.uv           = v.texcoord0;
+				o.worldPos     = mul(unity_ObjectToWorld, v.vertex).xyz;
 				o.viewPosition = mul(UNITY_MATRIX_V, float4(o.worldPos, 1.0f));
+
+				#if CW_COMPRESS_POSITIONS
+					float4 worldPos    = mul(unity_ObjectToWorld, v.vertex);
+					float3 worldCenter = unity_ObjectToWorld._m03_m13_m23;
+					worldPos.xyz = SSS_CompressWorld(worldPos.xyz, worldCenter, _SGT_Size.z, o.ratio);
+					v.vertex = mul(unity_WorldToObject, worldPos);
+				#else
+					o.ratio = 1.0;
+				#endif
+				o.pos       = UnityObjectToClipPos(v.vertex);
+				o.screenPos = ComputeScreenPos(o.pos);
 			}
 
 			float3 SGT_Rotate3(float3 p, float a)
@@ -326,6 +335,9 @@ Shader "SgtCloud"
 
 				// Depth clip
 				float worldEyeDepth = SGT_GetLinearEyeDepth(screenUV) * linearScale;
+				#if CW_COMPRESS_POSITIONS
+					worldEyeDepth = SSS_DecompressWorldDist(worldEyeDepth);
+				#endif
 
 				worldMax = min(worldMax, worldEyeDepth);
 				

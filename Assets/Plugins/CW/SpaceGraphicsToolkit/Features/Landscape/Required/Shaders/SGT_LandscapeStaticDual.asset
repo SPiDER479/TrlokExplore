@@ -15,6 +15,7 @@ MonoBehaviour:
   shaderTemplate: {fileID: -6465566751694194690, guid: 0dd4c7d7cef52be4a95d8969a7e3f958,
     type: 3}
   shaderFiles:
+  - {fileID: 10900000, guid: d4431ec5a244acd43991fdee45aa4761, type: 3}
   - {fileID: 10900000, guid: 9b358aadb2f1feb47ac10cce4e658c9e, type: 3}
   outputShader: {fileID: 4800000, guid: 77780badd8253cf4bb16eee8b3de9734, type: 3}
   outputTitle: Space Graphics Toolkit/LandscapeStaticDual

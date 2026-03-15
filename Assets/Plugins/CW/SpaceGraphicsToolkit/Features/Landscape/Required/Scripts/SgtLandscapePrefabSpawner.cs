@@ -19,8 +19,11 @@ namespace SpaceGraphicsToolkit.Landscape
 		public int SpawnRate { set { spawnRate = value; } get { return spawnRate; } } [SerializeField] private int spawnRate = -1;
 
 		private Dictionary<Tile, List<GameObject>> spawnedObjects = new Dictionary<Tile, List<GameObject>>();
+		
+		private Dictionary<GameObject, Transform> instanceToPrefab = new Dictionary<GameObject, Transform>();
 
 		private List<PendingSpawn> pendingSpawns = new List<PendingSpawn>();
+		private Stack<PendingSpawn> pendingSpawnPool = new Stack<PendingSpawn>();
 
 		private static LinkedList<SgtLandscapePrefabSpawner> instances = new LinkedList<SgtLandscapePrefabSpawner>();
 
@@ -32,12 +35,34 @@ namespace SpaceGraphicsToolkit.Landscape
 
 		private static int frameSpawnCount;
 
-		private struct PendingSpawn
+		private class PendingSpawn
 		{
-			public Tile         TargetTile;
-			public float3[]     Positions;
-			public quaternion[] Rotations;
-			public float3[]     Scales;
+			public Tile                   TargetTile;
+			public NativeList<double3>    Positions;
+			public NativeList<quaternion> Rotations;
+			public NativeList<float>      Scales;
+			public NativeList<float>      Seeds;
+
+			public void Init()
+			{
+				if (!Positions.IsCreated) Positions = new NativeList<double3>(16, Allocator.Persistent);
+				if (!Rotations.IsCreated) Rotations = new NativeList<quaternion>(16, Allocator.Persistent);
+				if (!Scales.IsCreated)    Scales    = new NativeList<float>(16, Allocator.Persistent);
+				if (!Seeds.IsCreated)     Seeds     = new NativeList<float>(16, Allocator.Persistent);
+
+				Positions.Clear();
+				Rotations.Clear();
+				Scales.Clear();
+				Seeds.Clear();
+			}
+
+			public void Dispose()
+			{
+				if (Positions.IsCreated) Positions.Dispose();
+				if (Rotations.IsCreated) Rotations.Dispose();
+				if (Scales.IsCreated) Scales.Dispose();
+				if (Seeds.IsCreated) Seeds.Dispose();
+			}
 		}
 
 		protected override void OnEnable()
@@ -49,14 +74,27 @@ namespace SpaceGraphicsToolkit.Landscape
 
 		protected override void OnDisable()
 		{
-			base.OnDisable();
+			base.OnDisable(); // calls ForceComplete and HandleDespawn for everything
 
 			instances.Remove(instanceNode);
+
+			foreach (var pending in pendingSpawns)
+			{
+				pending.Dispose();
+			}
+			pendingSpawns.Clear();
+
+			foreach (var pending in pendingSpawnPool)
+			{
+				pending.Dispose();
+			}
+			pendingSpawnPool.Clear();
+
+			instanceToPrefab.Clear();
 
 			if (instances.Count == 0 && poolRoot != null)
 			{
 				DestroyImmediate(poolRoot.gameObject);
-
 				poolRoot = null;
 				pool.Clear();
 			}
@@ -81,11 +119,15 @@ namespace SpaceGraphicsToolkit.Landscape
 					{
 						var index = list.Count;
 						var clone = GetInstance(prefab);
+						
+						instanceToPrefab[clone] = prefab;
 
-						clone.transform.SetParent(transform, false);
-						clone.transform.localPosition = pending.Positions[index];
-						clone.transform.localRotation = pending.Rotations[index];
-						clone.transform.localScale    = Vector3.Scale(prefab.localScale, pending.Scales[index]);
+						var pos   = pending.Positions[index];
+						var rot   = pending.Rotations[index];
+						var sca   = prefab.localScale * pending.Scales[index];
+
+						parent.AddChild(clone.transform, pos, rot, sca);
+
 						clone.SetActive(true);
 
 						list.Add(clone);
@@ -94,30 +136,28 @@ namespace SpaceGraphicsToolkit.Landscape
 				}
 
 				pendingSpawns.RemoveAt(i);
+				pendingSpawnPool.Push(pending);
 			}
 		}
 
-		protected override void HandleSpawn(Tile tile, NativeList<float3> pos, NativeList<quaternion> rot, NativeList<float3> scale)
+		protected override void HandleSpawn(Tile tile, NativeList<double3> positions, NativeList<quaternion> rotations, NativeList<float> scales, NativeList<float> seeds, NativeList<int> tileIDs)
 		{
 			if (prefabs == null || prefabs.Count == 0) return;
 
 			var list = new List<GameObject>(tile.spawnCount);
 			spawnedObjects[tile] = list;
 
-			var pending = new PendingSpawn
-			{
-				TargetTile = tile,
-				Positions  = new float3[tile.spawnCount],
-				Rotations  = new quaternion[tile.spawnCount],
-				Scales     = new float3[tile.spawnCount]
-			};
+			var pending = pendingSpawnPool.Count > 0 ? pendingSpawnPool.Pop() : new PendingSpawn();
+			pending.Init();
+			pending.TargetTile = tile;
 
 			for (var i = 0; i < tile.spawnCount; i++)
 			{
 				var index = tile.spawnIndex + i;
-				pending.Positions[i] = pos[index];
-				pending.Rotations[i] = rot[index];
-				pending.Scales[i]    = scale[index];
+				pending.Positions.Add(positions[index]);
+				pending.Rotations.Add(rotations[index]);
+				pending.Scales.Add(scales[index]);
+				pending.Seeds.Add(seeds[index]);
 			}
 
 			pendingSpawns.Add(pending);
@@ -129,6 +169,7 @@ namespace SpaceGraphicsToolkit.Landscape
 			{
 				if (pendingSpawns[i].TargetTile.Equals(tile))
 				{
+					pendingSpawnPool.Push(pendingSpawns[i]);
 					pendingSpawns.RemoveAt(i);
 				}
 			}
@@ -139,7 +180,15 @@ namespace SpaceGraphicsToolkit.Landscape
 				{
 					if (obj != null)
 					{
-						if (usePooling == true) ReleaseInstance(obj); else DestroyImmediate(obj);
+						if (usePooling == true) 
+						{
+							ReleaseInstance(obj); 
+						} 
+						else 
+						{
+							instanceToPrefab.Remove(obj);
+							DestroyImmediate(obj);
+						}
 					}
 				}
 			}
@@ -162,9 +211,7 @@ namespace SpaceGraphicsToolkit.Landscape
 
 		private void ReleaseInstance(GameObject instance)
 		{
-			var sourcePrefab = prefabs.Find(p => p.name == instance.name.Replace("(Clone)", "").Trim());
-
-			if (sourcePrefab != null)
+			if (instanceToPrefab.TryGetValue(instance, out var sourcePrefab))
 			{
 				if (poolRoot == null)
 				{

@@ -235,8 +235,6 @@ namespace SpaceGraphicsToolkit.Landscape
 			[ReadOnly] public NativeArray<double3> Points;
 			[ReadOnly] public NativeArray<double3> Directions;
 			[ReadOnly] public NativeArray<double>  Heights;
-			[ReadOnly] public NativeArray<double3> Weights;
-			[ReadOnly] public NativeArray<int>     Neighbors;
 
 			[WriteOnly] public NativeArray<float4> PixelP;
 
@@ -244,15 +242,9 @@ namespace SpaceGraphicsToolkit.Landscape
 			{
 				var origin = math.floor(GetPosition(0));
 
-				for (var i = 0; i < Directions.Length; i++)
+				for (var i = 0; i < Points.Length; i++)
 				{
-					var positionA = GetPosition(i);
-					var positionB = GetPosition(Neighbors[i * 3 + 0]);
-					var positionC = GetPosition(Neighbors[i * 3 + 0]);
-					var edge1 = positionB - positionA;
-					var edge2 = positionC - positionA;
-
-					PixelP[i] = new float4((float3)(positionA - origin), 0.0f);
+					PixelP[i] = new float4((float3)(GetPosition(i) - origin), (float)Heights[i]);
 				}
 			}
 
@@ -379,8 +371,6 @@ namespace SpaceGraphicsToolkit.Landscape
 		{
 			var pixelJob = new PixelJob();
 
-			pixelJob.Weights    = VERTEX_WEIGHTS;
-			pixelJob.Neighbors  = VERTEX_NEIGHBORS;
 			pixelJob.Points     = pending.Points;
 			pixelJob.Directions = pending.Directions;
 			pixelJob.Heights    = pending.Heights;

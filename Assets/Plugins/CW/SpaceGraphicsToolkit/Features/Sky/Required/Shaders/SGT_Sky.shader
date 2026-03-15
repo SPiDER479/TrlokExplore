@@ -5,6 +5,7 @@ Properties
 {
 
 
+
 	[Header(ALBEDO)]
 	[Toggle(_SGT_ALBEDO)] _SGT_Albedo("	Enable", Float) = 0
 	
@@ -32,6 +33,7 @@ Tags
 "ShaderGraphShader"="true"
 "ShaderGraphTargetId"="UniversalUnlitSubTarget"
 }
+
 
 
 
@@ -274,6 +276,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -452,6 +455,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -492,6 +496,7 @@ struct SSS_FragmentData
 	
 
 
+
 };
 
 struct SSS_SurfaceData
@@ -505,6 +510,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 #define __SGT_LIGHTANDSHADOW 1
 #define SGT_MAX_LIGHTS 16
 #define SGT_MAX_SPHERE_SHADOWS 16
@@ -577,17 +639,36 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 #include "SgtSky.cginc"
 
+float GetWorldSceneDepth(float2 screenUV)
+{
+	#if CW_COMPRESS_POSITIONS
+		return SSS_DecompressWorldDist(SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV)));
+	#else
+		return SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV));
+	#endif
+}
+
 void SSS_Vert(inout SSS_VertexData v)
 {
+	#if CW_COMPRESS_POSITIONS
+		float3 worldPos    = SSS_ObjectToWorld(v.position);
+		float3 worldCenter = _SGT_SkyToWorld._m03_m13_m23;
+		v.position = SSS_WorldToObject(SSS_CompressWorld(worldPos, worldCenter, _SGT_SkyRadius.y, v.extraV2F0.w));
+	#endif
 }
 
 void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 {
-	float3 wdir = -d.worldSpaceViewDir;
-	float  wfar = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
-	float  worldEyeDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
-	float3 tint = 1.0f;
-	float  dither = SGT_DitherFast(d.screenUV);
+	#if CW_COMPRESS_POSITIONS
+		d.worldSpacePosition = SSS_DecompressWorld(d.worldSpacePosition, d.extraV2F0.w);
+		d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	#endif
+	
+	float3 wdir          = -d.worldSpaceViewDir;
+	float  wfar          = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
+	float  worldEyeDepth = GetWorldSceneDepth(d.screenUV);
+	float3 tint          = 1.0f;
+	float  dither        = SGT_DitherFast(d.screenUV);
 	  
 	wfar = min(wfar, worldEyeDepth);
 		
@@ -595,7 +676,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	float3 ocam = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos, 1.0f)).xyz;
 	float3 ofar = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos + wdir * wfar, 1.0f)).xyz;
 	float  omax = distance(ocam, ofar);
-	float3 odir = normalize(mul(_SGT_WorldToSky, float4(-d.worldSpaceViewDir, 0.0f)).xyz);
+	float3 odir = normalize(mul(_SGT_WorldToSky, float4(wdir, 0.0f)).xyz);
 	float3 odst = SGT_SphereTest(ocam, odir, 1.0f);
 		
 	odst.xy = max(odst.xy, 0.0f);
@@ -625,9 +706,9 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	float4 cloudColor;
 	float  cloudDepth;
-	float  sceneDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	float  sceneDepth = GetWorldSceneDepth(d.screenUV);
 	
-	CW_SampleVolumetrics(d.screenUV, -d.worldSpaceViewDir, sceneDepth, cloudColor, cloudDepth);
+	CW_SampleVolumetrics(d.screenUV, wdir, sceneDepth, cloudColor, cloudDepth);
 	
 	#if _SGT_LIGHTING
 		float4 lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -652,7 +733,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	if (cloudColor.w > 0.0f)
 	{
-		float3 cloudWPos = CW_Depth2World(cloudDepth, -d.worldSpaceViewDir);
+		float3 cloudWPos = CW_Depth2World(cloudDepth, wdir);
 		float3 cloudSPos = mul(_SGT_WorldToSky, float4(cloudWPos, 1.0f)).xyz;
 		
 		#if _SGT_LIGHTING && _SSS_HDRP
@@ -829,8 +910,10 @@ void Frag_float
 }
 
 
+
 	#pragma shader_feature_local _SGT_ALBEDO_OFF _SGT_ALBEDO
 	#pragma shader_feature_local _SGT_LIGHTING_OFF _SGT_LIGHTING
+	#pragma multi_compile __ CW_COMPRESS_POSITIONS
 
 
 
@@ -1239,6 +1322,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -1417,6 +1501,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -1457,6 +1542,7 @@ struct SSS_FragmentData
 	
 
 
+
 };
 
 struct SSS_SurfaceData
@@ -1470,6 +1556,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 #define __SGT_LIGHTANDSHADOW 1
 #define SGT_MAX_LIGHTS 16
 #define SGT_MAX_SPHERE_SHADOWS 16
@@ -1542,17 +1685,36 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 #include "SgtSky.cginc"
 
+float GetWorldSceneDepth(float2 screenUV)
+{
+	#if CW_COMPRESS_POSITIONS
+		return SSS_DecompressWorldDist(SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV)));
+	#else
+		return SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV));
+	#endif
+}
+
 void SSS_Vert(inout SSS_VertexData v)
 {
+	#if CW_COMPRESS_POSITIONS
+		float3 worldPos    = SSS_ObjectToWorld(v.position);
+		float3 worldCenter = _SGT_SkyToWorld._m03_m13_m23;
+		v.position = SSS_WorldToObject(SSS_CompressWorld(worldPos, worldCenter, _SGT_SkyRadius.y, v.extraV2F0.w));
+	#endif
 }
 
 void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 {
-	float3 wdir = -d.worldSpaceViewDir;
-	float  wfar = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
-	float  worldEyeDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
-	float3 tint = 1.0f;
-	float  dither = SGT_DitherFast(d.screenUV);
+	#if CW_COMPRESS_POSITIONS
+		d.worldSpacePosition = SSS_DecompressWorld(d.worldSpacePosition, d.extraV2F0.w);
+		d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	#endif
+	
+	float3 wdir          = -d.worldSpaceViewDir;
+	float  wfar          = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
+	float  worldEyeDepth = GetWorldSceneDepth(d.screenUV);
+	float3 tint          = 1.0f;
+	float  dither        = SGT_DitherFast(d.screenUV);
 	  
 	wfar = min(wfar, worldEyeDepth);
 		
@@ -1560,7 +1722,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	float3 ocam = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos, 1.0f)).xyz;
 	float3 ofar = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos + wdir * wfar, 1.0f)).xyz;
 	float  omax = distance(ocam, ofar);
-	float3 odir = normalize(mul(_SGT_WorldToSky, float4(-d.worldSpaceViewDir, 0.0f)).xyz);
+	float3 odir = normalize(mul(_SGT_WorldToSky, float4(wdir, 0.0f)).xyz);
 	float3 odst = SGT_SphereTest(ocam, odir, 1.0f);
 		
 	odst.xy = max(odst.xy, 0.0f);
@@ -1590,9 +1752,9 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	float4 cloudColor;
 	float  cloudDepth;
-	float  sceneDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	float  sceneDepth = GetWorldSceneDepth(d.screenUV);
 	
-	CW_SampleVolumetrics(d.screenUV, -d.worldSpaceViewDir, sceneDepth, cloudColor, cloudDepth);
+	CW_SampleVolumetrics(d.screenUV, wdir, sceneDepth, cloudColor, cloudDepth);
 	
 	#if _SGT_LIGHTING
 		float4 lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -1617,7 +1779,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	if (cloudColor.w > 0.0f)
 	{
-		float3 cloudWPos = CW_Depth2World(cloudDepth, -d.worldSpaceViewDir);
+		float3 cloudWPos = CW_Depth2World(cloudDepth, wdir);
 		float3 cloudSPos = mul(_SGT_WorldToSky, float4(cloudWPos, 1.0f)).xyz;
 		
 		#if _SGT_LIGHTING && _SSS_HDRP
@@ -1794,8 +1956,10 @@ void Frag_float
 }
 
 
+
 	#pragma shader_feature_local _SGT_ALBEDO_OFF _SGT_ALBEDO
 	#pragma shader_feature_local _SGT_LIGHTING_OFF _SGT_LIGHTING
+	#pragma multi_compile __ CW_COMPRESS_POSITIONS
 
 
 
@@ -2200,6 +2364,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -2378,6 +2543,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -2418,6 +2584,7 @@ struct SSS_FragmentData
 	
 
 
+
 };
 
 struct SSS_SurfaceData
@@ -2431,6 +2598,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 #define __SGT_LIGHTANDSHADOW 1
 #define SGT_MAX_LIGHTS 16
 #define SGT_MAX_SPHERE_SHADOWS 16
@@ -2503,17 +2727,36 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 #include "SgtSky.cginc"
 
+float GetWorldSceneDepth(float2 screenUV)
+{
+	#if CW_COMPRESS_POSITIONS
+		return SSS_DecompressWorldDist(SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV)));
+	#else
+		return SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV));
+	#endif
+}
+
 void SSS_Vert(inout SSS_VertexData v)
 {
+	#if CW_COMPRESS_POSITIONS
+		float3 worldPos    = SSS_ObjectToWorld(v.position);
+		float3 worldCenter = _SGT_SkyToWorld._m03_m13_m23;
+		v.position = SSS_WorldToObject(SSS_CompressWorld(worldPos, worldCenter, _SGT_SkyRadius.y, v.extraV2F0.w));
+	#endif
 }
 
 void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 {
-	float3 wdir = -d.worldSpaceViewDir;
-	float  wfar = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
-	float  worldEyeDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
-	float3 tint = 1.0f;
-	float  dither = SGT_DitherFast(d.screenUV);
+	#if CW_COMPRESS_POSITIONS
+		d.worldSpacePosition = SSS_DecompressWorld(d.worldSpacePosition, d.extraV2F0.w);
+		d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	#endif
+	
+	float3 wdir          = -d.worldSpaceViewDir;
+	float  wfar          = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
+	float  worldEyeDepth = GetWorldSceneDepth(d.screenUV);
+	float3 tint          = 1.0f;
+	float  dither        = SGT_DitherFast(d.screenUV);
 	  
 	wfar = min(wfar, worldEyeDepth);
 		
@@ -2521,7 +2764,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	float3 ocam = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos, 1.0f)).xyz;
 	float3 ofar = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos + wdir * wfar, 1.0f)).xyz;
 	float  omax = distance(ocam, ofar);
-	float3 odir = normalize(mul(_SGT_WorldToSky, float4(-d.worldSpaceViewDir, 0.0f)).xyz);
+	float3 odir = normalize(mul(_SGT_WorldToSky, float4(wdir, 0.0f)).xyz);
 	float3 odst = SGT_SphereTest(ocam, odir, 1.0f);
 		
 	odst.xy = max(odst.xy, 0.0f);
@@ -2551,9 +2794,9 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	float4 cloudColor;
 	float  cloudDepth;
-	float  sceneDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	float  sceneDepth = GetWorldSceneDepth(d.screenUV);
 	
-	CW_SampleVolumetrics(d.screenUV, -d.worldSpaceViewDir, sceneDepth, cloudColor, cloudDepth);
+	CW_SampleVolumetrics(d.screenUV, wdir, sceneDepth, cloudColor, cloudDepth);
 	
 	#if _SGT_LIGHTING
 		float4 lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -2578,7 +2821,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	if (cloudColor.w > 0.0f)
 	{
-		float3 cloudWPos = CW_Depth2World(cloudDepth, -d.worldSpaceViewDir);
+		float3 cloudWPos = CW_Depth2World(cloudDepth, wdir);
 		float3 cloudSPos = mul(_SGT_WorldToSky, float4(cloudWPos, 1.0f)).xyz;
 		
 		#if _SGT_LIGHTING && _SSS_HDRP
@@ -2755,8 +2998,10 @@ void Frag_float
 }
 
 
+
 	#pragma shader_feature_local _SGT_ALBEDO_OFF _SGT_ALBEDO
 	#pragma shader_feature_local _SGT_LIGHTING_OFF _SGT_LIGHTING
+	#pragma multi_compile __ CW_COMPRESS_POSITIONS
 
 
 
@@ -3197,6 +3442,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -3375,6 +3621,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -3415,6 +3662,7 @@ struct SSS_FragmentData
 	
 
 
+
 };
 
 struct SSS_SurfaceData
@@ -3428,6 +3676,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 #define __SGT_LIGHTANDSHADOW 1
 #define SGT_MAX_LIGHTS 16
 #define SGT_MAX_SPHERE_SHADOWS 16
@@ -3500,17 +3805,36 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 #include "SgtSky.cginc"
 
+float GetWorldSceneDepth(float2 screenUV)
+{
+	#if CW_COMPRESS_POSITIONS
+		return SSS_DecompressWorldDist(SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV)));
+	#else
+		return SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV));
+	#endif
+}
+
 void SSS_Vert(inout SSS_VertexData v)
 {
+	#if CW_COMPRESS_POSITIONS
+		float3 worldPos    = SSS_ObjectToWorld(v.position);
+		float3 worldCenter = _SGT_SkyToWorld._m03_m13_m23;
+		v.position = SSS_WorldToObject(SSS_CompressWorld(worldPos, worldCenter, _SGT_SkyRadius.y, v.extraV2F0.w));
+	#endif
 }
 
 void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 {
-	float3 wdir = -d.worldSpaceViewDir;
-	float  wfar = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
-	float  worldEyeDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
-	float3 tint = 1.0f;
-	float  dither = SGT_DitherFast(d.screenUV);
+	#if CW_COMPRESS_POSITIONS
+		d.worldSpacePosition = SSS_DecompressWorld(d.worldSpacePosition, d.extraV2F0.w);
+		d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	#endif
+	
+	float3 wdir          = -d.worldSpaceViewDir;
+	float  wfar          = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
+	float  worldEyeDepth = GetWorldSceneDepth(d.screenUV);
+	float3 tint          = 1.0f;
+	float  dither        = SGT_DitherFast(d.screenUV);
 	  
 	wfar = min(wfar, worldEyeDepth);
 		
@@ -3518,7 +3842,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	float3 ocam = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos, 1.0f)).xyz;
 	float3 ofar = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos + wdir * wfar, 1.0f)).xyz;
 	float  omax = distance(ocam, ofar);
-	float3 odir = normalize(mul(_SGT_WorldToSky, float4(-d.worldSpaceViewDir, 0.0f)).xyz);
+	float3 odir = normalize(mul(_SGT_WorldToSky, float4(wdir, 0.0f)).xyz);
 	float3 odst = SGT_SphereTest(ocam, odir, 1.0f);
 		
 	odst.xy = max(odst.xy, 0.0f);
@@ -3548,9 +3872,9 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	float4 cloudColor;
 	float  cloudDepth;
-	float  sceneDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	float  sceneDepth = GetWorldSceneDepth(d.screenUV);
 	
-	CW_SampleVolumetrics(d.screenUV, -d.worldSpaceViewDir, sceneDepth, cloudColor, cloudDepth);
+	CW_SampleVolumetrics(d.screenUV, wdir, sceneDepth, cloudColor, cloudDepth);
 	
 	#if _SGT_LIGHTING
 		float4 lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -3575,7 +3899,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	if (cloudColor.w > 0.0f)
 	{
-		float3 cloudWPos = CW_Depth2World(cloudDepth, -d.worldSpaceViewDir);
+		float3 cloudWPos = CW_Depth2World(cloudDepth, wdir);
 		float3 cloudSPos = mul(_SGT_WorldToSky, float4(cloudWPos, 1.0f)).xyz;
 		
 		#if _SGT_LIGHTING && _SSS_HDRP
@@ -3752,8 +4076,10 @@ void Frag_float
 }
 
 
+
 	#pragma shader_feature_local _SGT_ALBEDO_OFF _SGT_ALBEDO
 	#pragma shader_feature_local _SGT_LIGHTING_OFF _SGT_LIGHTING
+	#pragma multi_compile __ CW_COMPRESS_POSITIONS
 
 
 
@@ -4161,6 +4487,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -4339,6 +4666,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -4379,6 +4707,7 @@ struct SSS_FragmentData
 	
 
 
+
 };
 
 struct SSS_SurfaceData
@@ -4392,6 +4721,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 #define __SGT_LIGHTANDSHADOW 1
 #define SGT_MAX_LIGHTS 16
 #define SGT_MAX_SPHERE_SHADOWS 16
@@ -4464,17 +4850,36 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 #include "SgtSky.cginc"
 
+float GetWorldSceneDepth(float2 screenUV)
+{
+	#if CW_COMPRESS_POSITIONS
+		return SSS_DecompressWorldDist(SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV)));
+	#else
+		return SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV));
+	#endif
+}
+
 void SSS_Vert(inout SSS_VertexData v)
 {
+	#if CW_COMPRESS_POSITIONS
+		float3 worldPos    = SSS_ObjectToWorld(v.position);
+		float3 worldCenter = _SGT_SkyToWorld._m03_m13_m23;
+		v.position = SSS_WorldToObject(SSS_CompressWorld(worldPos, worldCenter, _SGT_SkyRadius.y, v.extraV2F0.w));
+	#endif
 }
 
 void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 {
-	float3 wdir = -d.worldSpaceViewDir;
-	float  wfar = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
-	float  worldEyeDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
-	float3 tint = 1.0f;
-	float  dither = SGT_DitherFast(d.screenUV);
+	#if CW_COMPRESS_POSITIONS
+		d.worldSpacePosition = SSS_DecompressWorld(d.worldSpacePosition, d.extraV2F0.w);
+		d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	#endif
+	
+	float3 wdir          = -d.worldSpaceViewDir;
+	float  wfar          = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
+	float  worldEyeDepth = GetWorldSceneDepth(d.screenUV);
+	float3 tint          = 1.0f;
+	float  dither        = SGT_DitherFast(d.screenUV);
 	  
 	wfar = min(wfar, worldEyeDepth);
 		
@@ -4482,7 +4887,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	float3 ocam = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos, 1.0f)).xyz;
 	float3 ofar = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos + wdir * wfar, 1.0f)).xyz;
 	float  omax = distance(ocam, ofar);
-	float3 odir = normalize(mul(_SGT_WorldToSky, float4(-d.worldSpaceViewDir, 0.0f)).xyz);
+	float3 odir = normalize(mul(_SGT_WorldToSky, float4(wdir, 0.0f)).xyz);
 	float3 odst = SGT_SphereTest(ocam, odir, 1.0f);
 		
 	odst.xy = max(odst.xy, 0.0f);
@@ -4512,9 +4917,9 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	float4 cloudColor;
 	float  cloudDepth;
-	float  sceneDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	float  sceneDepth = GetWorldSceneDepth(d.screenUV);
 	
-	CW_SampleVolumetrics(d.screenUV, -d.worldSpaceViewDir, sceneDepth, cloudColor, cloudDepth);
+	CW_SampleVolumetrics(d.screenUV, wdir, sceneDepth, cloudColor, cloudDepth);
 	
 	#if _SGT_LIGHTING
 		float4 lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -4539,7 +4944,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	if (cloudColor.w > 0.0f)
 	{
-		float3 cloudWPos = CW_Depth2World(cloudDepth, -d.worldSpaceViewDir);
+		float3 cloudWPos = CW_Depth2World(cloudDepth, wdir);
 		float3 cloudSPos = mul(_SGT_WorldToSky, float4(cloudWPos, 1.0f)).xyz;
 		
 		#if _SGT_LIGHTING && _SSS_HDRP
@@ -4716,8 +5121,10 @@ void Frag_float
 }
 
 
+
 	#pragma shader_feature_local _SGT_ALBEDO_OFF _SGT_ALBEDO
 	#pragma shader_feature_local _SGT_LIGHTING_OFF _SGT_LIGHTING
+	#pragma multi_compile __ CW_COMPRESS_POSITIONS
 
 
 
@@ -5123,6 +5530,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 CBUFFER_END
 
@@ -5301,6 +5709,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -5341,6 +5750,7 @@ struct SSS_FragmentData
 	
 
 
+
 };
 
 struct SSS_SurfaceData
@@ -5354,6 +5764,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 #define __SGT_LIGHTANDSHADOW 1
 #define SGT_MAX_LIGHTS 16
 #define SGT_MAX_SPHERE_SHADOWS 16
@@ -5426,17 +5893,36 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 #include "SgtSky.cginc"
 
+float GetWorldSceneDepth(float2 screenUV)
+{
+	#if CW_COMPRESS_POSITIONS
+		return SSS_DecompressWorldDist(SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV)));
+	#else
+		return SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV));
+	#endif
+}
+
 void SSS_Vert(inout SSS_VertexData v)
 {
+	#if CW_COMPRESS_POSITIONS
+		float3 worldPos    = SSS_ObjectToWorld(v.position);
+		float3 worldCenter = _SGT_SkyToWorld._m03_m13_m23;
+		v.position = SSS_WorldToObject(SSS_CompressWorld(worldPos, worldCenter, _SGT_SkyRadius.y, v.extraV2F0.w));
+	#endif
 }
 
 void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 {
-	float3 wdir = -d.worldSpaceViewDir;
-	float  wfar = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
-	float  worldEyeDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
-	float3 tint = 1.0f;
-	float  dither = SGT_DitherFast(d.screenUV);
+	#if CW_COMPRESS_POSITIONS
+		d.worldSpacePosition = SSS_DecompressWorld(d.worldSpacePosition, d.extraV2F0.w);
+		d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	#endif
+	
+	float3 wdir          = -d.worldSpaceViewDir;
+	float  wfar          = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
+	float  worldEyeDepth = GetWorldSceneDepth(d.screenUV);
+	float3 tint          = 1.0f;
+	float  dither        = SGT_DitherFast(d.screenUV);
 	  
 	wfar = min(wfar, worldEyeDepth);
 		
@@ -5444,7 +5930,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	float3 ocam = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos, 1.0f)).xyz;
 	float3 ofar = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos + wdir * wfar, 1.0f)).xyz;
 	float  omax = distance(ocam, ofar);
-	float3 odir = normalize(mul(_SGT_WorldToSky, float4(-d.worldSpaceViewDir, 0.0f)).xyz);
+	float3 odir = normalize(mul(_SGT_WorldToSky, float4(wdir, 0.0f)).xyz);
 	float3 odst = SGT_SphereTest(ocam, odir, 1.0f);
 		
 	odst.xy = max(odst.xy, 0.0f);
@@ -5474,9 +5960,9 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	float4 cloudColor;
 	float  cloudDepth;
-	float  sceneDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	float  sceneDepth = GetWorldSceneDepth(d.screenUV);
 	
-	CW_SampleVolumetrics(d.screenUV, -d.worldSpaceViewDir, sceneDepth, cloudColor, cloudDepth);
+	CW_SampleVolumetrics(d.screenUV, wdir, sceneDepth, cloudColor, cloudDepth);
 	
 	#if _SGT_LIGHTING
 		float4 lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -5501,7 +5987,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	if (cloudColor.w > 0.0f)
 	{
-		float3 cloudWPos = CW_Depth2World(cloudDepth, -d.worldSpaceViewDir);
+		float3 cloudWPos = CW_Depth2World(cloudDepth, wdir);
 		float3 cloudSPos = mul(_SGT_WorldToSky, float4(cloudWPos, 1.0f)).xyz;
 		
 		#if _SGT_LIGHTING && _SSS_HDRP
@@ -5678,8 +6164,10 @@ void Frag_float
 }
 
 
+
 	#pragma shader_feature_local _SGT_ALBEDO_OFF _SGT_ALBEDO
 	#pragma shader_feature_local _SGT_LIGHTING_OFF _SGT_LIGHTING
+	#pragma multi_compile __ CW_COMPRESS_POSITIONS
 
 
 
@@ -6111,6 +6599,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 CBUFFER_END
 
 
@@ -6299,6 +6788,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -6339,6 +6829,7 @@ struct SSS_FragmentData
 	
 
 
+
 };
 
 struct SSS_SurfaceData
@@ -6352,6 +6843,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 #define __SGT_LIGHTANDSHADOW 1
 #define SGT_MAX_LIGHTS 16
 #define SGT_MAX_SPHERE_SHADOWS 16
@@ -6424,17 +6972,36 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 #include "SgtSky.cginc"
 
+float GetWorldSceneDepth(float2 screenUV)
+{
+	#if CW_COMPRESS_POSITIONS
+		return SSS_DecompressWorldDist(SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV)));
+	#else
+		return SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV));
+	#endif
+}
+
 void SSS_Vert(inout SSS_VertexData v)
 {
+	#if CW_COMPRESS_POSITIONS
+		float3 worldPos    = SSS_ObjectToWorld(v.position);
+		float3 worldCenter = _SGT_SkyToWorld._m03_m13_m23;
+		v.position = SSS_WorldToObject(SSS_CompressWorld(worldPos, worldCenter, _SGT_SkyRadius.y, v.extraV2F0.w));
+	#endif
 }
 
 void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 {
-	float3 wdir = -d.worldSpaceViewDir;
-	float  wfar = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
-	float  worldEyeDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
-	float3 tint = 1.0f;
-	float  dither = SGT_DitherFast(d.screenUV);
+	#if CW_COMPRESS_POSITIONS
+		d.worldSpacePosition = SSS_DecompressWorld(d.worldSpacePosition, d.extraV2F0.w);
+		d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	#endif
+	
+	float3 wdir          = -d.worldSpaceViewDir;
+	float  wfar          = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
+	float  worldEyeDepth = GetWorldSceneDepth(d.screenUV);
+	float3 tint          = 1.0f;
+	float  dither        = SGT_DitherFast(d.screenUV);
 	  
 	wfar = min(wfar, worldEyeDepth);
 		
@@ -6442,7 +7009,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	float3 ocam = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos, 1.0f)).xyz;
 	float3 ofar = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos + wdir * wfar, 1.0f)).xyz;
 	float  omax = distance(ocam, ofar);
-	float3 odir = normalize(mul(_SGT_WorldToSky, float4(-d.worldSpaceViewDir, 0.0f)).xyz);
+	float3 odir = normalize(mul(_SGT_WorldToSky, float4(wdir, 0.0f)).xyz);
 	float3 odst = SGT_SphereTest(ocam, odir, 1.0f);
 		
 	odst.xy = max(odst.xy, 0.0f);
@@ -6472,9 +7039,9 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	float4 cloudColor;
 	float  cloudDepth;
-	float  sceneDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	float  sceneDepth = GetWorldSceneDepth(d.screenUV);
 	
-	CW_SampleVolumetrics(d.screenUV, -d.worldSpaceViewDir, sceneDepth, cloudColor, cloudDepth);
+	CW_SampleVolumetrics(d.screenUV, wdir, sceneDepth, cloudColor, cloudDepth);
 	
 	#if _SGT_LIGHTING
 		float4 lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -6499,7 +7066,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	if (cloudColor.w > 0.0f)
 	{
-		float3 cloudWPos = CW_Depth2World(cloudDepth, -d.worldSpaceViewDir);
+		float3 cloudWPos = CW_Depth2World(cloudDepth, wdir);
 		float3 cloudSPos = mul(_SGT_WorldToSky, float4(cloudWPos, 1.0f)).xyz;
 		
 		#if _SGT_LIGHTING && _SSS_HDRP
@@ -6676,8 +7243,10 @@ void Frag_float
 }
 
 
+
 	#pragma shader_feature_local _SGT_ALBEDO_OFF _SGT_ALBEDO
 	#pragma shader_feature_local _SGT_LIGHTING_OFF _SGT_LIGHTING
+	#pragma multi_compile __ CW_COMPRESS_POSITIONS
 
 
 
@@ -7131,6 +7700,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 CBUFFER_END
 
 
@@ -7319,6 +7889,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -7359,6 +7930,7 @@ struct SSS_FragmentData
 	
 
 
+
 };
 
 struct SSS_SurfaceData
@@ -7372,6 +7944,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 #define __SGT_LIGHTANDSHADOW 1
 #define SGT_MAX_LIGHTS 16
 #define SGT_MAX_SPHERE_SHADOWS 16
@@ -7444,17 +8073,36 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 #include "SgtSky.cginc"
 
+float GetWorldSceneDepth(float2 screenUV)
+{
+	#if CW_COMPRESS_POSITIONS
+		return SSS_DecompressWorldDist(SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV)));
+	#else
+		return SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV));
+	#endif
+}
+
 void SSS_Vert(inout SSS_VertexData v)
 {
+	#if CW_COMPRESS_POSITIONS
+		float3 worldPos    = SSS_ObjectToWorld(v.position);
+		float3 worldCenter = _SGT_SkyToWorld._m03_m13_m23;
+		v.position = SSS_WorldToObject(SSS_CompressWorld(worldPos, worldCenter, _SGT_SkyRadius.y, v.extraV2F0.w));
+	#endif
 }
 
 void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 {
-	float3 wdir = -d.worldSpaceViewDir;
-	float  wfar = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
-	float  worldEyeDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
-	float3 tint = 1.0f;
-	float  dither = SGT_DitherFast(d.screenUV);
+	#if CW_COMPRESS_POSITIONS
+		d.worldSpacePosition = SSS_DecompressWorld(d.worldSpacePosition, d.extraV2F0.w);
+		d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	#endif
+	
+	float3 wdir          = -d.worldSpaceViewDir;
+	float  wfar          = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
+	float  worldEyeDepth = GetWorldSceneDepth(d.screenUV);
+	float3 tint          = 1.0f;
+	float  dither        = SGT_DitherFast(d.screenUV);
 	  
 	wfar = min(wfar, worldEyeDepth);
 		
@@ -7462,7 +8110,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	float3 ocam = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos, 1.0f)).xyz;
 	float3 ofar = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos + wdir * wfar, 1.0f)).xyz;
 	float  omax = distance(ocam, ofar);
-	float3 odir = normalize(mul(_SGT_WorldToSky, float4(-d.worldSpaceViewDir, 0.0f)).xyz);
+	float3 odir = normalize(mul(_SGT_WorldToSky, float4(wdir, 0.0f)).xyz);
 	float3 odst = SGT_SphereTest(ocam, odir, 1.0f);
 		
 	odst.xy = max(odst.xy, 0.0f);
@@ -7492,9 +8140,9 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	float4 cloudColor;
 	float  cloudDepth;
-	float  sceneDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	float  sceneDepth = GetWorldSceneDepth(d.screenUV);
 	
-	CW_SampleVolumetrics(d.screenUV, -d.worldSpaceViewDir, sceneDepth, cloudColor, cloudDepth);
+	CW_SampleVolumetrics(d.screenUV, wdir, sceneDepth, cloudColor, cloudDepth);
 	
 	#if _SGT_LIGHTING
 		float4 lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -7519,7 +8167,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	if (cloudColor.w > 0.0f)
 	{
-		float3 cloudWPos = CW_Depth2World(cloudDepth, -d.worldSpaceViewDir);
+		float3 cloudWPos = CW_Depth2World(cloudDepth, wdir);
 		float3 cloudSPos = mul(_SGT_WorldToSky, float4(cloudWPos, 1.0f)).xyz;
 		
 		#if _SGT_LIGHTING && _SSS_HDRP
@@ -7696,8 +8344,10 @@ void Frag_float
 }
 
 
+
 	#pragma shader_feature_local _SGT_ALBEDO_OFF _SGT_ALBEDO
 	#pragma shader_feature_local _SGT_LIGHTING_OFF _SGT_LIGHTING
+	#pragma multi_compile __ CW_COMPRESS_POSITIONS
 
 
 
@@ -8146,6 +8796,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 CBUFFER_END
 
 
@@ -8334,6 +8985,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -8374,6 +9026,7 @@ struct SSS_FragmentData
 	
 
 
+
 };
 
 struct SSS_SurfaceData
@@ -8387,6 +9040,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 #define __SGT_LIGHTANDSHADOW 1
 #define SGT_MAX_LIGHTS 16
 #define SGT_MAX_SPHERE_SHADOWS 16
@@ -8459,17 +9169,36 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 #include "SgtSky.cginc"
 
+float GetWorldSceneDepth(float2 screenUV)
+{
+	#if CW_COMPRESS_POSITIONS
+		return SSS_DecompressWorldDist(SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV)));
+	#else
+		return SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV));
+	#endif
+}
+
 void SSS_Vert(inout SSS_VertexData v)
 {
+	#if CW_COMPRESS_POSITIONS
+		float3 worldPos    = SSS_ObjectToWorld(v.position);
+		float3 worldCenter = _SGT_SkyToWorld._m03_m13_m23;
+		v.position = SSS_WorldToObject(SSS_CompressWorld(worldPos, worldCenter, _SGT_SkyRadius.y, v.extraV2F0.w));
+	#endif
 }
 
 void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 {
-	float3 wdir = -d.worldSpaceViewDir;
-	float  wfar = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
-	float  worldEyeDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
-	float3 tint = 1.0f;
-	float  dither = SGT_DitherFast(d.screenUV);
+	#if CW_COMPRESS_POSITIONS
+		d.worldSpacePosition = SSS_DecompressWorld(d.worldSpacePosition, d.extraV2F0.w);
+		d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	#endif
+	
+	float3 wdir          = -d.worldSpaceViewDir;
+	float  wfar          = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
+	float  worldEyeDepth = GetWorldSceneDepth(d.screenUV);
+	float3 tint          = 1.0f;
+	float  dither        = SGT_DitherFast(d.screenUV);
 	  
 	wfar = min(wfar, worldEyeDepth);
 		
@@ -8477,7 +9206,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	float3 ocam = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos, 1.0f)).xyz;
 	float3 ofar = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos + wdir * wfar, 1.0f)).xyz;
 	float  omax = distance(ocam, ofar);
-	float3 odir = normalize(mul(_SGT_WorldToSky, float4(-d.worldSpaceViewDir, 0.0f)).xyz);
+	float3 odir = normalize(mul(_SGT_WorldToSky, float4(wdir, 0.0f)).xyz);
 	float3 odst = SGT_SphereTest(ocam, odir, 1.0f);
 		
 	odst.xy = max(odst.xy, 0.0f);
@@ -8507,9 +9236,9 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	float4 cloudColor;
 	float  cloudDepth;
-	float  sceneDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	float  sceneDepth = GetWorldSceneDepth(d.screenUV);
 	
-	CW_SampleVolumetrics(d.screenUV, -d.worldSpaceViewDir, sceneDepth, cloudColor, cloudDepth);
+	CW_SampleVolumetrics(d.screenUV, wdir, sceneDepth, cloudColor, cloudDepth);
 	
 	#if _SGT_LIGHTING
 		float4 lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -8534,7 +9263,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	if (cloudColor.w > 0.0f)
 	{
-		float3 cloudWPos = CW_Depth2World(cloudDepth, -d.worldSpaceViewDir);
+		float3 cloudWPos = CW_Depth2World(cloudDepth, wdir);
 		float3 cloudSPos = mul(_SGT_WorldToSky, float4(cloudWPos, 1.0f)).xyz;
 		
 		#if _SGT_LIGHTING && _SSS_HDRP
@@ -8711,8 +9440,10 @@ void Frag_float
 }
 
 
+
 	#pragma shader_feature_local _SGT_ALBEDO_OFF _SGT_ALBEDO
 	#pragma shader_feature_local _SGT_LIGHTING_OFF _SGT_LIGHTING
+	#pragma multi_compile __ CW_COMPRESS_POSITIONS
 
 
 
@@ -9161,6 +9892,7 @@ CBUFFER_START(UnityPerMaterial)
 
 
 
+
 CBUFFER_END
 
 
@@ -9349,6 +10081,7 @@ struct SSS_VertexData
 	
 
 
+
 };
 
 struct SSS_FragmentData
@@ -9389,6 +10122,7 @@ struct SSS_FragmentData
 	
 
 
+
 };
 
 struct SSS_SurfaceData
@@ -9402,6 +10136,63 @@ struct SSS_SurfaceData
 	float  Alpha;
 };
 
+float2 _CW_PositionCompressionData; // x = start distance, y = max distance limit
+
+#define DEBUG_SCALE 0.001
+
+float SSS_GetCompressionRatio(float worldDist)
+{
+    float M       = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+    float excess  = max(0.0, worldDist - _CW_PositionCompressionData.x);
+    float newDist = worldDist - excess + (excess * M) / (excess + M + 0.0001);
+	
+	//return DEBUG_SCALE;
+	
+    return worldDist > 0.001 ? (newDist / worldDist) : 1.0;
+}
+
+float SSS_DecompressWorldDist(float compressedDist)
+{
+    float M = _CW_PositionCompressionData.y - _CW_PositionCompressionData.x;
+	
+    float compressedExcess = clamp(compressedDist - _CW_PositionCompressionData.x, 0.0, M - 0.001);
+	
+	//return compressedDist / DEBUG_SCALE;
+	
+    return compressedDist - compressedExcess + (compressedExcess * M) / (M - compressedExcess);
+}
+
+float3 SSS_CompressWorld(float3 worldPos, float3 worldCenter, float worldRadius, out float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  farDist    = distance(_WorldSpaceCameraPos, worldCenter) + worldRadius;
+    
+    ratio = SSS_GetCompressionRatio(farDist);
+    
+    return _WorldSpaceCameraPos + worldDelta * ratio;
+}
+
+float3 SSS_CompressWorld(float3 worldPos) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return _WorldSpaceCameraPos + worldDelta * SSS_GetCompressionRatio(worldDist);
+}
+
+float3 SSS_DecompressWorld(float3 worldPos)
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    float  worldDist  = length(worldDelta);
+    
+    return worldDist > 0.001 ? _WorldSpaceCameraPos + (worldDelta / worldDist) * SSS_DecompressWorldDist(worldDist) : _WorldSpaceCameraPos;
+}
+
+float3 SSS_DecompressWorld(float3 worldPos, float ratio) 
+{
+    float3 worldDelta = worldPos - _WorldSpaceCameraPos;
+    return _WorldSpaceCameraPos + worldDelta / ratio;
+}
 #define __SGT_LIGHTANDSHADOW 1
 #define SGT_MAX_LIGHTS 16
 #define SGT_MAX_SPHERE_SHADOWS 16
@@ -9474,17 +10265,36 @@ float4 SGT_ShadowColor(float3 worldPoint3)
 
 #include "SgtSky.cginc"
 
+float GetWorldSceneDepth(float2 screenUV)
+{
+	#if CW_COMPRESS_POSITIONS
+		return SSS_DecompressWorldDist(SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV)));
+	#else
+		return SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV));
+	#endif
+}
+
 void SSS_Vert(inout SSS_VertexData v)
 {
+	#if CW_COMPRESS_POSITIONS
+		float3 worldPos    = SSS_ObjectToWorld(v.position);
+		float3 worldCenter = _SGT_SkyToWorld._m03_m13_m23;
+		v.position = SSS_WorldToObject(SSS_CompressWorld(worldPos, worldCenter, _SGT_SkyRadius.y, v.extraV2F0.w));
+	#endif
 }
 
 void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 {
-	float3 wdir = -d.worldSpaceViewDir;
-	float  wfar = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
-	float  worldEyeDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
-	float3 tint = 1.0f;
-	float  dither = SGT_DitherFast(d.screenUV);
+	#if CW_COMPRESS_POSITIONS
+		d.worldSpacePosition = SSS_DecompressWorld(d.worldSpacePosition, d.extraV2F0.w);
+		d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	#endif
+	
+	float3 wdir          = -d.worldSpaceViewDir;
+	float  wfar          = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
+	float  worldEyeDepth = GetWorldSceneDepth(d.screenUV);
+	float3 tint          = 1.0f;
+	float  dither        = SGT_DitherFast(d.screenUV);
 	  
 	wfar = min(wfar, worldEyeDepth);
 		
@@ -9492,7 +10302,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	float3 ocam = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos, 1.0f)).xyz;
 	float3 ofar = mul(_SGT_WorldToSky, float4(_WorldSpaceCameraPos + wdir * wfar, 1.0f)).xyz;
 	float  omax = distance(ocam, ofar);
-	float3 odir = normalize(mul(_SGT_WorldToSky, float4(-d.worldSpaceViewDir, 0.0f)).xyz);
+	float3 odir = normalize(mul(_SGT_WorldToSky, float4(wdir, 0.0f)).xyz);
 	float3 odst = SGT_SphereTest(ocam, odir, 1.0f);
 		
 	odst.xy = max(odst.xy, 0.0f);
@@ -9522,9 +10332,9 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	float4 cloudColor;
 	float  cloudDepth;
-	float  sceneDepth = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	float  sceneDepth = GetWorldSceneDepth(d.screenUV);
 	
-	CW_SampleVolumetrics(d.screenUV, -d.worldSpaceViewDir, sceneDepth, cloudColor, cloudDepth);
+	CW_SampleVolumetrics(d.screenUV, wdir, sceneDepth, cloudColor, cloudDepth);
 	
 	#if _SGT_LIGHTING
 		float4 lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
@@ -9549,7 +10359,7 @@ void SSS_Frag(inout SSS_SurfaceData s, inout SSS_FragmentData d)
 	
 	if (cloudColor.w > 0.0f)
 	{
-		float3 cloudWPos = CW_Depth2World(cloudDepth, -d.worldSpaceViewDir);
+		float3 cloudWPos = CW_Depth2World(cloudDepth, wdir);
 		float3 cloudSPos = mul(_SGT_WorldToSky, float4(cloudWPos, 1.0f)).xyz;
 		
 		#if _SGT_LIGHTING && _SSS_HDRP
@@ -9726,8 +10536,10 @@ void Frag_float
 }
 
 
+
 	#pragma shader_feature_local _SGT_ALBEDO_OFF _SGT_ALBEDO
 	#pragma shader_feature_local _SGT_LIGHTING_OFF _SGT_LIGHTING
+	#pragma multi_compile __ CW_COMPRESS_POSITIONS
 
 
 

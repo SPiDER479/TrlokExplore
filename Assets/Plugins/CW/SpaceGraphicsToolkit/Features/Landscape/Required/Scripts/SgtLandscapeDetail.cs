@@ -174,7 +174,7 @@ namespace SpaceGraphicsToolkit.Landscape
 
 			public void Execute()
 			{
-				var two = DataA[0].z >= 0.0;
+				var two = DataA.Length > 0 && DataA[0].z >= 0.0;
 
 				if (HeightData16.Length > 0)
 				{

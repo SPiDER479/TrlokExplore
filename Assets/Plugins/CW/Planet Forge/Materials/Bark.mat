@@ -9,23 +9,25 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Bark
   m_Shader: {fileID: 4800000, guid: 26882550368c5c642960d7d0334607be, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _SGT_WIND
   m_InvalidKeywords:
+  - _ALPHATEST_ON
   - _DISABLE_SSR_TRANSPARENT
+  - _SGT_COMPRESS_POSITIONS
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: 2450
   stringTagMap:
     MotionVector: User
+    RenderType: TransparentCutout
   disabledShaderPasses:
   - TransparentDepthPrepass
   - TransparentDepthPostpass
   - TransparentBackface
   - RayTracingPrepass
-  m_LockedProperties: 
+  - MOTIONVECTORS
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -116,19 +118,23 @@ Material:
     - _OpaqueCullMode: 2
     - _Parallax: 0.02
     - _PerPixelSorting: 0
-    - _QueueControl: 1
-    - _QueueOffset: 0
     - _RayTracing: 0
     - _ReceivesSSR: 1
     - _ReceivesSSRTransparent: 0
     - _RefractionModel: 0
     - _RenderQueueType: 1
     - _RequireSplitLighting: 0
+    - _SGT_CompressPositions: 1
     - _SGT_CrossImpostor: 0
     - _SGT_DitherEnd: 0.1
     - _SGT_DitherStart: 0.7
+    - _SGT_Expand: 0
+    - _SGT_SubsurfaceRange: 10
     - _SGT_SurfsurfaceRange: 10
     - _SGT_SurfsurfaceScattering: 0
+    - _SGT_Wind: 1
+    - _SGT_WindCoordScale: 0
+    - _SGT_WindHeightScale: 0.05
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
@@ -168,6 +174,6 @@ Material:
     - _SGT_AxisWorldHalf2: {r: 1, g: 1, b: 0, a: 0}
     - _SGT_BoundsExtents: {r: 1, g: 1, b: 1, a: 0}
     - _SGT_BoundsOffset: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_WindCoordCenter: {r: 0, g: 0, b: 0, a: 0}
     - _Tiling: {r: 1, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []
-  m_AllowLocking: 1

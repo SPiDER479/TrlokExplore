@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: BrownBoulder_CrossImpostor_Material
+  m_Shader: {fileID: 4800000, guid: 26882550368c5c642960d7d0334607be, type: 3}
+  m_ValidKeywords:
+  - _SGT_CROSS_IMPOSTOR
+  m_InvalidKeywords:
+  - _SGT_STATIC
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BumpMap:
+        m_Texture: {fileID: 2800000, guid: 4bbef53fbf8cb444d96c7876ca3e5891, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 2800000, guid: bfccb89c308a7be47b607ce4e16a5d96, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 2800000, guid: ebbc7d823cee2344798d184dacb974e0, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 2800000, guid: b040110f7d3fc284baf43669b4af2833, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BUILTIN_QueueControl: 0
+    - _BUILTIN_QueueOffset: 0
+    - _BumpScale: 1
+    - _GlossMapScale: 1
+    - _Metallic: 1
+    - _SGT_CrossImpostor: 1
+    - _SGT_DitherEnd: 0.1
+    - _SGT_DitherStart: 0.7
+    - _SGT_Expand: 0.21
+    - _SGT_SubsurfaceRange: 10
+    - _SGT_SurfsurfaceRange: 10
+    - _SGT_SurfsurfaceScattering: 0
+    - _SGT_Wind: 0
+    - _SGT_WindCoordScale: 0
+    - _SGT_WindHeightScale: 1
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Emission: {r: 0, g: 0, b: 0, a: 1}
+    - _SGT_AxisWorldHalf0: {r: 1, g: 1, b: 0, a: 0}
+    - _SGT_AxisWorldHalf1: {r: 1, g: 1, b: 0, a: 0}
+    - _SGT_AxisWorldHalf2: {r: 1, g: 1, b: 0, a: 0}
+    - _SGT_BoundsExtents: {r: 1, g: 1, b: 1, a: 0}
+    - _SGT_BoundsOffset: {r: 0, g: 0, b: 0, a: 0}
+    - _SGT_WindCoordCenter: {r: 0, g: 0, b: 0, a: 0}
+    - _Tiling: {r: 1, g: 1, b: 0, a: 0}
+  m_BuildTextureStacks: []

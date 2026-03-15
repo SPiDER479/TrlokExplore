@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f7a03758462e6a24489f2c6dec23e685
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 4300000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.22
+  assetPath: Assets/Plugins/CW/Planet Forge/Prefabs/GrassTile/GrassTile1_CrossImpostor_Mesh.asset
+  uploadId: 881296

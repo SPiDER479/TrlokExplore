@@ -15,6 +15,7 @@ MonoBehaviour:
   shaderTemplate: {fileID: -6465566751694194690, guid: bf18604bf73988b4db718b1880751df4,
     type: 3}
   shaderFiles:
+  - {fileID: 10900000, guid: d4431ec5a244acd43991fdee45aa4761, type: 3}
   - {fileID: 10900000, guid: b8f00a1d34502c74ca83e2a6723a976d, type: 3}
   outputShader: {fileID: 4800000, guid: ad3e1cf3b9e417d4fa5aa1de024ac56f, type: 3}
   outputTitle: Space Graphics Toolkit/Skybox

@@ -3,6 +3,7 @@ using Unity.Jobs;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Burst;
+using System.Collections.Generic;
 using RNG = Unity.Mathematics.Random;
 
 namespace SpaceGraphicsToolkit.Landscape
@@ -11,6 +12,7 @@ namespace SpaceGraphicsToolkit.Landscape
 	public abstract class SgtLandscapeSpawner : MonoBehaviour
 	{
 		public enum RotateType { Randomly, ToLandscapeCenter, ToSurfaceNormal }
+		public enum DistributionType { Random, Grid }
 
 		/// <summary>This allows you to define the spawn area. NOTE: Texture must be R8/Alpha8 and Read/Write enabled.</summary>
 		public Texture2D MaskTex { set { if (maskTex != value) { maskTex = value; UpdateMaskData(); } } get { return maskTex; } } [SerializeField] private Texture2D maskTex;
@@ -18,14 +20,29 @@ namespace SpaceGraphicsToolkit.Landscape
 		/// <summary>Invert the mask, so 0 values become 255 values, and 255 values become 0 values?</summary>
 		public bool InvertMask { set { invertMask = value; } get { return invertMask; } } [SerializeField] private bool invertMask;
 
-		/// <summary>The target size of each grid tile in world units. This will determine the slice count.</summary>
+		/// <summary>Objects are spawned on square tiles that are placed on the planet surface. This allows you to control the size of each tile across each edge in meters. Smaller tiles give better resolution spawning patterns, but may run slower and consume more memory.</summary>
 		public float TileSize { set { tileSize = value; } get { return tileSize; } } [SerializeField] private float tileSize = 10.0f;
 
-		/// <summary>The world space distance the camera must be within for a grid cell to spawn.</summary>
+		/// <summary>The world space distance the camera must be within for a tile to spawn.</summary>
 		public float Range { set { range = value; } get { return range; } } [SerializeField] private float range = 20.0f;
+
+		/// <summary>The local space distance between the 3 samples used to calculate terrain slope.</summary>
+		public float SampleStride { set { sampleStride = value; } get { return sampleStride; } } [SerializeField] private float sampleStride = 0.01f;
+
+		/// <summary>Should the spawn point be positioned at the center of the 3 samples, rather than the position of the first?</summary>
+		public bool SampleCenter { set { sampleCenter = value; } get { return sampleCenter; } } [SerializeField] private bool sampleCenter;
 
 		/// <summary>The density of spawned objects per square unit.</summary>
 		public float Density { set { density = value; } get { return density; } } [SerializeField] private float density = 0.1f;
+
+		/// <summary>How should the objects be distributed across the landscape?</summary>
+		public DistributionType Distribution { set { distribution = value; } get { return distribution; } } [SerializeField] private DistributionType distribution = DistributionType.Random;
+
+		/// <summary>When using the Grid distribution, should the objects be scaled to perfectly fit the grid spacing?</summary>
+		public bool GridFit { set { gridFit = value; } get { return gridFit; } } [SerializeField] private bool gridFit;
+
+		/// <summary>When using the Grid distribution, how much should the points be scattered on the XZ plane?</summary>
+		public float GridScatter { set { gridScatter = value; } get { return gridScatter; } } [SerializeField] private float gridScatter;
 
 		/// <summary>The random seed when procedurally spawning.</summary>
 		public int Seed { set { seed = value; } get { return seed; } } [SerializeField] [CW.Common.CwSeed] private int seed;
@@ -41,6 +58,9 @@ namespace SpaceGraphicsToolkit.Landscape
 
 		/// <summary>The spawned objects will have their position offset by this local space distance.</summary>
 		public float Offset { set { offset = value; } get { return offset; } } [SerializeField] private float offset;
+
+		/// <summary>Adds an angle deviation up to this specified value in degrees when Rotate is set to ToLandscapeCenter or ToSurfaceNormal.</summary>
+		public float AngleScatter { set { angleScatter = value; } get { return angleScatter; } } [SerializeField] private float angleScatter;
 
 		/// <summary>Should the minimum height constraint be applied?</summary>
 		public bool UseMinHeight { set { useMinHeight = value; } get { return useMinHeight; } } [SerializeField] private bool useMinHeight;
@@ -87,13 +107,22 @@ namespace SpaceGraphicsToolkit.Landscape
 		public struct Tile : System.IEquatable<Tile>
 		{
 			public long    u, v;
-			public int     faceIndex;
+			public int     faceIndex, id;
 			public double3 corner, tangent, bitangent, center;
 			public int     tripletIndex, tripletCount;
 			public int     spawnIndex, spawnCount;
+			public double3 localMin, localMax;
+			public float   scaleMultiplier;
 
-			public bool Equals(Tile other)    => u == other.u && v == other.v && faceIndex == other.faceIndex;
-			public override int GetHashCode() => unchecked((int)((17 * 23 + u) * 23 + v) * 23 + faceIndex);
+			public bool Equals(Tile other)
+			{
+				return u == other.u && v == other.v && faceIndex == other.faceIndex;
+			}
+
+			public override int GetHashCode()
+			{
+				return unchecked((int)((17 * 23 + u) * 23 + v) * 23 + faceIndex);
+			}
 		}
 
 		[BurstCompile]
@@ -101,6 +130,7 @@ namespace SpaceGraphicsToolkit.Landscape
 		{
 			public NativeList<Tile>    current, added, removed;
 			public NativeList<double3> spawnPoints;
+			public NativeQueue<int>    unusedIDs;
 			public double3   camWorld;
 			public double    surfaceHeight;
 			public double4x4 localToWorld, worldToLocal;
@@ -108,6 +138,9 @@ namespace SpaceGraphicsToolkit.Landscape
 			public int       count;
 			public uint      Seed;
 			public float     spawnDensity;
+			public float     sampleStride;
+			public DistributionType distribution;
+			public float     gridScatter;
 
 			static void GetFace(int f, double h, out double3 o, out double3 u, out double3 v, out int dominantAxis)
 			{
@@ -127,27 +160,28 @@ namespace SpaceGraphicsToolkit.Landscape
 			public void Execute()
 			{
 				var prev      = new NativeArray<Tile>(current.AsArray(), Allocator.Temp);
-				var prevSet   = new NativeParallelHashSet<Tile>(prev.Length, Allocator.Temp);
+				var prevMap   = new NativeParallelHashMap<Tile, Tile>(prev.Length, Allocator.Temp);
 				var currSet   = new NativeParallelHashSet<Tile>(prev.Length, Allocator.Temp);
 				var size      = radius * 2.0;
 				var cs        = size / count;
-				var eps       = 0.01;
 				var searchRad = (int)math.ceil(math.sqrt(maxDistSq) / cs * 2.0);
 
 				current.Clear(); added.Clear(); removed.Clear(); spawnPoints.Clear();
 
-				for (var i = 0; i < prev.Length; i++) prevSet.Add(prev[i]);
+				for (var i = 0; i < prev.Length; i++) 
+					prevMap.TryAdd(prev[i], prev[i]);
 
 				var camLocal  = math.transform(worldToLocal, camWorld);
 				var camNormal = math.normalize(camLocal);
 
-				camLocal -= camNormal * surfaceHeight;
+				// Create a version of the camera clamped perfectly to the base sphere
+				var camBaseLocal = camNormal * radius;
+				var camBaseWorld = math.transform(localToWorld, camBaseLocal);
 
 				for (var f = 0; f < 6; f++)
 				{
 					GetFace(f, radius, out var fO, out var fU, out var fV, out var dominantAxis);
 
-					// Map camera from sphere back to cube face
 					var dominantValue = camLocal[dominantAxis];
 					if (math.abs(dominantValue) < 0.0001) continue;
 
@@ -173,45 +207,84 @@ namespace SpaceGraphicsToolkit.Landscape
 						var center = fO + fU * (tu * cs + cs * 0.5) + fV * (tv * cs + cs * 0.5);
 						var sc     = math.normalize(center) * radius;
 
-						if (math.distancesq(camWorld, math.transform(localToWorld, sc)) > maxDistSq)
+						// Check distance against the projected camera, NOT the floating camera
+						if (math.distancesq(camBaseWorld, math.transform(localToWorld, sc)) > maxDistSq)
 							continue;
 
-						var tile = new Tile {
-							u = tu, v = tv, faceIndex = f, tangent = fU, bitangent = fV,
-							corner = fO + fU * (tu * cs) + fV * (tv * cs), center = center
-						};
+						var tileLookup   = new Tile { u = tu, v = tv, faceIndex = f };
+						var existingTile = default(Tile);
 
-						if (!currSet.Add(tile)) continue;
+						if (!currSet.Add(tileLookup)) continue;
 
-						if (!prevSet.Contains(tile))
+						if (prevMap.TryGetValue(tileLookup, out existingTile) == true)
 						{
-							var distSq    = math.lengthsq(center);
-							var areaRatio = (radius * radius * radius) / (distSq * math.sqrt(distSq));
-							var rng       = new RNG(math.hash(center) + Seed);
-
-							var theoreticalCount = cs * cs * areaRatio * spawnDensity;
-							var baseCount        = (int)math.floor(theoreticalCount);
-							var fractionalChance = theoreticalCount - baseCount;
-
-							if (rng.NextDouble() < fractionalChance)
-							{
-								baseCount += 1;
-							}
-
-							tile.tripletIndex = spawnPoints.Length;
-							tile.tripletCount = baseCount;
-
-							for (var p = 0; p < tile.tripletCount; p++)
-							{
-								var pU = tu * cs + rng.NextDouble() * cs;
-								var pV = tv * cs + rng.NextDouble() * cs;
-								spawnPoints.Add(math.normalize(fO + fU * pU + fV * pV) * radius);
-								spawnPoints.Add(math.normalize(fO + fU * (pU + eps) + fV * pV) * radius);
-								spawnPoints.Add(math.normalize(fO + fU * pU + fV * (pV + eps)) * radius);
-							}
-							added.Add(tile);
+							current.Add(existingTile);
 						}
-						current.Add(tile);
+						else // New tile
+						{
+							var newTile          = new Tile { u = tu, v = tv, faceIndex = f, tangent = fU, bitangent = fV, corner = fO + fU * (tu * cs) + fV * (tv * cs), center = center };
+							var distSq           = math.lengthsq(center);
+							var areaRatio        = (radius * radius * radius) / (distSq * math.sqrt(distSq));
+							var rng              = new RNG(math.hash(center) + Seed);
+							var theoreticalCount = cs * cs * areaRatio * spawnDensity;
+
+							if (distribution == DistributionType.Grid)
+							{
+								var gridRes = (int)math.round(math.sqrt(theoreticalCount));
+								if (gridRes < 1) gridRes = 1;
+
+								newTile.tripletIndex    = spawnPoints.Length;
+								newTile.tripletCount    = gridRes * gridRes;
+								newTile.scaleMultiplier = (float)(math.sqrt(theoreticalCount) / gridRes);
+
+								var step  = cs / gridRes;
+								var start = step * 0.5;
+
+								for (var x = 0; x < gridRes; x++)
+								for (var y = 0; y < gridRes; y++)
+								{
+									var pU = tu * cs + start + x * step;
+									var pV = tv * cs + start + y * step;
+
+									if (gridScatter > 0.0f)
+									{
+										var cellHash = math.hash(center) + (uint)(x + y * gridRes);
+										var cellRng  = new RNG(cellHash + Seed);
+										pU += (cellRng.NextDouble() - 0.5) * step * gridScatter;
+										pV += (cellRng.NextDouble() - 0.5) * step * gridScatter;
+									}
+
+									spawnPoints.Add(math.normalize(fO + fU * pU + fV * pV) * radius);
+									spawnPoints.Add(math.normalize(fO + fU * (pU + sampleStride) + fV * pV) * radius);
+									spawnPoints.Add(math.normalize(fO + fU * pU + fV * (pV + sampleStride)) * radius);
+								}
+							}
+							else
+							{
+								var baseCount        = (int)math.floor(theoreticalCount);
+								var fractionalChance = theoreticalCount - baseCount;
+
+								if (rng.NextDouble() < fractionalChance)
+								{
+									baseCount += 1;
+								}
+
+								newTile.tripletIndex    = spawnPoints.Length;
+								newTile.tripletCount    = baseCount;
+								newTile.scaleMultiplier = 1.0f;
+
+								for (var p = 0; p < newTile.tripletCount; p++)
+								{
+									var pU = tu * cs + rng.NextDouble() * cs;
+									var pV = tv * cs + rng.NextDouble() * cs;
+									spawnPoints.Add(math.normalize(fO + fU * pU + fV * pV) * radius);
+									spawnPoints.Add(math.normalize(fO + fU * (pU + sampleStride) + fV * pV) * radius);
+									spawnPoints.Add(math.normalize(fO + fU * pU + fV * (pV + sampleStride)) * radius);
+								}
+							}
+
+							added.Add(newTile);
+						}
 					}
 				}
 
@@ -219,16 +292,31 @@ namespace SpaceGraphicsToolkit.Landscape
 				{
 					if (currSet.Contains(prev[i]) == false)
 					{
+						unusedIDs.Enqueue(prev[i].id);
+
 						removed.Add(prev[i]);
 					}
 				}
 
+				for (var i = 0; i < added.Length; i++)
+				{
+					if (unusedIDs.Count == 0) break; // Too many tiles!
+
+					var tile = added[i];
+					
+					tile.id = unusedIDs.Dequeue();
+
+					added[i] = tile;
+
+					current.Add(tile);
+				}
+
 				prev.Dispose();
-				prevSet.Dispose();
+				prevMap.Dispose();
 				currSet.Dispose();
 
-				// Inject camera pos at end to calculate surfaceHeight for next time
-				spawnPoints.Add(camLocal);
+				// Keep the camera request for surface height evaluation
+				spawnPoints.Add(camBaseLocal);
 			}
 		}
 
@@ -240,27 +328,57 @@ namespace SpaceGraphicsToolkit.Landscape
 			[ReadOnly] public NativeArray<double>  InputHeights;
 			[ReadOnly] public NativeArray<double4> InputDataA;
 			[ReadOnly] public NativeArray<byte>    MaskPixels;
+			
+			[ReadOnly] public int                    HoleCount;
+			[ReadOnly] public NativeArray<float4>    HoleDatas;
+			[ReadOnly] public NativeArray<double4x4> HoleMatrices;
 
 			public uint Seed;
-			public int MaskWidth, MaskHeight;
+			public int2 MaskSize;
 			public bool InvertMask;
-			public float ScaleMin, ScaleMax, Offset;
+			public float Offset;
+			public float ScaleMin, ScaleMax;
+			public bool GridFit;
 			public RotateType RotateMode;
+			public bool SampleCenter;
+			public float AngleScatter;
 
 			public float UseMinHeight, MinHeight, MinHeightFalloff;
 			public float UseMaxHeight, MaxHeight, MaxHeightFalloff;
 			public float UseMinSlope, MinSlope, MinSlopeFalloff;
 			public float UseMaxSlope, MaxSlope, MaxSlopeFalloff;
 
-			public NativeList<float3>     OutPositions;
+			public NativeList<double3>    OutPositions;
 			public NativeList<quaternion> OutRotations;
-			public NativeList<float3>     OutScales;
+			public NativeList<float>      OutScales;
+			public NativeList<float>      OutSeeds;
+			public NativeList<int>        OutIDs;
+
+			private bool PointInHole(double3 point)
+			{
+				for (var h = 0; h < HoleCount; h++)
+				{
+					var entrancePoint = math.transform(HoleMatrices[h], point);
+					var circleDist    = math.dot(entrancePoint.xz, entrancePoint.xz);
+					var boxDist       = math.max(math.abs(entrancePoint.x), math.abs(entrancePoint.z));
+					var finalDist     = math.lerp(circleDist, boxDist, HoleDatas[h].x);
+
+					if (finalDist < 1.0 && math.abs(entrancePoint).y < 1.0)
+					{
+						return true;
+					}
+				}
+
+				return false;
+			}
 
 			public void Execute()
 			{
 				OutPositions.Clear();
 				OutRotations.Clear();
 				OutScales.Clear();
+				OutSeeds.Clear();
+				OutIDs.Clear();
 
 				for (var i = 0; i < Tiles.Length; i++)
 				{
@@ -278,18 +396,16 @@ namespace SpaceGraphicsToolkit.Landscape
 						var uv          = InputDataA[globalIdx].xy;
 						var rng         = new RNG(math.hash(p0) + Seed);
 						var upDir       = (float3)InputDirections[globalIdx];
-						var norm        = math.normalize(math.cross(p1 - p0, p2 - p0));
-						var slope       = math.degrees(math.acos(math.clamp(math.dot(norm, upDir), -1.0f, 1.0f)));
+						var norm        = math.normalize(math.cross(p1 - p0, p2 - p0)); if (math.dot(norm, upDir) < 0f) norm = -norm;
+						var slope       = math.degrees(math.acos(math.saturate(math.abs(math.dot(norm, upDir)))));
 						var probability = (float)SampleMask(uv);
 
-						// Height Constraints
 						var hMinP  = math.saturate((height - MinHeight) / math.max(MinHeightFalloff, 0.0001f));
 						var hMaxP  = math.saturate((MaxHeight - height) / math.max(MaxHeightFalloff, 0.0001f));
 				
 						probability *= math.lerp(1.0f, hMinP, UseMinHeight);
 						probability *= math.lerp(1.0f, hMaxP, UseMaxHeight);
 
-						// Slope Constraints
 						var sMinP = math.saturate((slope - MinSlope) / math.max(MinSlopeFalloff, 0.0001f));
 						var sMaxP = math.saturate((MaxSlope - slope) / math.max(MaxSlopeFalloff, 0.0001f));
 
@@ -298,19 +414,49 @@ namespace SpaceGraphicsToolkit.Landscape
 
 						if (probability < rng.NextFloat()) continue;
 
-						var rot  = quaternion.identity;
-						var spin = quaternion.RotateY(rng.NextFloat(0, math.PI * 2.0f));
+						var rot   = quaternion.identity;
+						var spin  = quaternion.RotateY(rng.NextFloat(0, math.PI * 2.0f));
+						var seed  = rng.NextFloat();
+						var scale = math.lerp(ScaleMin, ScaleMax, seed);
+
+						if (GridFit) scale *= tile.scaleMultiplier;
 
 						switch (RotateMode)
 						{
-							case RotateType.Randomly:          rot = rng.NextQuaternionRotation(); break;
+							case RotateType.Randomly: rot = rng.NextQuaternionRotation(); break;
 							case RotateType.ToLandscapeCenter: rot = math.mul(FromToRotation(new float3(0,1,0), upDir), spin); break;
-							case RotateType.ToSurfaceNormal:   rot = math.mul(FromToRotation(new float3(0,-1,0), (float3)norm), spin); break;
+							case RotateType.ToSurfaceNormal:   rot = math.mul(FromToRotation(new float3(0,1,0), (float3)norm), spin); break;
 						}
 
-						OutPositions.Add((float3)p0 + math.rotate(rot, new float3(0, Offset, 0)));
+						if (RotateMode != RotateType.Randomly && AngleScatter > 0.0f)
+						{
+							var scatterAxis = rng.NextFloat3Direction();
+							var scatterRot  = quaternion.AxisAngle(scatterAxis, rng.NextFloat(0, math.radians(AngleScatter)));
+							rot = math.mul(rot, scatterRot);
+						}
+
+						var finalPos = (SampleCenter ? (p0 + p1 + p2) / 3.0 : p0) + math.rotate(rot, new float3(0, Offset, 0));
+
+						if (PointInHole(finalPos) == true)
+						{
+							continue;
+						}
+
+						OutPositions.Add(finalPos);
 						OutRotations.Add(rot);
-						OutScales.Add(new float3(rng.NextFloat(ScaleMin, ScaleMax)));
+						OutScales.Add(scale);
+						OutSeeds.Add(seed);
+						OutIDs.Add(tile.id);
+
+						if (tile.spawnCount == 0)
+						{
+							tile.localMin = tile.localMax = finalPos;
+						}
+						else
+						{
+							tile.localMin = math.min(tile.localMin, finalPos);
+							tile.localMax = math.max(tile.localMax, finalPos);
+						}
 		
 						tile.spawnCount += 1;
 					}
@@ -326,24 +472,19 @@ namespace SpaceGraphicsToolkit.Landscape
 			private quaternion FromToRotation(float3 from, float3 to)
 			{
 				var dot = math.dot(from, to);
-
 				if (dot > 0.999999f) return quaternion.identity;
-
 				if (dot < -0.999999f)
 				{
 					var axis = math.abs(from.z) < 0.9f ? new float3(-from.y, from.x, 0) : new float3(0, -from.z, from.y);
 					return quaternion.AxisAngle(math.normalize(axis), math.PI);
 				}
-
 				return math.normalize(new quaternion(new float4(math.cross(from, to), 1.0f + dot)));
 			}
 
 			private double SampleMask(double2 uv)
 			{
-				if (!MaskPixels.IsCreated || MaskWidth <= 0) return 1.0;
-				var x = math.clamp((int)(uv.x * MaskWidth), 0, MaskWidth - 1);
-				var y = math.clamp((int)(uv.y * MaskHeight), 0, MaskHeight - 1);
-				var m = (double)MaskPixels[x + y * MaskWidth] / 255.0;
+				if (!MaskPixels.IsCreated) return 1.0;
+				var m = SgtLandscape.Sample_Linear_WrapX(MaskPixels, MaskSize, uv);
 				return InvertMask ? 1.0 - m : m;
 			}
 		}
@@ -352,6 +493,7 @@ namespace SpaceGraphicsToolkit.Landscape
 		[System.NonSerialized] private NativeList<Tile>    addedTiles;
 		[System.NonSerialized] private NativeList<Tile>    removedTiles;
 		[System.NonSerialized] private NativeList<double3> spawnPoints;
+		[System.NonSerialized] private NativeQueue<int>    availableTileIds;
 
 		[System.NonSerialized] private NativeArray<byte> maskPixels;
 		[System.NonSerialized] private int               maskWidth;
@@ -364,85 +506,116 @@ namespace SpaceGraphicsToolkit.Landscape
 
 		private SgtSphereLandscape.PendingPoints pendingData;
 
-		// Reusable persistent buffers
-		private NativeList<float3> spawnP;
-		private NativeList<quaternion> spawnR;
-		private NativeList<float3> spawnS;
+		private NativeList<double3>    spawnPositions;
+		private NativeList<quaternion> spawnRotations;
+		private NativeList<float>      spawnScales;
+		private NativeList<float>      spawnSeeds;
+		private NativeList<int>        spawnTileIDs;
+		private NativeList<float4>     spawnHoleDatas;
+		private NativeList<double4x4>  spawnHoleMatrices;
 
 		public int GetSlices()
-        {
-            if (parent == null) parent = GetComponentInParent<SgtSphereLandscape>();
-            if (parent == null || tileSize <= 0.001f) return 1;
+		{
+			if (parent == null) parent = GetComponentInParent<SgtSphereLandscape>();
+			if (parent == null || tileSize <= 0.001f) return 1;
+			return math.max(1, (int)math.round((parent.Radius * 2.0) / tileSize));
+		}
 
-            return math.max(1, (int)math.round((parent.Radius * 2.0) / tileSize));
-        }
+		public float GetApproxSpawnSpacing()
+		{
+			if (density > 0.0f)
+			{
+				return math.sqrt(1.0f / density);
+			}
 
-		/// <summary>Returns the approximate maximum number of objects that can spawn with these settings when the camera is on the surface, if all height and slope checks pass.</summary>
+			return 0.0f;
+		}
+
+		public int GetApproximateMaximumTileCount()
+		{
+			if (parent == null) parent = GetComponentInParent<SgtSphereLandscape>();
+			if (parent == null) return -1;
+
+			int slices = GetSlices();
+			var planetArea = 4.0 * math.PI * parent.Radius * parent.Radius;
+			var tileArea   = planetArea / (6.0 * slices * slices);
+			var searchArea = math.PI * range * range;
+			
+			return (int)math.ceil(searchArea / tileArea);
+		}
+
 		public int GetApproximateMaximumSpawnCount()
 		{
 			if (parent == null) parent = GetComponentInParent<SgtSphereLandscape>();
 			if (parent == null) return -1;
 
-            int slices = GetSlices();
+			int slices = GetSlices();
 			var planetArea = 4.0 * math.PI * parent.Radius * parent.Radius;
 			var tileArea   = planetArea / (6.0 * slices * slices);
-			var searchArea = math.PI * range * range;
-			var tileCount  = searchArea / tileArea;
+			var tileCount  = GetApproximateMaximumTileCount();
 
 			return (int)math.ceil(tileCount * (tileArea * density));
+		}
+
+		public int GetApproximateMaximumSpawnCountPerTile()
+		{
+			if (parent == null) parent = GetComponentInParent<SgtSphereLandscape>();
+			if (parent == null) return -1;
+
+			int slices = GetSlices();
+			var planetArea = 4.0 * math.PI * parent.Radius * parent.Radius;
+			var tileArea   = planetArea / (6.0 * slices * slices);
+			var tileCount  = GetApproximateMaximumTileCount();
+
+			return (int)math.ceil(tileArea * density);
 		}
 
 		protected virtual void OnEnable()
 		{
 			parent = GetComponentInParent<SgtSphereLandscape>();
-
 			UpdateMaskData();
-
 			currentTiles = new NativeList<Tile>(128, Allocator.Persistent);
 			addedTiles   = new NativeList<Tile>(128, Allocator.Persistent);
 			removedTiles = new NativeList<Tile>(128, Allocator.Persistent);
 			spawnPoints  = new NativeList<double3>(512, Allocator.Persistent);
-	
-			spawnP = new NativeList<float3>(1024, Allocator.Persistent);
-			spawnR = new NativeList<quaternion>(1024, Allocator.Persistent);
-			spawnS = new NativeList<float3>(1024, Allocator.Persistent);
+			availableTileIds = new NativeQueue<int>(Allocator.Persistent);
+			spawnPositions = new NativeList<double3>(1024, Allocator.Persistent);
+			spawnRotations = new NativeList<quaternion>(1024, Allocator.Persistent);
+			spawnScales = new NativeList<float>(1024, Allocator.Persistent);
+			spawnSeeds = new NativeList<float>(1024, Allocator.Persistent);
+			spawnTileIDs = new NativeList<int>(1024, Allocator.Persistent);
+			spawnHoleDatas = new NativeList<float4>(64, Allocator.Persistent);
+			spawnHoleMatrices = new NativeList<double4x4>(64, Allocator.Persistent);
+
+			for (int i = 999; i >= 0; i--) availableTileIds.Enqueue(i);
 		}
 
 		protected virtual void OnDisable()
 		{
 			ForceComplete();
-
 			foreach (var tile in currentTiles)
 				HandleDespawn(tile);
-
 			maskPixels.Dispose();
-
 			currentTiles.Dispose();
 			addedTiles.Dispose();
 			removedTiles.Dispose();
 			spawnPoints.Dispose();
-
-			spawnP.Dispose();
-			spawnR.Dispose();
-			spawnS.Dispose();
+			availableTileIds.Dispose();
+			spawnPositions.Dispose();
+			spawnRotations.Dispose();
+			spawnScales.Dispose();
+			spawnSeeds.Dispose();
+			spawnTileIDs.Dispose();
+			spawnHoleDatas.Dispose();
+			spawnHoleMatrices.Dispose();
 		}
 
 		public void MarkAsDirty()
 		{
 			if (currentTiles.IsCreated == true)
 			{
-				ForceComplete();
-
-				foreach (var tile in currentTiles)
-					HandleDespawn(tile);
-
-				currentTiles.Clear();
-				addedTiles.Clear();
-				removedTiles.Clear();
-
-				maskPixels.Dispose();
-
-				UpdateMaskData();
+				OnDisable();
+				OnEnable();
 			}
 		}
 
@@ -453,7 +626,6 @@ namespace SpaceGraphicsToolkit.Landscape
 				gridHandle.Complete();
 				gridRunning = false;
 			}
-
 			if (spawnRunning)
 			{
 				spawnHandle.Complete();
@@ -465,50 +637,31 @@ namespace SpaceGraphicsToolkit.Landscape
 		protected virtual void Update()
 		{
 			var observerExists = parent != null && parent.TryGetFirstObserverWorldPosition(ref currentObserverWorldPosition);
-
-			// Update tiles
 			if (gridRunning)
 			{
 				if (!gridHandle.IsCompleted) return;
-		
 				gridHandle.Complete();
 				gridRunning = false;
-
 				StartSpawnPipeline();
-
 				foreach (var tile in removedTiles)
 					HandleDespawn(tile);
-
 				return;
 			}
-
-			// Update spawning
 			if (spawnRunning)
 			{
 				if (!spawnHandle.IsCompleted) return;
-
 				spawnHandle.Complete();
 				spawnRunning = false;
-
-				// Extract injected cam pos
 				int camIdx = pendingData.Points.Length - 1;
-				if (camIdx >= 0)
-				{
-					surfaceHeight = pendingData.Heights[camIdx];
-				}
-
+				if (camIdx >= 0) surfaceHeight = pendingData.Heights[camIdx];
 				foreach (var tile in addedTiles)
-					HandleSpawn(tile, spawnP, spawnR, spawnS);
-
+				{
+					HandleSpawn(tile, spawnPositions, spawnRotations, spawnScales, spawnSeeds, spawnTileIDs);
+				}
 				pendingData.Dispose();
 				return;
 			}
-
-			// Start new search for tiles?
-			if (observerExists == true)
-			{
-				StartGridPipeline(currentObserverWorldPosition);
-			}
+			if (observerExists == true) StartGridPipeline(currentObserverWorldPosition);
 		}
 
 		private void StartGridPipeline(Vector3 observerWorldPosition)
@@ -519,6 +672,7 @@ namespace SpaceGraphicsToolkit.Landscape
 				added         = addedTiles,
 				removed       = removedTiles,
 				spawnPoints   = spawnPoints,
+				unusedIDs     = availableTileIds,
 				camWorld      = new double3(observerWorldPosition),
 				surfaceHeight = surfaceHeight,
 				worldToLocal  = new double4x4(transform.worldToLocalMatrix),
@@ -528,9 +682,11 @@ namespace SpaceGraphicsToolkit.Landscape
 				Seed          = (uint)seed,
 				count         = GetSlices(),
 				spawnDensity  = density,
-				spawnOffset   = offset
+				spawnOffset   = offset,
+				sampleStride  = sampleStride,
+				distribution  = distribution,
+				gridScatter   = gridScatter
 			};
-
 			gridHandle = job.Schedule();
 			gridRunning = true;
 		}
@@ -538,48 +694,56 @@ namespace SpaceGraphicsToolkit.Landscape
 		private void StartSpawnPipeline()
 		{
 			pendingData = parent.SchedulePoints(spawnPoints);
-	
-			spawnP.Clear();
-			spawnR.Clear();
-			spawnS.Clear();
+			spawnPositions.Clear();
+			spawnRotations.Clear();
+			spawnScales.Clear();
+			spawnSeeds.Clear();
+			spawnTileIDs.Clear();
+			spawnHoleDatas.Clear();
+			spawnHoleMatrices.Clear();
+
+			spawnHoleDatas.AddRange(parent.ActiveHoleDatasNA);
+			spawnHoleMatrices.AddRange(parent.ActiveHoleMatricesNA);
 
 			var job = new SpawnJob()
 			{
-				Tiles           = addedTiles,
-				InputPoints     = pendingData.Points,
-				InputDirections = pendingData.Directions,
-				InputHeights    = pendingData.Heights,
-				InputDataA      = pendingData.DataA,
-
-				MaskPixels      = maskPixels,
-				MaskWidth       = maskWidth,
-				MaskHeight      = maskHeight,
-				InvertMask      = invertMask,
-
-				Seed            = (uint)seed,
-				ScaleMin        = scaleMin,
-				ScaleMax        = scaleMax,
-				Offset          = offset,
-				RotateMode      = rotate,
-				OutPositions    = spawnP,
-				OutRotations    = spawnR,
-				OutScales       = spawnS,
-
+				Tiles            = addedTiles,
+				InputPoints      = pendingData.Points,
+				InputDirections  = pendingData.Directions,
+				InputHeights     = pendingData.Heights,
+				InputDataA       = pendingData.DataA,
+				MaskPixels       = maskPixels,
+				MaskSize         = new int2(maskWidth, maskHeight),
+				HoleCount        = parent.ActiveHoleCount,
+				HoleDatas        = spawnHoleDatas.AsArray(),
+				HoleMatrices     = spawnHoleMatrices.AsArray(),
+				InvertMask       = invertMask,
+				Seed             = (uint)seed,
+				Offset           = offset,
+				ScaleMin         = scaleMin,
+				ScaleMax         = scaleMax,
+				GridFit          = gridFit,
+				RotateMode       = rotate,
+				SampleCenter     = sampleCenter,
+				AngleScatter     = angleScatter,
+				OutPositions     = spawnPositions,
+				OutRotations     = spawnRotations,
+				OutScales        = spawnScales,
+				OutSeeds         = spawnSeeds,
+				OutIDs           = spawnTileIDs,
 				UseMinHeight     = useMinHeight ? 1 : 0,
 				MinHeight        = minHeight,
-				MinHeightFalloff = minHeightFalloff, // Fixed
+				MinHeightFalloff = minHeightFalloff,
 				UseMaxHeight     = useMaxHeight ? 1 : 0,
 				MaxHeight        = maxHeight,
-				MaxHeightFalloff = maxHeightFalloff, // Fixed
-
-				UseMinSlope     = useMinSlope ? 1 : 0,
-				MinSlope        = minSlope,
-				MinSlopeFalloff = minSlopeFalloff,
-				UseMaxSlope     = useMaxSlope ? 1 : 0,
-				MaxSlope        = maxSlope,
-				MaxSlopeFalloff = maxSlopeFalloff,
+				MaxHeightFalloff = maxHeightFalloff,
+				UseMinSlope      = useMinSlope ? 1 : 0,
+				MinSlope         = minSlope,
+				MinSlopeFalloff  = minSlopeFalloff,
+				UseMaxSlope      = useMaxSlope ? 1 : 0,
+				MaxSlope         = maxSlope,
+				MaxSlopeFalloff  = maxSlopeFalloff,
 			};
-
 			spawnHandle = job.Schedule(pendingData.Handle);
 			spawnRunning = true;
 		}
@@ -601,8 +765,7 @@ namespace SpaceGraphicsToolkit.Landscape
 			}
 		}
 
-		protected abstract void HandleSpawn(Tile tile, NativeList<float3> pos, NativeList<quaternion> rot, NativeList<float3> scale);
-
+		protected abstract void HandleSpawn(Tile tile, NativeList<double3> pos, NativeList<quaternion> rot, NativeList<float> scale, NativeList<float> seed, NativeList<int> id);
 		protected abstract void HandleDespawn(Tile tile);
 	}
 }
@@ -615,78 +778,99 @@ namespace SpaceGraphicsToolkit.Landscape
 		protected override void OnInspector()
 		{
 			SgtLandscapeSpawner tgt; SgtLandscapeSpawner[] tgts; GetTargets(out tgt, out tgts);
-
 			var markAsDirty = false;
 
-			Draw("maskTex", ref markAsDirty, "The spawn area mask (R8/Alpha8).");
-			Draw("invertMask", ref markAsDirty, "Invert the mask?");
+			Draw("maskTex", ref markAsDirty, "This allows you to define the spawn area. NOTE: Texture must be R8/Alpha8 and Read/Write enabled.");
+			Draw("invertMask", ref markAsDirty, "Invert the mask, so 0 values become 255 values, and 255 values become 0 values?");
+
 			BeginError(Any(tgts, t => t.TileSize <= 0.0f));
-				Draw("tileSize", ref markAsDirty, "The target size for each grid tile. Smaller tiles increase grid precision but use more CPU.");
+				Draw("tileSize", ref markAsDirty, "Objects are spawned on square tiles that are placed on the planet surface. This allows you to control the size of each tile across each edge in meters. Smaller tiles give better resolution spawning patterns, but may run slower and consume more memory.");
 			EndError();
+
 			BeginError(Any(tgts, t => t.Range <= 0.0f));
-				Draw("range", "The world space distance the camera must be within for a grid cell to spawn.");
+				Draw("range", "The world space distance the camera must be within for a tile to spawn.");
 			EndError();
+
+			Draw("sampleStride", ref markAsDirty, "The local space distance between the 3 samples used to calculate terrain slope.");
+			Draw("sampleCenter", ref markAsDirty, "Should the spawn point be positioned at the center of the 3 samples, rather than the position of the first?");
+
 			BeginError(Any(tgts, t => t.Density <= 0.0f));
-				Draw("density", ref markAsDirty, "Objects per square unit.");
+				Draw("density", ref markAsDirty, "The density of spawned objects per square unit.");
 			EndError();
+
+			Draw("distribution", ref markAsDirty, "How should the objects be distributed across the landscape?");
+			if (Any(tgts, t => t.Distribution == SgtLandscapeSpawner.DistributionType.Grid))
+			{
+				BeginIndent();
+					Draw("gridFit", ref markAsDirty, "When using the Grid distribution, should the objects be scaled to perfectly fit the grid spacing?");
+					Draw("gridScatter", ref markAsDirty, "When using the Grid distribution, how much should the points be scattered on the XZ plane?");
+				EndIndent();
+			}
+
 			BeginDisabled();
+				var maxTileCount = tgt.GetApproximateMaximumTileCount();
+				BeginError(Any(tgts, t => t.GetApproximateMaximumTileCount() > 900));
+					UnityEditor.EditorGUILayout.IntField("Approx Max Tile Count", maxTileCount);
+				EndError();
 				UnityEditor.EditorGUILayout.IntField("Approx Max Spawn Count", tgt.GetApproximateMaximumSpawnCount());
+				UnityEditor.EditorGUILayout.FloatField("Approx Spawn Spacing", tgt.GetApproxSpawnSpacing());
 			EndDisabled();
-			Draw("seed", ref markAsDirty, "Random seed.");
+
+			Draw("seed", ref markAsDirty, "The random seed when procedurally spawning.");
 
 			Separator();
 
-			Draw("scaleMin", ref markAsDirty);
-			Draw("scaleMax", ref markAsDirty);
-			Draw("rotate", ref markAsDirty);
-			Draw("offset", ref markAsDirty);
+			Draw("scaleMin", ref markAsDirty, "The spawned objects will have their localScale multiplied by at least this number.");
+			Draw("scaleMax", ref markAsDirty, "The spawned objects will have their localScale multiplied by at most this number.");
+			Draw("rotate", ref markAsDirty, "How should the spawned objects be rotated?");
+			Draw("offset", ref markAsDirty, "The spawned objects will have their position offset by this local space distance.");
+
+			if (Any(tgts, t => t.Rotate == SgtLandscapeSpawner.RotateType.ToLandscapeCenter || t.Rotate == SgtLandscapeSpawner.RotateType.ToSurfaceNormal))
+			{
+				Draw("angleScatter", ref markAsDirty, "Adds an angle deviation up to this specified value in degrees when Rotate is set to ToLandscapeCenter or ToSurfaceNormal.");
+			}
 
 			Separator();
 
-			Draw("useMinHeight", ref markAsDirty, "Enable to clip or fade out spawning below a specific height.");
-
+			Draw("useMinHeight", ref markAsDirty, "Should the minimum height constraint be applied?");
 			if (Any(tgts, t => t.UseMinHeight))
 			{
 				BeginIndent();
-					Draw("minHeight", ref markAsDirty, "The absolute height value where spawning probability is 0%.");
-					Draw("minHeightFalloff", ref markAsDirty, "The distance above <b>MinHeight</b> it takes for the spawning probability to reach 100%. \n\nSet to 0 for an abrupt cutoff.");
+					Draw("minHeight", ref markAsDirty, "The height at which objects start spawning (0% probability).");
+					Draw("minHeightFalloff", ref markAsDirty, "The distance over which spawning probability fades in from 0 to 1.");
 				EndIndent();
 			}
 
-			Draw("useMaxHeight", ref markAsDirty, "Enable to clip or fade out spawning above a specific height.");
-
+			Draw("useMaxHeight", ref markAsDirty, "Should the maximum height constraint be applied?");
 			if (Any(tgts, t => t.UseMaxHeight))
 			{
 				BeginIndent();
-					Draw("maxHeight", ref markAsDirty, "The absolute height value where spawning probability returns to 0%.");
-					Draw("maxHeightFalloff", ref markAsDirty, "The distance below <b>MaxHeight</b> where the spawning probability begins to fade out. \n\nSet to 0 for an abrupt cutoff.");
+					Draw("maxHeight", ref markAsDirty, "The height at which objects stop spawning (0% probability).");
+					Draw("maxHeightFalloff", ref markAsDirty, "The distance over which spawning probability fades out from 1 to 0.");
 				EndIndent();
 			}
 
 			Separator();
 
-			Draw("useMinSlope", ref markAsDirty, "Enable to clip or fade out spawning on flat terrain.");
+			Draw("useMinSlope", ref markAsDirty, "Should the minimum slope constraint be applied?");
 			if (Any(tgts, t => t.UseMinSlope))
 			{
 				BeginIndent();
-					Draw("minSlope", ref markAsDirty, "Minimum angle (0-90).");
-					Draw("minSlopeFalloff", ref markAsDirty, "Angular fade-in distance.");
+					Draw("minSlope", ref markAsDirty, "The minimum slope angle (in degrees) required for spawning.");
+					Draw("minSlopeFalloff", ref markAsDirty, "The angular distance over which spawning probability fades in from 0 to 1.");
 				EndIndent();
 			}
 
-			Draw("useMaxSlope", ref markAsDirty, "Enable to clip or fade out spawning on steep terrain.");
+			Draw("useMaxSlope", ref markAsDirty, "Should the maximum slope constraint be applied?");
 			if (Any(tgts, t => t.UseMaxSlope))
 			{
 				BeginIndent();
-					Draw("maxSlope", ref markAsDirty, "Maximum angle (0-90).");
-					Draw("maxSlopeFalloff", ref markAsDirty, "Angular fade-out distance.");
+					Draw("maxSlope", ref markAsDirty, "The maximum slope angle (in degrees) allowed for spawning.");
+					Draw("maxSlopeFalloff", ref markAsDirty, "The angular distance over which spawning probability fades out from 1 to 0.");
 				EndIndent();
 			}
 
-			if (markAsDirty == true)
-			{
-				Each(tgts, t => t.MarkAsDirty(), true);
-			}
+			if (markAsDirty == true) Each(tgts, t => t.MarkAsDirty(), true);
 		}
 	}
 }

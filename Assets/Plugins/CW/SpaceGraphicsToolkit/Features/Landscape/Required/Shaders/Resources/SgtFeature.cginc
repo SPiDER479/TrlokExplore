@@ -8,9 +8,10 @@ struct a2v
 
 struct v2f
 {
-	float4 vertex : SV_POSITION;
-	float4 pixel  : TEXCOORD0;
-	float2 coord  : TEXCOORD1;
+	float4 vertex   : SV_POSITION;
+	float4 pixel    : TEXCOORD0;
+	float2 coord    : TEXCOORD1;
+	float3 localPos : TEXCOORD2;
 };
 
 struct f2g
@@ -27,6 +28,7 @@ struct f2g
 #define LOCAL_FLATTEN_CAPACITY 32
 #define GLOBAL_COLOR_CAPACITY 8
 #define LOCAL_COLOR_CAPACITY 32
+#define HOLES_CAPACITY 64
 
 int    _CwGlobalDetailCount;
 float4 _CwGlobalDetailDataA[GLOBAL_DETAIL_CAPACITY];
@@ -77,12 +79,18 @@ float4 _CwMaskTopologyAtlasSize;
 float4 _CwGradientAtlasSize;
 float4 _CwDetailAtlasSize;
 
+sampler2D       _CwBufferP;
+float4          _CwBufferSize;
 float           _CwVertexResolution;
 float2          _CwPixelSize;
 float4x4        _CwMatrix;
-float           _CwSize;
 float4          _CwCoords[VERTEX_COUNT];
 float4          _CwWeights[VERTEX_COUNT];
+float3          _CwOffset;
+
+int      _CwHoleCount;
+float4   _CwHoleDatas[HOLES_CAPACITY];
+float4x4 _CwHoleMatrices[HOLES_CAPACITY];
 
 void CW_ContributeTopo(inout float4 cur, float4 add, float replace, float mask)
 {
@@ -94,17 +102,23 @@ void CW_ContributeStrata(inout float cur, float add, float replace, float mask)
 	cur = lerp(cur, 0.0f, replace * mask) + add * mask;
 }
 
+float4 CW_Load(sampler2D s, float2 t, int x, int y)
+{
+	return tex2Dlod(s, float4((x + 0.5) * t.x, (y + 0.5) * t.y, 0.0, 0.0));
+}
+
 void CW_Vert(a2v i, out v2f o)
 {
-	float  vertexIndex = i.vertex.x;
-
-	float2 coord = _CwCoords[vertexIndex].xy;
-
-	o.coord = coord;
-
-	o.pixel = float4(coord * _CwPixelSize, coord * _CwVertexResolution);
-
-	o.vertex = float4(coord * 2.0f - 1.0f, 0.5f, 1.0f);
+	int    vertexIndex = round(i.vertex.x);
+	float2 coord       = _CwCoords[vertexIndex].xy;
+	float  partIndex   = i.vertex.y;
+	
+	coord.x = (coord.x + partIndex) / 3.0f;
+	
+	o.coord    = coord;
+	o.pixel    = float4(coord * _CwPixelSize, coord * _CwVertexResolution);
+	o.localPos = CW_Load(_CwBufferP, _CwBufferSize.zw, vertexIndex, 0).xyz;
+    o.vertex   = float4(coord * 2.0f - 1.0f, 0.5f, 1.0f);
 
 #if UNITY_UV_STARTS_AT_TOP
 	o.vertex.y = -o.vertex.y;
@@ -142,6 +156,25 @@ float4 CW_SampleMaskTopology(float4 globalCoord, float2 globalOffset, float mask
 	}
 
 	return maskTopology;
+}
+
+void CW_ContributeHoles(inout float4 rgbo, inout float4 nnes, float3 localPos)
+{
+	for (int h = 0; h < _CwHoleCount; h++)
+	{
+		float3 entrancePoint = mul(_CwHoleMatrices[h], float4(localPos, 1.0)).xyz;
+		float  circleDist    = dot(entrancePoint.xz, entrancePoint.xz);
+		float  boxDist       = max(abs(entrancePoint.x), abs(entrancePoint.z));
+		float  finalDist     = lerp(circleDist, boxDist, _CwHoleDatas[h].x);
+		
+		if (finalDist < 1.0 && abs(entrancePoint).y < 1.0)
+		{
+			rgbo = 0.0f;
+			nnes = 0.0f;
+			
+			break;
+		}
+	}
 }
 
 void CW_ContributeTopologyFeatures(inout float4 finalAlbedo, inout float finalOcclusion, inout float finalEmission, inout float finalSmoothness, inout float4 finalTopology, inout float finalStrata, float4x4 coordM, float4 localPos, float4 globalCoord, float2 globalOffset, float2 pole2, float angle1)

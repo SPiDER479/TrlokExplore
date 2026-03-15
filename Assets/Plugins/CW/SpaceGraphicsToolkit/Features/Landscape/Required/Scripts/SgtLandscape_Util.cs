@@ -161,6 +161,44 @@ namespace SpaceGraphicsToolkit.Landscape
 			return math.lerp(b0, t0, fracY);
 		}
 
+		public static float Sample_Linear_WrapX(NativeArray<ushort> data, int2 size, double2 uv)
+		{
+			var pixel = uv * size - 0.5;
+			var fracX = (float)((pixel.x % 1.0 + 1.0) % 1.0);
+			var fracY = (float)((pixel.y % 1.0 + 1.0) % 1.0);
+			var x     = (long)math.floor(pixel.x % size.x);
+			var y     = (long)math.floor(pixel.y % size.y);
+
+			var bl0 = Sample_WrapX(data, size, x    , y    );
+			var br0 = Sample_WrapX(data, size, x + 1, y    );
+			var tl0 = Sample_WrapX(data, size, x    , y + 1);
+			var tr0 = Sample_WrapX(data, size, x + 1, y + 1);
+
+			var b0 = math.lerp(bl0, br0, fracX);
+			var t0 = math.lerp(tl0, tr0, fracX);
+
+			return math.lerp(b0, t0, fracY);
+		}
+
+		public static float Sample_Linear_WrapX(NativeArray<byte> data, int2 size, double2 uv)
+		{
+			var pixel = uv * size - 0.5;
+			var fracX = (float)((pixel.x % 1.0 + 1.0) % 1.0);
+			var fracY = (float)((pixel.y % 1.0 + 1.0) % 1.0);
+			var x     = (long)math.floor(pixel.x % size.x);
+			var y     = (long)math.floor(pixel.y % size.y);
+
+			var bl0 = Sample_WrapX(data, size, x    , y    );
+			var br0 = Sample_WrapX(data, size, x + 1, y    );
+			var tl0 = Sample_WrapX(data, size, x    , y + 1);
+			var tr0 = Sample_WrapX(data, size, x + 1, y + 1);
+
+			var b0 = math.lerp(bl0, br0, fracX);
+			var t0 = math.lerp(tl0, tr0, fracX);
+
+			return math.lerp(b0, t0, fracY);
+		}
+
 		public static float Sample_Linear_Clamp(NativeArray<ushort> data, int2 size, double2 pixel)
 		{
 			var fracX = (float)((pixel.x % 1.0 + 1.0) % 1.0);

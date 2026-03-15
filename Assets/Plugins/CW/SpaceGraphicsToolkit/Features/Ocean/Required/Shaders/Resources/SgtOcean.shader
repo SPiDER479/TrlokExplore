@@ -23,6 +23,7 @@ Shader "Hidden/SgtOcean"
 			#pragma multi_compile_local _SGT_RIPPLES_OFF _SGT_RIPPLES_ON
 			#pragma multi_compile_local _SGT_SNAP_OFF _SGT_SNAP_ON
 			#pragma multi_compile_local _SGT_WAVES_1 _SGT_WAVES_2 _SGT_WAVES_3
+			#pragma multi_compile __ CW_COMPRESS_POSITIONS
 
 			#if _SGT_WAVES_3
 				#define WAVE_SKIP 1
@@ -34,6 +35,7 @@ Shader "Hidden/SgtOcean"
 
 			#include "UnityCG.cginc"
 			#include "../OceanShared.cginc"
+			#include "../../../../../../Shared/SimpleOriginSystem/Scripts/PositionCompression.cginc"
 
 			float3 _SGT_WCam;
 
@@ -140,9 +142,17 @@ Shader "Hidden/SgtOcean"
 
 				SGT_ApplyWaves(v.vertex.xyz, normal, tangent, binormal, 0.0, 0.01);
 
-				o.position           = UnityObjectToClipPos(v.vertex);
+				
 				o.worldSpacePosition = mul(_SGT_ObjectToWorld, v.vertex).xyz;
-				o.screenPos          = ComputeScreenPos(o.position);
+
+				#if CW_COMPRESS_POSITIONS
+					float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
+					worldPos.xyz = SSS_CompressWorld(worldPos.xyz);
+					v.vertex = mul(unity_WorldToObject, worldPos);
+				#endif
+
+				o.position  = UnityObjectToClipPos(v.vertex);
+				o.screenPos = ComputeScreenPos(o.position);
 			}
 
 			void frag(v2f i, out f2g o, in bool isFrontFace : SV_IsFrontFace)

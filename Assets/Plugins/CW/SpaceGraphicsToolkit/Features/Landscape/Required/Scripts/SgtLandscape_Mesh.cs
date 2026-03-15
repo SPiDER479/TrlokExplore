@@ -43,70 +43,27 @@ namespace SpaceGraphicsToolkit.Landscape
 		public static NativeArray<int>     VERTEX_NEIGHBORS;
 
 		[System.NonSerialized]
-		public static Mesh[] batchMeshes;
-
-		[System.NonSerialized]
 		public static Mesh visualBlitMesh;
 
 		public void TryGenerateMeshData()
 		{
-			if (batchMeshes != null && batchMeshes[0] != null)
+			if (VERTEX_WEIGHTS.IsCreated == true)
 			{
 				return;
 			}
 
-			batchMeshes = new Mesh[BATCH_CAPACITY];
-
 			GenerateTriangleData();
 
-			var combinedPositions = new NativeArray<float3>(VERTEX_COUNT * BATCH_CAPACITY, Allocator.Persistent);
-			var combinedIndices   = new NativeArray<int>(INDEX_COUNT * BATCH_CAPACITY, Allocator.Persistent);
+			visualBlitMesh = new Mesh();
 
-			for (var i = 0; i < BATCH_CAPACITY; i++)
-			{
-				var baseV = VERTEX_COUNT * i;
-				var baseI =  INDEX_COUNT * i;
-
-				for (var j = 0; j < VERTEX_COUNT; j++)
-				{
-					combinedPositions[baseV + j] = VERTEX_POSITIONS[j] + new float3(0.0f, 0.0f, i);
-				}
-
-				for (var j = 0; j < INDEX_COUNT; j++)
-				{
-					combinedIndices[baseI + j] = VERTEX_INDICES[j] + baseV;
-				}
-
-				var batchMesh = new Mesh();
-
-				batchMesh.hideFlags   = HideFlags.DontSaveInBuild | HideFlags.DontSaveInEditor;
-				batchMesh.indexFormat = IndexFormat.UInt32;
-				batchMesh.SetVertices(combinedPositions, 0, VERTEX_COUNT * (i + 1), MeshUpdateFlags.DontRecalculateBounds);
-				batchMesh.SetIndices(combinedIndices, 0, INDEX_COUNT * (i + 1), MeshTopology.Triangles, 0, false, 0);
-
-				batchMesh.bounds = new Bounds(Vector3.zero, Vector3.one * 10000000.0f);
-
-				batchMeshes[i] = batchMesh;
-			}
-
-			GenerateVisualBlitMesh(combinedPositions, combinedIndices);
-
-			combinedPositions.Dispose();
-			combinedIndices.Dispose();
+			visualBlitMesh.hideFlags   = HideFlags.DontSaveInBuild | HideFlags.DontSaveInEditor;
+			visualBlitMesh.indexFormat = IndexFormat.UInt32;
+			visualBlitMesh.SetVertices(VERTEX_POSITIONS, 0, VERTEX_COUNT, MeshUpdateFlags.DontRecalculateBounds);
+			visualBlitMesh.SetIndices(VERTEX_INDICES, 0, INDEX_COUNT, MeshTopology.Triangles, 0, false, 0);
 		}
 
 		public void TryDisposeMeshData()
 		{
-			if (batchMeshes != null)
-			{
-				foreach (var batchMesh in batchMeshes)
-				{
-					DestroyImmediate(batchMesh);
-				}
-
-				batchMeshes = null;
-			}
-
 			if (VERTEX_WEIGHTS.IsCreated == true)
 			{
 				DisposeTriangleData();
@@ -157,28 +114,6 @@ namespace SpaceGraphicsToolkit.Landscape
 					PIXEL_WEIGHTS.SetPixel(x + PIXEL_HEIGHT * step, y, new Color(b.x, b.y, b.z, 1.0f));
 				}
 			}
-		}
-
-		private static void GenerateVisualBlitMesh(NativeArray<float3> srcPositions, NativeArray<int> srcIndices)
-		{
-			visualBlitMesh = new Mesh();
-
-			var indexV = VERTEX_COUNT;
-			var indexI = INDEX_COUNT;
-			var index0 = indexV;
-			var positions = new NativeArray<float3>(VERTEX_COUNT, Allocator.Persistent);
-			var indices   = new NativeArray<int>(INDEX_COUNT, Allocator.Persistent);
-
-			NativeArray<float3>.Copy(srcPositions, positions, VERTEX_COUNT);
-			NativeArray<int   >.Copy(srcIndices  , indices  ,  INDEX_COUNT);
-
-			visualBlitMesh.hideFlags   = HideFlags.DontSaveInBuild | HideFlags.DontSaveInEditor;
-			visualBlitMesh.indexFormat = IndexFormat.UInt32;
-			visualBlitMesh.SetVertices(positions, 0, indexV, MeshUpdateFlags.DontRecalculateBounds);
-			visualBlitMesh.SetIndices(indices, 0, indexI, MeshTopology.Triangles, 0, false, 0);
-
-			positions.Dispose();
-			indices.Dispose();
 		}
 
 		private static List<float3>  tempPositions = new List<float3 >();
@@ -316,6 +251,8 @@ namespace SpaceGraphicsToolkit.Landscape
 			tempCoords.Clear();
 			tempIndices.Clear();
 			tempNeighbors.Clear();
+
+			DestroyImmediate(visualBlitMesh);
 		}
 	}
 }

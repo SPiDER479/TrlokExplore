@@ -14,6 +14,8 @@ namespace SpaceGraphicsToolkit.Gravity
 
 		[System.NonSerialized] private Rigidbody cachedRigidbody;
 
+		[System.NonSerialized] private bool cachedRigidbodySet;
+
 		/// <summary>The linear drag applied to this Rigidbody will be multiplied by this value.</summary>
 		public float LinearDragMultiplier { set { linearDragMultiplier = value; } get { return linearDragMultiplier; } } [SerializeField] private float linearDragMultiplier = 1.0f;
 
@@ -24,14 +26,21 @@ namespace SpaceGraphicsToolkit.Gravity
 		{
 			get
 			{
+				if (cachedRigidbodySet == false)
+				{
+					cachedRigidbody    = GetComponent<Rigidbody>();
+					cachedRigidbodySet = true;
+				}
+
 				return cachedRigidbody;
 			}
 		}
 
 		protected virtual void OnEnable()
 		{
-			cachedRigidbody = GetComponent<Rigidbody>();
-			node            = Instances.AddLast(this);
+			cachedRigidbody    = GetComponent<Rigidbody>();
+			cachedRigidbodySet = true;
+			node               = Instances.AddLast(this);
 		}
 
 		protected virtual void OnDisable()

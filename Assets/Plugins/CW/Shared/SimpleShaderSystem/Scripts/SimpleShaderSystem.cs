@@ -980,7 +980,7 @@ namespace Inspector
 		{
 			UnityEngine.Rendering.RenderPipelineManager.activeRenderPipelineTypeChanged += CheckForChangesAll;
 
-			CheckForChangesAll();
+			EditorApplication.delayCall += CheckForChangesAll;
 		}
 
 		private static void CheckForChangesAll()

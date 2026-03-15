@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c76e77b6e47b6f34986d481a7b5cf912, type: 3}
+  m_Name: BrownBoulder_CrossImpostor
+  m_EditorClassIdentifier: 
+  sourcePrefab: {fileID: 7655913988223480824, guid: 09b8734ada47cde4aa82994c1ccb6f14,
+    type: 3}
+  material: {fileID: 2100000, guid: 9ab8116a530c024409289b9b4bef7555, type: 2}
+  bakedMesh: {fileID: 4300000, guid: da8199a95101f8c4d897fdd28055cd41, type: 2}
+  maxFrameSize: 512
+  framePadding: 4
+  BakedOffset: {x: -0.0000014901161, y: -0.00004696846, z: 0.000017523766}
+  BakedExtents: {x: 0.7589695, y: 0.60102504, z: 1.0943065}
+  FrameUVRects:
+  - {x: 0.0032051282, y: 0.114423074, z: 0.41025642, w: 0.27115384}
+  - {x: 0.0032051282, y: 0.6144231, z: 0.41025642, w: 0.27115384}
+  - {x: 0.4198718, y: 0.0038461538, z: 0.28525642, w: 0.4923077}
+  - {x: 0.4198718, y: 0.50384617, z: 0.28525642, w: 0.4923077}
+  - {x: 0.71153843, y: 0.114423074, z: 0.28525642, w: 0.27115384}
+  - {x: 0.71153843, y: 0.6144231, z: 0.28525642, w: 0.27115384}
+  AtlasWidth: 1248
+  AtlasHeight: 1040
+  AxisFrameSizes:
+  - {x: 512, y: 282}
+  - {x: 356, y: 512}
+  - {x: 356, y: 282}
+  AxisWorldHalfSizes:
+  - {x: 1.0943065, y: 0.6027235}
+  - {x: 0.76088494, y: 1.0943065}
+  - {x: 0.76088494, y: 0.6027235}

@@ -68,6 +68,7 @@ BEGIN_DEFINES
 	#pragma shader_feature_local _SGT_SHORE_OFF _SGT_SHORE
 	#pragma shader_feature_local _SGT_FASTSSR_OFF _SGT_FASTSSR
 	#pragma shader_feature_local _SGT_FASTSSS_OFF _SGT_FASTSSS
+	#pragma multi_compile __ CW_COMPRESS_POSITIONS
 END_DEFINES
 
 float _SGT_RefractionDistance;
@@ -104,6 +105,26 @@ float     _SGT_ShoreBias;
 
 // FAST REFLECTIONS
 float _SGT_FssrError;
+
+float ReconstructWorldDist(float2 screenUV)
+{
+	#if CW_COMPRESS_POSITIONS
+		float worldEyeDepth = SSS_DecompressWorldDist(SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV)));
+	#else
+		float worldEyeDepth = SSS_GetSceneWorldDistance(screenUV, SSS_GetSceneDepth(screenUV));
+	#endif
+	
+	return clamp(worldEyeDepth, 0, 50000000);
+}
+
+float3 ReconstructWorldPos(float2 screenUV)
+{
+	#if CW_COMPRESS_POSITIONS
+		return SSS_DecompressWorld(SSS_GetSceneWorldPosition(screenUV, SSS_GetSceneDepth(screenUV)));
+	#else
+		return SSS_GetSceneWorldPosition(screenUV, SSS_GetSceneDepth(screenUV));
+	#endif
+}
 
 float SGT_SampleCloudDensity(float3 wpos, float bias)
 {
@@ -183,7 +204,7 @@ float3 SGT_SurfaceSSR(float2 screenUV, float3 worldPos, float3 worldNormal, floa
 	float3 reflectedPos   = worldPos + reflectedDir * reflectedLen;
 	float2 reflectedUV    = SGT_ProjectWorldToScreen(reflectedPos);
 	float3 reflectedColor = SSS_GetSceneColorHD(reflectedUV);
-	float  reflectedDepth = SSS_GetSceneWorldDistance(reflectedUV, SSS_GetSceneDepth(reflectedUV));
+	float  reflectedDepth = ReconstructWorldDist(reflectedUV);
 	float3 reflectedVDir  = -normalize(_WorldSpaceCameraPos - reflectedPos);
 	
 	// Directional edge fade
@@ -243,7 +264,7 @@ float3 SGT_UnderwaterSSR(float3 worldPos, float3 worldNormal, float3 worldViewDi
 	float2 uv   = SGT_ProjectWorldToScreen(reflectedPos);
 	float2 edge = saturate(1.0 - abs(uv * 2.0 - 1.0));
 	
-	float  sceneDepth = SSS_GetSceneWorldDistance(uv, SSS_GetSceneDepth(uv));
+	float  sceneDepth = ReconstructWorldDist(uv);
 	
 	if (sceneDepth < wmax)
 	{
@@ -336,11 +357,6 @@ float SGT_Fresnel(float3 dir, float3 normal, float airIOR, float waterIOR)
 	return F0 + (1.0 - F0) * pow(abs(1.0 - cosTheta), 5.0);
 }
 
-float3 ReconstructWorldPos(float2 uv)
-{
-	return SSS_GetSceneWorldPosition(uv, SSS_GetSceneDepth(uv));
-}
-
 float3 GetSmoothedNormal(float3 worldEyePosition, float2 screenUV, float dither, float2 texelSize)
 {
 	#if 1
@@ -362,18 +378,28 @@ float3 GetSmoothedNormal(float3 worldEyePosition, float2 screenUV, float dither,
 
 void SSS_Vert(inout SSS_VertexData v)
 {
+	#if CW_COMPRESS_POSITIONS
+		float3 worldPos    = SSS_ObjectToWorld(v.position);
+		float3 worldCenter = _SGT_SkyToWorld._m03_m13_m23;
+		v.position = SSS_WorldToObject(SSS_CompressWorld(worldPos, worldCenter, _SGT_SkyRadius.y, v.extraV2F0.w));
+	#endif
 }
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 {
-	float airIOR              = 1.0;
-	float waterIOR            = 1.33;
+	#if CW_COMPRESS_POSITIONS
+		d.worldSpacePosition = SSS_DecompressWorld(d.worldSpacePosition, d.extraV2F0.w);
+		d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	#endif
+	
+	float  airIOR             = 1.0;
+	float  waterIOR           = 1.33;
 	float3 wdir               = -d.worldSpaceViewDir;
 	float  wmax               = distance(_WorldSpaceCameraPos, d.worldSpacePosition);
 	float  wfar               = wmax;
 	float3 tint               = 1.0;
 	float  dither             = SGT_DitherFast(d.screenUV);
-	float  worldEyeDepth      = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+	float  worldEyeDepth      = ReconstructWorldDist(d.screenUV);
 	float3 worldEyePosition   = _WorldSpaceCameraPos + wdir * worldEyeDepth;
 	float3 worldEyeNormal     = GetSmoothedNormal(worldEyePosition, d.screenUV, dither, 0.005);
 	
@@ -528,14 +554,14 @@ void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 		#if _SGT_REFRACTION
 			float3 refractedWP     = d.worldSpacePosition + refractDir * _SGT_RefractionDistance;
 			float2 refractedUV     = SGT_FixRefractedUV(d.screenUV, SGT_ProjectWorldToScreen(refractedWP));
-			float3 refractedPos    = SSS_GetSceneWorldPosition(refractedUV, SSS_GetSceneDepth(refractedUV));
+			float3 refractedPos    = ReconstructWorldPos(refractedUV);
 			float  refractedDist   = distance(_WorldSpaceCameraPos, refractedPos);
 			float  refractedWeight = saturate(refractedDist - surfaceDistance);
 		
 			// Override values with refracted data
 			d.screenUV       = lerp(d.screenUV, refractedUV, refractedWeight);
 			worldEyePosition = lerp(worldEyePosition, refractedPos, refractedWeight);
-			worldEyeDepth    = SSS_GetSceneWorldDistance(d.screenUV, SSS_GetSceneDepth(d.screenUV));
+			worldEyeDepth    = ReconstructWorldDist(d.screenUV);
 		#endif
 		
 		float dist      = max(0.0, worldEyeDepth - surfaceDistance);

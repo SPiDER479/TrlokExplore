@@ -15,6 +15,7 @@ MonoBehaviour:
   shaderTemplate: {fileID: -6465566751694194690, guid: d24ae131bb985ba4a9ac5d8b012974cd,
     type: 3}
   shaderFiles:
+  - {fileID: 10900000, guid: d4431ec5a244acd43991fdee45aa4761, type: 3}
   - {fileID: 10900000, guid: 71897bae9cbd64a4caefb6c1432e66da, type: 3}
   outputShader: {fileID: 4800000, guid: f5b5a766eb6e9b447bdf0c5dda583344, type: 3}
   outputTitle: Hidden/SgtVolumeDepth

@@ -15,6 +15,7 @@ MonoBehaviour:
   shaderTemplate: {fileID: -6465566751694194690, guid: 642b6a09c2bbdfa408ad215f8544f373,
     type: 3}
   shaderFiles:
+  - {fileID: 10900000, guid: d4431ec5a244acd43991fdee45aa4761, type: 3}
   - {fileID: 10900000, guid: b3e8fc45341f0f444ba3ffa518ba9c4c, type: 3}
   - {fileID: 10900000, guid: 56c44489b2c3bb04ea26ff5915ae5aaf, type: 3}
   outputShader: {fileID: 4800000, guid: 6c35a34d0891ea949bb50c18d18af0de, type: 3}

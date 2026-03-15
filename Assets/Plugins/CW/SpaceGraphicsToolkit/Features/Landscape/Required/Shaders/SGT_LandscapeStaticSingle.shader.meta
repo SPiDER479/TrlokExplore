@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: d1bfc5a9609b09b4699530fcdaf229a9
+guid: be8db525894904c409023845eada53ee
 ShaderImporter:
   externalObjects: {}
   defaultTextures: []
@@ -11,6 +11,6 @@ AssetOrigin:
   serializedVersion: 1
   productId: 127671
   packageName: Planet Forge
-  packageVersion: 1.6.16
+  packageVersion: 1.6.22
   assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Landscape/Required/Shaders/SGT_LandscapeStaticSingle.shader
-  uploadId: 870778
+  uploadId: 881296

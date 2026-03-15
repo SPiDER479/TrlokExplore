@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: da8199a95101f8c4d897fdd28055cd41
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 4300000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.22
+  assetPath: Assets/Plugins/CW/Planet Forge/Prefabs/BrownBoulder/BrownBoulder_CrossImpostor_Mesh.asset
+  uploadId: 881296

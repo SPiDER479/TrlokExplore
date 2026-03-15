@@ -168,6 +168,9 @@ namespace SpaceGraphicsToolkit.Landscape
 		/// <summary>The maximum LOD chunks that can be generated between each LOD change. For example, if your camera suddenly travels to the planet surface then many LOD chunks will need to be generated. If you set LOD Steps to a high value, then it will take a while for any changes to appear, whereas a low value means the landscape will constantly be updating to the final LOD state.</summary>
 		public int LodSteps { set { lodSteps = value; } get { return lodSteps; } } [SerializeField] protected int lodSteps = 30;
 
+		/// <summary>If you spawn objects on a massive planet, their positions can degrade from floating point precision. If you enable this, then they will spawn on a separate GameObject in the scene root.</summary>
+		public bool UseSpawnAnchor { set { useSpawnAnchor = value; } get { return useSpawnAnchor; } } [SerializeField] private bool useSpawnAnchor;
+
 		/// <summary>The landscape will be rendered using this Material.
 		/// NOTE: This material must use a shader based on the SGT/Landscape shader.</summary>
 		public Material Material { set { material = value; } get { return material; } } [SerializeField] private Material material;
@@ -218,6 +221,8 @@ namespace SpaceGraphicsToolkit.Landscape
 
 		private static readonly int LOCAL_COLOR_CAPACITY = 32;
 
+		private static readonly int HOLES_CAPACITY = 64;
+
 		[System.NonSerialized]
 		protected NativeList<Triangle> topology;
 
@@ -226,6 +231,53 @@ namespace SpaceGraphicsToolkit.Landscape
 
 		[System.NonSerialized]
 		protected NativeList<Triangle> triangles;
+
+		[System.NonSerialized] private int         activeHoleCount;
+		[System.NonSerialized] private Vector4[]   activeHoleDatas;
+		[System.NonSerialized] private Matrix4x4[] activeHoleMatrices;
+		
+		[System.NonSerialized] private NativeArray<float4>    activeHoleDatasNA;
+		[System.NonSerialized] private NativeArray<double4x4> activeHoleMatricesNA;
+
+		public int ActiveHoleCount
+		{
+			get
+			{
+				return activeHoleCount;
+			}
+		}
+
+		public Vector4[] ActiveHoleDatas
+		{
+			get
+			{
+				return activeHoleDatas;
+			}
+		}
+
+		public Matrix4x4[] ActiveHoleMatrices
+		{
+			get
+			{
+				return activeHoleMatrices;
+			}
+		}
+
+		public NativeArray<float4> ActiveHoleDatasNA
+		{
+			get
+			{
+				return activeHoleDatasNA;
+			}
+		}
+
+		public NativeArray<double4x4> ActiveHoleMatricesNA
+		{
+			get
+			{
+				return activeHoleMatricesNA;
+			}
+		}
 
 		[System.NonSerialized] protected NativeList<Triangle> createDiffs;
 		[System.NonSerialized] protected NativeList<Triangle> deleteDiffs;
@@ -249,6 +301,8 @@ namespace SpaceGraphicsToolkit.Landscape
 
 		public event System.Action<Visual> OnHideVisual;
 
+		[System.NonSerialized] private List<SgtLandscapeCave> caves = new List<SgtLandscapeCave>();
+
 		[System.NonSerialized]
 		private bool markForRebuild;
 
@@ -265,7 +319,23 @@ namespace SpaceGraphicsToolkit.Landscape
 		protected PendingPoints cameraPoints;
 
 		[System.NonSerialized]
+		private static Transform spawnAnchor;
+
+		[System.NonSerialized]
+		 private double3 spawnOffset;
+
+		[System.NonSerialized]
 		protected List<SgtLandscapeFeature> features = new List<SgtLandscapeFeature>();
+
+		public event System.Action OnSpawnOffsetChanged;
+
+		public double3 SpawnOffset
+		{
+			get
+			{
+				return spawnOffset;
+			}
+		}
 
 		[System.NonSerialized] private int       globalDetailCount;
 		[System.NonSerialized] private Vector4[] globalDetailDataA = new Vector4[GLOBAL_DETAIL_CAPACITY];
@@ -308,7 +378,6 @@ namespace SpaceGraphicsToolkit.Landscape
 		[System.NonSerialized] private Matrix4x4[] localColorMatrix = new Matrix4x4[LOCAL_COLOR_CAPACITY];
 
 		protected static readonly int _CwMatrix        = Shader.PropertyToID("_CwMatrix");
-		protected static readonly int _CwSize          = Shader.PropertyToID("_CwSize");
 		protected static readonly int _CwPositionA     = Shader.PropertyToID("_CwPositionA");
 		protected static readonly int _CwPositionB     = Shader.PropertyToID("_CwPositionB");
 		protected static readonly int _CwPositionC     = Shader.PropertyToID("_CwPositionC");
@@ -336,7 +405,12 @@ namespace SpaceGraphicsToolkit.Landscape
 		protected static readonly int _SGT_OceanSmoothness     = Shader.PropertyToID("_SGT_OceanSmoothness");
 		protected static readonly int _SGT_OceanRadius         = Shader.PropertyToID("_SGT_OceanRadius");
 
+		protected static readonly int _CwHoleCount    = Shader.PropertyToID("_CwHoleCount");
+		protected static readonly int _CwHoleDatas    = Shader.PropertyToID("_CwHoleDatas");
+		protected static readonly int _CwHoleMatrices = Shader.PropertyToID("_CwHoleMatrices");
+
 		protected static readonly int _CwBufferP          = Shader.PropertyToID("_CwBufferP");
+		protected static readonly int _CwBufferSize       = Shader.PropertyToID("_CwBufferSize");
 		protected static readonly int _CwWeights          = Shader.PropertyToID("_CwWeights");
 		protected static readonly int _SGT_WeightTex      = Shader.PropertyToID("_SGT_WeightTex");
 		protected static readonly int _CwCoords           = Shader.PropertyToID("_CwCoords");
@@ -400,6 +474,92 @@ namespace SpaceGraphicsToolkit.Landscape
 		protected static readonly int _CwGradientAtlasSize       = Shader.PropertyToID("_CwGradientAtlasSize");
 		protected static readonly int _CwDetailAtlas             = Shader.PropertyToID("_CwDetailAtlas");
 		protected static readonly int _CwDetailAtlasSize         = Shader.PropertyToID("_CwDetailAtlasSize");
+
+		/// <summary>This allows you to add a child GameObject to your planet with high precision positions, regardless of the planet size.</summary>
+		public void AddChild(Transform root, double3 localPos, quaternion localRot, float3 localScale)
+		{
+			root.SetParent(GetSpawnAnchor(), false);
+			root.localPosition = (Vector3)(float3)(localPos - spawnOffset);
+			root.localRotation = localRot;
+			root.localScale    = (Vector3)localScale;
+		}
+
+		public Transform GetSpawnAnchor()
+		{
+			var parent = transform;
+
+			if (useSpawnAnchor == true)
+			{
+				if (spawnAnchor == null)
+				{
+					var anchorName = "SpawnAnchor (" + gameObject.name + ")";
+					var existing = GameObject.Find(anchorName);
+					
+					if (existing != null)
+					{
+						spawnAnchor = existing.transform;
+					}
+					else
+					{
+						spawnAnchor = new GameObject(anchorName).transform;
+						spawnAnchor.gameObject.hideFlags = HideFlags.DontSave;
+						spawnOffset = double3.zero;
+						spawnAnchor.SetPositionAndRotation(transform.position, transform.rotation);
+					}
+				}
+
+				UpdateAnchor();
+
+				parent = spawnAnchor;
+			}
+
+			return parent;
+		}
+
+		private void DisposeAnchor()
+		{
+			if (spawnAnchor != null)
+			{
+				DestroyImmediate(spawnAnchor.gameObject);
+			}
+
+			spawnAnchor = null;
+		}
+
+		private void UpdateAnchor()
+		{
+			var camPos = default(Vector3);
+
+			if (TryGetFirstObserverWorldPosition(ref camPos) == false) return;
+
+			var snapInterval   = 100.0;
+			var snapIntervalSq = snapInterval * snapInterval * 4.0;
+			var anchorDelta     = (double3)(float3)(camPos - spawnAnchor.position);
+
+			if (math.lengthsq(anchorDelta) < snapIntervalSq) return;
+
+			var planetMatrix   = new double4x4(transform.localToWorldMatrix);
+			var invMatrix      = math.inverse(planetMatrix);
+			var camLocal       = math.mul(invMatrix, new double4(camPos.x, camPos.y, camPos.z, 1.0)).xyz;
+			var localDelta     = camLocal - spawnOffset;
+
+			if (math.lengthsq(localDelta) >= snapIntervalSq)
+			{
+				var snapped = math.round(math.floor(camLocal / snapInterval)) * snapInterval;
+				var delta   = snapped - spawnOffset;
+				var offset  = (Vector3)(float3)(-delta);
+
+				for (var i = 0; i < spawnAnchor.childCount; i++)
+					spawnAnchor.GetChild(i).localPosition += offset;
+
+				spawnOffset = snapped;
+
+				if (OnSpawnOffsetChanged != null) OnSpawnOffsetChanged();
+			}
+
+			spawnAnchor.rotation = transform.rotation;
+			spawnAnchor.position = (Vector3)(float3)math.transform(planetMatrix, spawnOffset);
+		}
 
 		public bool GetTilingLayer(float size, ref int index, ref int tiling)
 		{
@@ -558,6 +718,10 @@ namespace SpaceGraphicsToolkit.Landscape
 			return (float3)transform.TransformPoint(localPoint);
 		}
 
+		public abstract double3 GetLocalDirection(double3 localPoint);
+
+		public abstract double3 GetWorldDirection(double3 worldPoint);
+
 		public abstract double3 GetWorldPivot(double3 worldPoint);
 
 		private static double3 GetNormal(double3 vectorA, double3 vectorB, double length)
@@ -663,13 +827,17 @@ namespace SpaceGraphicsToolkit.Landscape
 		{
 			markForRebuild = false;
 
-			topology        = new NativeList<Triangle>(Allocator.Persistent);
-			cameraPositions = new NativeList<double3>(Allocator.Persistent);
-			triangles       = new NativeList<Triangle>(4096, Allocator.Persistent);
-			createDiffs     = new NativeList<Triangle>(4096, Allocator.Persistent);
-			deleteDiffs     = new NativeList<Triangle>(4096, Allocator.Persistent);
-			statusDiffs     = new NativeList<Triangle>(4096, Allocator.Persistent);
-			cameraPoints    = new PendingPoints(1);
+			topology             = new NativeList<Triangle>(Allocator.Persistent);
+			cameraPositions      = new NativeList<double3>(Allocator.Persistent);
+			triangles            = new NativeList<Triangle>(4096, Allocator.Persistent);
+			createDiffs          = new NativeList<Triangle>(4096, Allocator.Persistent);
+			deleteDiffs          = new NativeList<Triangle>(4096, Allocator.Persistent);
+			statusDiffs          = new NativeList<Triangle>(4096, Allocator.Persistent);
+			cameraPoints         = new PendingPoints(1);
+			activeHoleDatas      = new Vector4[HOLES_CAPACITY];
+			activeHoleMatrices   = new Matrix4x4[HOLES_CAPACITY];
+			activeHoleDatasNA    = new NativeArray<float4>(HOLES_CAPACITY, Allocator.Persistent);
+			activeHoleMatricesNA = new NativeArray<double4x4>(HOLES_CAPACITY, Allocator.Persistent);
 
 			if (bundle != null)
 			{
@@ -908,6 +1076,11 @@ namespace SpaceGraphicsToolkit.Landscape
 			deleteDiffs.Dispose();
 			statusDiffs.Dispose();
 
+			activeHoleDatas = null;
+			activeHoleMatrices = null;
+			activeHoleDatasNA.Dispose();
+			activeHoleMatricesNA.Dispose();
+
 			if (registeredBundle != null)
 			{
 				registeredBundle.RemoveRef();
@@ -1075,6 +1248,8 @@ namespace SpaceGraphicsToolkit.Landscape
 					{
 						UpdateCameraPositions();
 
+						UpdateHoleData();
+
 						pendingUpdate.Schedule(ScheduleUpdateTriangles(detail, boostMultiplier, maxSteps));
 					}
 				}
@@ -1140,6 +1315,42 @@ namespace SpaceGraphicsToolkit.Landscape
 			TryGenerateMeshData();
 		}
 
+		protected virtual void OnDestroy()
+		{
+			DisposeAnchor();
+		}
+
+		public void RegisterCave(SgtLandscapeCave cave)
+		{
+			caves.Add(cave);
+		}
+
+		public void UnregisterCave(SgtLandscapeCave cave)
+		{
+			caves.Remove(cave);
+		}
+
+		private void UpdateHoleData()
+		{
+			activeHoleCount = 0;
+
+			foreach (var cave in caves)
+			{
+				if (cave.isActiveAndEnabled == true)
+				{
+					var data   = new Vector4((int)cave.EntranceShape, 0.0f, 0.0f, 0.0f);
+					var matrix = cave.EntranceMatrix;
+
+					activeHoleDatas[activeHoleCount] = data;
+					activeHoleMatrices[activeHoleCount] = (float4x4)matrix;
+					activeHoleDatasNA[activeHoleCount] = data;
+					activeHoleMatricesNA[activeHoleCount] = matrix;
+
+					activeHoleCount += 1;
+				}
+			}
+		}
+
 		protected virtual void LateUpdate()
 		{
 #if UNITY_EDITOR
@@ -1149,6 +1360,8 @@ namespace SpaceGraphicsToolkit.Landscape
 			{
 				Rebuild();
 			}
+
+			UpdateHoleData();
 
 			/*
 			if (instances.First == node)
@@ -1171,6 +1384,8 @@ namespace SpaceGraphicsToolkit.Landscape
 			}
 			*/
 
+			
+
 			var finalLodSteps = lodSteps;//Mathf.CeilToInt(lodSteps * Time.deltaTime);
 
 #if UNITY_EDITOR
@@ -1183,6 +1398,11 @@ namespace SpaceGraphicsToolkit.Landscape
 #endif
 			
 			DrawTriangles();
+
+			if (spawnAnchor != null)
+			{
+				UpdateAnchor();
+			}
 		}
 
 		protected abstract Bounds GetWorldBounds();
@@ -1239,7 +1459,7 @@ namespace SpaceGraphicsToolkit.Landscape
 
 				settings.matProps = batch.Properties;
 
-				Graphics.RenderMeshPrimitives(settings, batchMeshes[0], 0, batch.Count);
+				Graphics.RenderMeshPrimitives(settings, visualBlitMesh, 0, batch.Count);
 			}
 		}
 
@@ -1419,6 +1639,7 @@ namespace SpaceGraphicsToolkit.Landscape
 			EndError();
 			Draw("lodBudget", "The maximum amount of seconds we can budget for LOD.");
 			Draw("lodSteps", "The maximum LOD chunks that can be generated between each LOD change. For example, if your camera suddenly travels to the planet surface then many LOD chunks will need to be generated. If you set LOD Steps to a high value, then it will take a while for any changes to appear, whereas a low value means the landscape will constantly be updating to the final LOD state.");
+			Draw("useSpawnAnchor", "If you spawn objects on a massive planet, their positions can degrade from floating point precision. If you enable this, then they will spawn on a separate GameObject in the scene root.");
 			Draw("observers", "The landscape LOD will be based on these transform positions.\n\nNone/null = The GameObject with the <b>MainCamera</b> tag will be used.");
 
 			Separator();

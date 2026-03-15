@@ -1,7 +1,9 @@
 #include "UnityCG.cginc"
 #include "../../../Sky/Required/Shaders/SgtSky.cginc"
+#include "../../../../../Shared/SimpleOriginSystem/Scripts/PositionCompression.cginc"
 
 #define __SGT_CUTOFF 0.02
+
 
 sampler2D_float _SGT_SceneDepthTexture;
 float SGT_GetLinearEyeDepth(float2 uv) { return tex2D(_SGT_SceneDepthTexture, uv); }

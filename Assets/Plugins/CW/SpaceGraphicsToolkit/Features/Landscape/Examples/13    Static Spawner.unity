@@ -179,9 +179,16 @@ MonoBehaviour:
   maskDetailOffset: 0.1
   gradientIndex: 0
   variation: 0.151
+  offset: 0
   occlusion: 1
   strata: 1
-  smooth: 0
+  blur: 0
+  smoothnessMidpoint: 0.5
+  smoothnessStrength: 0
+  smoothnessPower: 2
+  emissionMidpoint: 0.5
+  emissionStrength: 0
+  emissionPower: 2
 --- !u!850595691 &878699092
 LightingSettings:
   m_ObjectHideFlags: 0
@@ -404,15 +411,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   maskTex: {fileID: 2800000, guid: c28d8d6c97b9ba743bf04d41039cea32, type: 3}
   invertMask: 1
-  triangleSize: 10
-  count: 100
+  tileSize: 30
+  range: 80
+  density: 0.1
   seed: -690503924
   scaleMin: 0.1
   scaleMax: 0.2
-  offset: 0
   rotate: 0
-  mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
-  material: {fileID: 2100000, guid: fab6ebac0c8956749985b7397ee0605c, type: 2}
+  offset: 0.05
+  useMinHeight: 0
+  minHeight: 0
+  minHeightFalloff: 0
+  useMaxHeight: 0
+  maxHeight: 0
+  maxHeightFalloff: 0
+  useMinSlope: 0
+  minSlope: 0
+  minSlopeFalloff: 5
+  useMaxSlope: 0
+  maxSlope: 90
+  maxSlopeFalloff: 5
+  staticMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  staticMaterial: {fileID: 2100000, guid: fab6ebac0c8956749985b7397ee0605c, type: 2}
+  swapPrefab: {fileID: 0}
+  swapRange: 10
+  swapFalloff: 2
 --- !u!1 &1311199522
 GameObject:
   m_ObjectHideFlags: 0
@@ -458,6 +481,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   space: 0
+  surfaceScale: 1
   mask: 1
   maskIndex: 0
   maskInvert: 1
@@ -467,14 +491,14 @@ MonoBehaviour:
   maskDetailIndex: 0
   maskDetailTiling: {x: 10, y: 10}
   maskDetailOffset: 0.1
-  surfaceScale: 1
   heightIndex: 0
   heightMidpoint: 0
   heightRange: 1
   localTiling: {x: 1, y: 1}
   strata: 1
-  globalLayer: 3
+  globalSize: 1024
   displace: 1
+  replace: 0
 --- !u!1 &1979672835
 GameObject:
   m_ObjectHideFlags: 0
@@ -523,19 +547,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   editorDetail: 1
+  initDetail: 0
   detail: 5
-  surfaceScale: 1
+  boostMultiplier: 1.75
   minimumTriangleSize: 0.1
   lodBudget: 0.001
+  lodSteps: 30
   material: {fileID: 2100000, guid: d5aa596eb38af8046b6348d89ff713cf, type: 2}
   bundle: {fileID: 1504359710658688620, guid: dbbb67e30544ed54b9b7d56b001fecf3, type: 3}
   globalSizes: {x: 1, y: 11, z: 121, w: 1331}
+  globalSizesNormalized: {x: 1.0005072, y: 10.833078, z: 104.71976, w: 314.15927}
   globalTiling: {x: 314, y: 29, z: 3, w: 1}
-  globalTilingNormalized: {x: 999.49304, y: 92.30987, z: 9.549296, w: 3.183099}
+  globalTilingNormalized: {x: 0.99949306, y: 0.09230987, z: 0.009549296, w: 0.003183099}
   observers: []
   castShadows: 1
   receiveShadows: 1
   radius: 50
+  sky: {fileID: 0}
+  cloudShadow: {fileID: 0}
+  oceanFade: {fileID: 0}
   albedoTex: {fileID: 0}
   heightTex: {fileID: 0}
   heightMidpoint: 0.401

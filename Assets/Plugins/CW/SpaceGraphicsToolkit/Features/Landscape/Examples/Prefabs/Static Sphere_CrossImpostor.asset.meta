@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 6609f4b707760784cb89430364b8570a
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 11400000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.22
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Landscape/Examples/Prefabs/Static
+    Sphere_CrossImpostor.asset
+  uploadId: 881296

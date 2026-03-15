@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 3e575ecd38056e2449862f378eae7010
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.22
+  assetPath: Assets/Plugins/CW/SpaceGraphicsToolkit/Features/Landscape/Examples/Prefabs/Static
+    Sphere.mat
+  uploadId: 881296

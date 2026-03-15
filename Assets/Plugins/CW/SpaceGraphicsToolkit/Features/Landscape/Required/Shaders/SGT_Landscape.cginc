@@ -23,6 +23,7 @@ BEGIN_DEFINES
 	#pragma shader_feature_local _SGT_SHAPE_SQUARE _SGT_SHAPE_SPHERE
 	#pragma shader_feature_local _SGT_CLOUDS_OFF _SGT_CLOUDS
 	#pragma shader_feature_local _SGT_OCEAN_FADE_OFF _SGT_OCEAN_FADE
+	#pragma multi_compile __ CW_COMPRESS_POSITIONS
 END_DEFINES
 
 #pragma instancing_options procedural:SetupInstancing
@@ -167,6 +168,12 @@ void SSS_Vert(inout SSS_VertexData v)
 	
 	v.extraV2F0.x = pixelX / pixelS.x;
 	v.extraV2F0.y = pixelY / pixelS.y;
+	
+	#if CW_COMPRESS_POSITIONS
+		float3 wpos = mul(_CwObjectToWorld, float4(v.position, 1.0f)).xyz;
+		wpos = SSS_CompressWorld(wpos);
+		v.position = mul(_CwWorldToObject, float4(wpos, 1.0f)).xyz;
+	#endif
 }
 
 float3 SGT_GetColor(float3 wnormal, float3 wlight)
@@ -222,24 +229,31 @@ float SGT_Bayer4x4(float2 screenPos)
 
 void SSS_Frag(inout SSS_SurfaceData o, inout SSS_FragmentData d)
 {
-	float4 dataA = tex2Dlod(DataA, float4(d.extraV2F0.xy,0,0));
-	float4 dataN = tex2Dlod(DataN, float4(d.extraV2F0.xy,0,0)); dataN.xy = dataN.xy * 2.0f - 1.0f;
+	#if CW_COMPRESS_POSITIONS
+		d.worldSpacePosition = SSS_DecompressWorld(d.worldSpacePosition);
+		d.worldSpaceViewDir  = normalize(_WorldSpaceCameraPos - d.worldSpacePosition);
+	#endif
 	
-	dataN.x = -dataN.x; // Don't set negative tangent sign, so do it manually
+	float4 dataA = tex2Dlod(DataA, float4(d.extraV2F0.xy,0,0));
+	float4 dataN = tex2Dlod(DataN, float4(d.extraV2F0.xy,0,0)); 
+	float2 tnorm = dataN.xy * 2.0f - 1.0f;
+	
+	tnorm.x = -tnorm.x; // Don't set negative tangent sign, so do it manually
 	
 	o.Albedo     = dataA.xyz;
 	o.Occlusion  = _SGT_Occlusion;
 	o.Emission   = dataA.xyz * dataN.z;
 	o.Smoothness = dataN.w;
 	o.Metallic   = 0.0f;
-	o.Normal     = float3(dataN.xy, sqrt(1.0f - saturate(dot(dataN.xy, dataN.xy))));
+	o.Normal     = float3(tnorm, sqrt(1.0f - saturate(dot(tnorm, tnorm))));
+	o.Alpha      = dataN.x != 0.0 && dataN.y != 0.0;
 	
 	float localEyeHeight = d.extraV2F0.w;
 	
 	#if _SGT_OCEAN_FADE
 		float  fadeTransition = step(SGT_Bayer4x4(d.screenUV), _SGT_OceanFade);
 		float  cameraDistance = distance(d.worldSpacePosition, _WorldSpaceCameraPos);
-		float  cameraDist01   = 1.0 - pow(saturate(1.0 - cameraDistance / _SGT_OceanRadius), 8.0);
+		float  cameraDist01   = 1.0 - pow(abs(saturate(1.0 - cameraDistance / _SGT_OceanRadius)), 8.0);
 		float3 oceanColor     = SGT_ApplyOceanColor(o.Albedo, dataA.w, _SGT_OceanColor, _SGT_OceanDensity, cameraDist01, 1.0);
 		float  fade           = saturate(dataA.w > 0) * fadeTransition;
 	

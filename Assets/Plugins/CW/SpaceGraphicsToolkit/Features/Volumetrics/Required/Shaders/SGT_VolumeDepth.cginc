@@ -93,19 +93,26 @@ Pass
 			};
 
 			Varyings Vert(Attributes input)
-			{
-				Varyings output;
-				UNITY_SETUP_INSTANCE_ID(input);
-				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
-				output.positionCS = GetFullScreenTriangleVertexPosition(input.vertexID, 0.0f);
-				output.positionCS   = float4(input.texcoord0.xy * 2.0f - 1.0f, 0.5f, 1.0f);
-				output.texcoord0 = input.texcoord0;
-				
-				#if UNITY_UV_STARTS_AT_TOP
-					output.positionCS.y = -output.positionCS.y;
-				#endif
-				return output;
-			}
+		{
+			Varyings output;
+			UNITY_SETUP_INSTANCE_ID(input);
+			UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+    
+			// 1. Generate the correct clip-space position for a procedural triangle
+			output.positionCS = GetFullScreenTriangleVertexPosition(input.vertexID, 0.5f);
+    
+			// 2. Procedurally generate the UVs based on the vertex ID
+			float2 uv = float2((input.vertexID << 1) & 2, input.vertexID & 2);
+    
+			// 3. Flip the UVs (not the geometry) if the API coordinates start at the top
+			#if UNITY_UV_STARTS_AT_TOP
+				uv.y = 1.0 - uv.y;
+			#endif
+    
+			output.texcoord0 = uv;
+    
+			return output;
+		}
 			
 			float4 Frag(Varyings varyings) : SV_Target
 			{

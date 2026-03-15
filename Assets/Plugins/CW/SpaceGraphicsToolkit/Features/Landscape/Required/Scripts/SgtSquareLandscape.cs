@@ -228,6 +228,7 @@ namespace SpaceGraphicsToolkit.Landscape
 			blitMaterial.SetMatrix(_CwCoordY, new Matrix4x4((Vector2)(float2)coordYA, (Vector2)(float2)coordYB, (Vector2)(float2)coordYC, default(Vector4)));
 			blitMaterial.SetMatrix(_CwCoordZ, new Matrix4x4((Vector2)(float2)coordZA, (Vector2)(float2)coordZB, (Vector2)(float2)coordZC, default(Vector4)));
 			blitMaterial.SetMatrix(_CwCoordW, new Matrix4x4((Vector2)(float2)coordWA, (Vector2)(float2)coordWB, (Vector2)(float2)coordWC, default(Vector4)));
+			blitMaterial.SetInt(_CwDepth, pending.Triangle.Depth);
 
 			return blitMaterial;
 		}
@@ -316,6 +317,16 @@ namespace SpaceGraphicsToolkit.Landscape
 			ScheduleFeatures(pending);
 
 			return pending;
+		}
+
+		public override double3 GetLocalDirection(double3 localPoint)
+		{
+			return new double3(0.0, 1.0, 0.0);
+		}
+
+		public override double3 GetWorldDirection(double3 worldPoint)
+		{
+			return (float3)transform.up;
 		}
 
 		public override double3 GetWorldPivot(double3 worldPoint)

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 9ab8116a530c024409289b9b4bef7555
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 127671
+  packageName: Planet Forge
+  packageVersion: 1.6.22
+  assetPath: Assets/Plugins/CW/Planet Forge/Prefabs/BrownBoulder/BrownBoulder_CrossImpostor_Material.mat
+  uploadId: 881296

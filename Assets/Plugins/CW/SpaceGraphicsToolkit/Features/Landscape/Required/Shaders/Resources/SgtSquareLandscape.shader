@@ -85,6 +85,8 @@ Shader "Hidden/SgtSquareLandscape"
 
 				o.rgbo = float4(albedo.xyz, ocean);
 				o.nnes = float4(topology.xy * 0.5f + 0.5f, emission, smoothness);
+
+				CW_ContributeHoles(o.rgbo, o.nnes, localPos);
 			}
 			ENDCG
 		}

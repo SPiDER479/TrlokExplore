@@ -480,6 +480,16 @@ namespace SpaceGraphicsToolkit.Landscape
 			}
 		}
 
+		public override double3 GetLocalDirection(double3 localPoint)
+		{
+			return math.normalize(localPoint);
+		}
+
+		public override double3 GetWorldDirection(double3 worldPoint)
+		{
+			return math.normalize(worldPoint);
+		}
+
 		public override double3 GetWorldPivot(double3 worldPoint)
 		{
 			return (float3)transform.position;
