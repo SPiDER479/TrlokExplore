@@ -21,6 +21,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Tours/SolarSystem/Solar System Tour.unity
     guid: c3b14e2cc39c377449776edbb4692f25
   - enabled: 1
+    path: Assets/Scenes/Tours/Mars/Mars Tour.unity
+    guid: b5bae081223a2cd44a5882c8e8ed258b
+  - enabled: 1
     path: Assets/Scenes/Custom/CustomPlanet.unity
     guid: 15a33e4d161ff624ca60dc6a639d1346
   - enabled: 1
