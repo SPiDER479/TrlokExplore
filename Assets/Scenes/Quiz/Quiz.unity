@@ -623,6 +623,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::QuizManager
   categories:
   - {fileID: 11400000, guid: 327b1f7b7c2e07c4c878f9a56635d120, type: 2}
+  - {fileID: 11400000, guid: 6b41317af1b38184188ee0adeefe9871, type: 2}
   namePanel: {fileID: 1096360077}
   nameInputField: {fileID: 972383778}
   categoryPanel: {fileID: 755648415}

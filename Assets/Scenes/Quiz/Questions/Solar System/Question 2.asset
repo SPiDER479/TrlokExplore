@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da7b4c60aef90ec468cda6cd8a588127, type: 3}
   m_Name: Question 2
   m_EditorClassIdentifier: Assembly-CSharp::Question
-  question: C
-  optionA: a
-  optionB: b
-  optionC: c
-  optionD: d
-  correctOption: 1
+  question: What is the largest planet in our solar system?
+  optionA: Earth
+  optionB: Neptune
+  optionC: Jupiter
+  optionD: Mercury
+  correctOption: 2

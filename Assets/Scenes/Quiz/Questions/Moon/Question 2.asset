@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: da7b4c60aef90ec468cda6cd8a588127, type: 3}
-  m_Name: Question 3
+  m_Name: Question 2
   m_EditorClassIdentifier: Assembly-CSharp::Question
-  question: What is the name of the star at the center of our solar system?
-  optionA: Moon
-  optionB: Sun
-  optionC: Venus
-  optionD: Sirius
-  correctOption: 1
+  question: How many moons does Earth have?
+  optionA: 1
+  optionB: 2
+  optionC: 3
+  optionD: 4
+  correctOption: 0

@@ -131,7 +131,7 @@ public class QuizManager : MonoBehaviour
     private void ShowResult()
     {
         resultText.text = playerName + " has scored " + score + " / " + currentQuestions.questions.Length +
-                          " in the Trlok Explore Quiz in the category " + currentQuestions.name;
+                          " in the TrlokXplore Quiz in the category " + currentQuestions.name;
         
         ScreenCapture.CaptureScreenshot(playerName + "_" + currentQuestions.name + "_Result.png");
     }
