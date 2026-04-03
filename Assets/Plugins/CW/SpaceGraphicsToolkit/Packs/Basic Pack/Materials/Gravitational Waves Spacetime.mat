@@ -121,7 +121,7 @@ Material:
     - _Proximity: 1
     - _QueueControl: -1
     - _QueueOffset: 0
-    - _Rip: 1
+    - _Rip: 0
     - _SGT_SphereMask: 0
     - _SGT_SphereMaskFalloff: 3
     - _SGT_SphereMaskRadius: 1
@@ -131,7 +131,7 @@ Material:
     - _Tiling: 0.25
     - _TintBrightness: 1
     - _TintExpand: 1.75
-    - _Twi: 0
+    - _Twi: 1
     - _UVSec: 0
     - _Warp: 1
     - _WarpBrightness: 10
