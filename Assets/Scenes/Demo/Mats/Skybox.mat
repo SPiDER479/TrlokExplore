@@ -199,7 +199,7 @@ Material:
     - _CloudOpacityExp: 2
     - _CloudsEmissionPower: 10
     - _CloudsOpacityExp: 2
-    - _CloudsOpacityPower: 0.019998152
+    - _CloudsOpacityPower: 0.01999741
     - _CloudsRampOffsetExp: 2
     - _CloudsRampOffsetExp2: 1
     - _CloudsRampOffsetMultiply: 1
@@ -319,7 +319,7 @@ Material:
     - _SphericalDistortionAmount: 0
     - _SphericalDistortionExp: 1
     - _SrcBlend: 1
-    - _StarsEmissionPower: 0.17998338
+    - _StarsEmissionPower: 0.1799767
     - _StarsExp: 2
     - _StarsExpNegate: 0.269
     - _StarsHueShift: 0
